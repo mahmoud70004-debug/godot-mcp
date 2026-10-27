@@ -1,7 +1,7 @@
 extends Control
 ## Title screen.
 
-const FIRST_LEVEL := "res://src/levels/test/visual_test.tscn"
+const PROLOGUE := "res://src/cutscenes/prologue.tscn"
 
 @onready var title: Label = %Title
 @onready var new_game_button: Button = %NewGameButton
@@ -39,7 +39,7 @@ func _process(delta: float) -> void:
 
 func _on_new_game() -> void:
 	GameState.new_game()
-	SceneLoader.change_scene(FIRST_LEVEL, 1.2)
+	SceneLoader.change_scene(PROLOGUE, 1.2)
 
 
 func _on_continue() -> void:

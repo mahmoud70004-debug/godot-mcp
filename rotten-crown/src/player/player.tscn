@@ -36,7 +36,7 @@ position = Vector3(0, 1.6, 0)
 current = true
 fov = 72.0
 near = 0.05
-far = 80.0
+far = 170.0
 
 [node name="WeaponPivot" type="Node3D" parent="Head/Camera3D" node_paths=PackedStringArray("hitbox")]
 position = Vector3(0.34, -0.36, -0.55)
@@ -62,7 +62,7 @@ shape = SubResource("BoxShape3D_attack")
 position = Vector3(-0.25, -0.45, -0.2)
 light_color = Color(1, 0.72, 0.42, 1)
 light_energy = 0.55
-omni_range = 7.0
+omni_range = 5.5
 omni_attenuation = 1.6
 script = ExtResource("7_flicker")
 base_energy = 0.55

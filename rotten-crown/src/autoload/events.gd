@@ -7,6 +7,8 @@ signal player_health_changed(current: float, maximum: float)
 signal player_stamina_changed(current: float, maximum: float)
 signal player_damaged(amount: float)
 signal player_died
+## The knight wakes in the meadow after the prologue (HUD plays the eyelids).
+signal wake_up_started(duration: float)
 
 # Input routed from the touch layer (degrees of yaw/pitch).
 signal look_input(delta_degrees: Vector2)

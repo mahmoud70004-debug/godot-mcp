@@ -3,3 +3,4 @@
 max-line-length: 200
 disable:
   - class-definitions-order
+  - max-returns

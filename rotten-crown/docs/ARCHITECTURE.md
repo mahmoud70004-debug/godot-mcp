@@ -26,6 +26,8 @@ rotten-crown/
 │   ├── world/               Level، RegionData و RegionTrigger، FlickerLight، AmbientDrone، Blockout
 │   ├── rendering/           RetroMaterials + post_process.tscn
 │   ├── ui/                  HUD، التحكم باللمس، الحقيبة، القائمة الرئيسية
+│   ├── characters/          HumanoidRig + KnightModel + VillagerModel (شخصيات من أشكال بسيطة مع حركات إجرائية)
+│   ├── cutscenes/           prologue.tscn + PrologueCutscene (مخرج اللقطات والنصوص)
 │   └── levels/test/visual_test.tscn
 ├── tools/validate_project.py مدقّق ثابت للمراجع والمسارات
 └── docs/
@@ -85,9 +87,24 @@ HurtboxComponent
 | **منطقة** | أنشئ `RegionData` ومشهداً جذره `Level`، وأضف `RegionTrigger` عند المدخل |
 | **مادة بيكسل** | أضف دالة في `RetroMaterials` بلوحة ألوان جديدة |
 
-## الأداء على الهاتف (قرارات المرحلة 1)
+## أدوات المطوّر
+| الأداة | الوظيفة |
+|---|---|
+| `tools/render_shots.sh` | يصوّر لقطات من أي موقع بنفس مُصيِّر المتصفح (RC_SHOT="x,y,z,yaw,pitch") |
+| `tools/gen_audio.py` | يولّد الموسيقى والأصوات المؤقتة كملفات WAV مع نقاط تكرار (Loop) |
+| `tools/web_smoke_test.cjs` | اختبار المتصفح الكامل (قائمة، ثم تخطّي المشهد الافتتاحي، ثم مشي ونظر وهجوم وحقيبة) |
+| `tools/web_touch_repro.cjs` | يمنع عودة خلل قفز الكاميرا مع ذراع التحكم |
+| `tools/web_perf.cjs` | يقيس الإطارات في الثانية مع تعطيل ميزات عبر `?perf=` |
+| `?debug=1` في الرابط | يعرض FPS وحالة اللمس على الشاشة (DebugBridge) |
+
+## الأداء على الهاتف
 - العرض داخلياً بدقّة 640×360 فقط، فتكلفة البكسلات ضئيلة.
 - مُصيِّر **Mobile**، دون MSAA، وظلال قاسية، وظل واحد فقط (القمر).
 - الأرض مقسّمة إلى مربّعات 20م، لأن مُصيِّر Mobile يسمح بثمانية أضواء Omni فقط لكل Mesh.
 - أضواء الفوانيس بدون ظلال.
+- **مُصيِّر المتصفح (Compatibility) يرسم كل جسم مرة إضافية لكل ضوء يلمسه.** لذلك:
+  - `MeshMerger.merge_static` يدمج الـ Blockout في مجسّم واحد لكل (خامة × خلية 20م)، فيبقى أثر الضوء محلياً.
+  - `MeshMerger.bake_character` يدمج قطع كل مفصل في مجسّم واحد بألوان الرؤوس (Vertex Colors).
+  - العشب بلا إضاءة (Unshaded)، ومقسّم إلى أجزاء 12م، ويختفي بعد 40م.
+  - الألعاب النارية بلا أضواء حقيقية.
 - ضغط الخامات ETC2/ASTC مفعّل.

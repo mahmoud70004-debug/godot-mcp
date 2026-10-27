@@ -15,11 +15,58 @@ func _ready() -> void:
 	if region:
 		GameState.current_region_id = region.id
 		_apply_region_atmosphere()
-		if announce_on_start:
+		if announce_on_start and not GameState.get_flag("waking_up"):
 			_announce_region.call_deferred()
 	if player and GameState.pending_player_position is Vector3:
 		player.global_position = GameState.pending_player_position
 		GameState.pending_player_position = null
+	_apply_dev_shot()
+	_apply_dev_perf_flags()
+	if player and GameState.get_flag("waking_up"):
+		GameState.flags.erase("waking_up")
+		_wake_up.call_deferred()
+
+
+func _wake_up() -> void:
+	await player.play_wake_up()
+	if region and announce_on_start:
+		Events.region_entered.emit(region)
+
+
+## Dev aid for profiling: RC_PERF="nosky,nograss,nohorizon,nopost,nofog".
+func _apply_dev_perf_flags() -> void:
+	var raw := OS.get_environment("RC_PERF")
+	if OS.has_feature("web"):
+		var q: Variant = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('perf') || ''", true)
+		raw = str(q) if q != null else raw
+	var flags := raw.split(",", false)
+	if flags.is_empty():
+		return
+	var env := environment.environment if environment else null
+	if flags.has("nosky") and env:
+		env.background_mode = Environment.BG_COLOR
+		env.background_color = Color(0.05, 0.06, 0.05)
+	if flags.has("nofog") and env:
+		env.fog_enabled = false
+	for node in find_children("*", "", true, false):
+		if flags.has("nograss") and node.name == "Grass":
+			(node as Node3D).visible = false
+		if flags.has("nohorizon") and node.name == "Horizon":
+			(node as Node3D).visible = false
+		if flags.has("nopost") and node.name == "PostProcess":
+			(node as CanvasLayer).visible = false
+
+
+## Dev aid for rendering review shots: RC_SHOT="x,y,z,yaw_deg,pitch_deg".
+func _apply_dev_shot() -> void:
+	var shot := OS.get_environment("RC_SHOT")
+	if shot == "" or player == null:
+		return
+	var v := shot.split_floats(",")
+	if v.size() >= 5:
+		player.global_position = Vector3(v[0], v[1], v[2])
+		player.rotation_degrees.y = v[3]
+		player.head.rotation_degrees.x = v[4]
 
 
 func _announce_region() -> void:

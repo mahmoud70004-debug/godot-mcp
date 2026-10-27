@@ -47,6 +47,7 @@ func _ready() -> void:
 	Events.lore_discovered.connect(_open_lore)
 	Events.lore_read_requested.connect(_open_lore)
 	Events.region_entered.connect(_show_region)
+	Events.wake_up_started.connect(_play_eyelids)
 
 	inventory_menu.closed.connect(close_menu)
 	%ResumeButton.pressed.connect(close_menu)
@@ -161,6 +162,37 @@ func _show_region(region: RegionData) -> void:
 	_region_tween.tween_interval(2.5)
 	_region_tween.tween_property(region_title, "modulate:a", 0.0, 2.0)
 	_region_tween.parallel().tween_property(region_subtitle, "modulate:a", 0.0, 1.6)
+
+
+## Heavy eyelids: open a crack, sink shut, then open for real.
+func _play_eyelids(duration: float) -> void:
+	var lids: Array[ColorRect] = []
+	for top in [true, false]:
+		var lid := ColorRect.new()
+		lid.color = Color.BLACK
+		lid.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lid.anchor_right = 1.0
+		if top:
+			lid.anchor_bottom = 0.5
+		else:
+			lid.anchor_top = 0.5
+			lid.anchor_bottom = 1.0
+		add_child(lid)
+		lids.append(lid)
+	var h := get_viewport().get_visible_rect().size.y * 0.5
+	var tw := create_tween().set_trans(Tween.TRANS_SINE)
+	tw.tween_interval(duration * 0.08)
+	tw.tween_property(lids[0], "position:y", -h * 0.25, duration * 0.12)
+	tw.parallel().tween_property(lids[1], "position:y", h * 0.25, duration * 0.12)
+	tw.tween_interval(duration * 0.08)
+	tw.tween_property(lids[0], "position:y", 0.0, duration * 0.1)
+	tw.parallel().tween_property(lids[1], "position:y", 0.0, duration * 0.1)
+	tw.tween_interval(duration * 0.05)
+	tw.tween_property(lids[0], "position:y", -h * 1.05, duration * 0.2)
+	tw.parallel().tween_property(lids[1], "position:y", h * 1.05, duration * 0.2)
+	await tw.finished
+	for lid in lids:
+		lid.queue_free()
 
 
 func _on_player_damaged(_amount: float) -> void:

@@ -24,7 +24,12 @@ static func cobble() -> StandardMaterial3D:
 
 
 static func dead_grass() -> StandardMaterial3D:
-	return _cached("dead_grass", [Color(0.05, 0.07, 0.045), Color(0.08, 0.11, 0.06), Color(0.12, 0.14, 0.08), Color(0.1, 0.09, 0.06)], FastNoiseLite.TYPE_SIMPLEX, 0.22, 0.35)
+	return _cached("dead_grass", [Color(0.055, 0.08, 0.04), Color(0.085, 0.12, 0.05), Color(0.125, 0.165, 0.07), Color(0.035, 0.05, 0.03)], FastNoiseLite.TYPE_SIMPLEX, 0.22, 0.35)
+
+
+## Reddish cracked earth for roads (the red path of the gloom paintings).
+static func red_earth() -> StandardMaterial3D:
+	return _cached("red_earth", [Color(0.07, 0.04, 0.03), Color(0.12, 0.06, 0.04), Color(0.2, 0.08, 0.04), Color(0.09, 0.05, 0.035)], FastNoiseLite.TYPE_CELLULAR, 0.3, 0.5)
 
 
 static func mud() -> StandardMaterial3D:
@@ -106,5 +111,7 @@ static func _cached(key: String, palette: Array, noise_type: int, frequency: flo
 	mat.uv1_world_triplanar = true
 	mat.uv1_scale = Vector3.ONE * uv_scale
 	mat.roughness = 0.95
+	# Representative colour for vertex-colour baking (MeshMerger.bake_character).
+	mat.set_meta("swatch", palette[palette.size() / 2])
 	_cache[key] = mat
 	return mat

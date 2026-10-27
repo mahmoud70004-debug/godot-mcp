@@ -13,15 +13,28 @@ const base = process.argv[2] || 'http://localhost:8766/index.html';
   const cdp = await ctx.newCDPSession(page);
   await page.goto(base + (base.includes('?') ? '&' : '?') + 'debug=1');
   await page.waitForFunction(() => window.rcState, null, { timeout: 90000 });
+  await page.waitForTimeout(5000); // let the menu settle before tapping
   const box = await page.locator('canvas').boundingBox();
   const s = box.height / 360, uiW = box.width / s;
   const P = (x, y) => ({ x: box.x + x * s, y: box.y + y * s });
   const send = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
   const state = () => page.evaluate(() => window.rcState);
+  // Poll with evaluate(): waitForFunction's rAF polling starves while Godot loads a scene.
+  const until = async (pred, ms = 90000) => {
+    for (const t0 = Date.now(); Date.now() - t0 < ms; await page.waitForTimeout(500)) {
+      const st = await state();
+      if (st && pred(st)) return st;
+    }
+    throw new Error('timed out waiting for game state');
+  };
   const wake = P(uiW / 2, 222);
-  await page.touchscreen.tap(wake.x, wake.y);
-  await page.waitForFunction(() => window.rcState && window.rcState.player, null, { timeout: 60000 });
-  await page.waitForTimeout(2500);
+  await page.touchscreen.tap(wake.x, wake.y);          // Wake Up -> prologue
+  await until((st) => st.scene === 'Prologue');
+  await page.waitForTimeout(1500);
+  const skip = P(uiW - 39, 16);
+  await page.touchscreen.tap(skip.x, skip.y);          // SKIP >>
+  await until((st) => !!st.player);
+  await page.waitForTimeout(9000);                     // wake-up animation
 
   let thumb = { ...P(uiW * 0.8, 150), id: 7 };
   let stick = { ...P(80, 280), id: 3 };

@@ -25,3 +25,10 @@ The user tests on their phone through GitHub Pages (https://mahmoud70004-debug.g
 2. Serve ../docs locally and run `node tools/web_smoke_test.cjs http://localhost:PORT/index.html build/smoke`; look at the screenshots.
 3. Commit `../docs` together with the change and push.
 Web uses the Compatibility renderer: keep shaders/features working there too (e.g. generated audio needs PLAYBACK_TYPE_STREAM).
+Also run `node tools/web_touch_repro.cjs URL` (joystick regression) and compare `node tools/web_perf.cjs URL` with the previous build.
+
+## Performance rules (web / Compatibility renderer)
+- Every object is drawn again for each light touching it: keep omni ranges small, no lights on effects (fireworks), unshaded for big surfaces (grass, far ground, silhouettes).
+- Procedural geometry must go through MeshMerger (merge_static for scenery, bake_character for rigs).
+- Large instanced surfaces (grass) must be chunked with visibility_range_end.
+- Visual review without a phone: `tools/render_shots.sh` (RC_SHOT) or Movie Maker on the cutscene (see docs/ARCHITECTURE.md).

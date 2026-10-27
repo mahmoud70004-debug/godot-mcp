@@ -147,6 +147,8 @@ func _apply_look(delta_degrees: Vector2) -> void:
 
 
 func _update_head_bob(delta: float, speed_ratio: float) -> void:
+	if not input_enabled:
+		return  # cinematic head motion (waking, dying) owns the head
 	if speed_ratio > 0.05:
 		_bob_time += delta * bob_frequency * TAU * clampf(speed_ratio, 0.3, 1.2) * 0.5
 	var target_y := eye_height + sin(_bob_time * 2.0) * bob_amplitude * speed_ratio
@@ -245,6 +247,29 @@ func _on_stats_changed() -> void:
 	stamina = minf(stamina, max_stamina)
 	health.set_max_health(GameState.get_max_health())
 	Events.player_stamina_changed.emit(stamina, max_stamina)
+
+
+## Opening of gameplay: lying in the grass, staring at the sky, then rising.
+func play_wake_up(duration: float = 7.0) -> void:
+	input_enabled = false
+	Events.wake_up_started.emit(duration)
+	head.position.y = 0.35
+	head.rotation = Vector3(deg_to_rad(72.0), 0.0, deg_to_rad(-14.0))
+	weapon.visible = false
+	var tw := create_tween()
+	tw.tween_interval(duration * 0.45)
+	# Sit up...
+	tw.tween_property(head, "rotation", Vector3(deg_to_rad(18.0), 0.0, deg_to_rad(-4.0)), duration * 0.2).set_trans(Tween.TRANS_SINE)
+	tw.parallel().tween_property(head, "position:y", 0.9, duration * 0.2).set_trans(Tween.TRANS_SINE)
+	tw.tween_interval(duration * 0.1)
+	# ...and stand, unsteady.
+	tw.tween_property(head, "position:y", eye_height, duration * 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.parallel().tween_property(head, "rotation", Vector3.ZERO, duration * 0.25).set_trans(Tween.TRANS_SINE)
+	await tw.finished
+	_pitch = 0.0
+	weapon.visible = true
+	weapon.equip(GameState.equipped_weapon)
+	input_enabled = true
 
 
 func kill() -> void:

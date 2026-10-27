@@ -38,7 +38,13 @@ const UI_H = 360; // project viewport height
   await shot('01_menu');
   await page.touchscreen.tap(P(uiW / 2, UI_H - 138).x, P(uiW / 2, UI_H - 138).y); // "Wake Up"
   await page.waitForTimeout(9000);
-  await shot('02_wake');
+  await shot('02a_prologue');
+  const skip = P(uiW - 39, 16);
+  await page.touchscreen.tap(skip.x, skip.y); // "SKIP >>"
+  await page.waitForTimeout(12000);
+  await shot('02_wake');      // eyes opening in the meadow
+  await page.waitForTimeout(8000); // wake-up animation keeps input locked
+  await shot('02b_awake');
 
   // Walk forward: hold the joystick (centre 80, 280) pushed up.
   const stick = P(80, 280);

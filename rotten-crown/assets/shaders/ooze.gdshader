@@ -29,14 +29,16 @@ float noise(vec2 p) {
 void fragment() {
 	vec2 uv = floor(UV * pixel_size) / pixel_size;
 	float d = length(uv - 0.5) * 2.0;
-	vec2 s = vec2(seed * 13.7, seed * 7.3);
+	// Merged splats carry their seed in vertex colour (see MeshMerger).
+	float sd = seed + COLOR.r * 100.0;
+	vec2 s = vec2(sd * 13.7, sd * 7.3);
 	float n = noise(uv * 5.0 + s) * 0.65 + noise(uv * 11.0 - s) * 0.35;
 	float mask = (1.0 - d) + (n - 0.5) * 1.1;
 	if (mask < 0.12) {
 		discard;
 	}
 	float depth = smoothstep(0.12, 0.65, mask);
-	float bubbles = step(0.94, noise(uv * 18.0 + vec2(TIME * bubble_speed, seed))) * bubble_amount;
+	float bubbles = step(0.94, noise(uv * 18.0 + vec2(TIME * bubble_speed, sd))) * bubble_amount;
 	vec3 col = mix(surface_color.rgb, deep_color.rgb, depth);
 	col += bubbles * 0.25;
 	ALBEDO = col;

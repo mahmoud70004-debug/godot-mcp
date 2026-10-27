@@ -24,6 +24,8 @@ export GODOT=$(tools/setup_godot.sh)    # ينزّل Godot 4.4.1 وقوالب ا
 tools/publish_web.sh                    # تصدير، ثم نسخ إلى ../docs (المجلد الذي يخدمه GitHub Pages)
 (cd ../docs && python3 -m http.server 8766 &) && node tools/web_smoke_test.cjs http://localhost:8766/index.html build/smoke
 ```
+أضف `?debug=1` للرابط لعرض FPS وحالة اللمس على الشاشة، وهذا مفيد عند الإبلاغ عن خلل.
+
 يحاكي `web_smoke_test.cjs` هاتفاً أفقياً يعمل باللمس في Chromium: يبدأ اللعبة، ويمشي عبر البوابة، وينظر حوله، ويهاجم، ويفتح الحقيبة، ويحفظ صوراً للشاشة. ويفشل إذا ظهر أي خطأ من المحرك.
 
 ## التشغيل
@@ -48,6 +50,7 @@ tools/publish_web.sh                    # تصدير، ثم نسخ إلى ../doc
 لمعاينة أدوات اللمس على الحاسوب: فعّل **Preview touch controls** في القائمة الرئيسية، ثم شغّل Godot مع خيار *Emulate Touch From Mouse* (Project Settings ← Input Devices).
 
 ## ماذا تختبر في مشهد الاختبار
+0. **Wake Up** يشغّل المشهد الافتتاحي (احتفال ليلة النصر). يمكنك تخطّيه بـ **SKIP**.
 1. تستيقظ في **سهول ضوء القمر** بجانب فانوسك الساقط. التقط **الدعوة الممزّقة**.
 2. ادخل من **البوابة المكسورة** فتظهر بطاقة عنوان "The Outer Ward".
 3. في **الوليمة**: Hollow نائم وظهره لك. اقترب لترى رأسه يلتفت قبل جسده.

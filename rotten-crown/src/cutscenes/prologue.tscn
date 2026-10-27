@@ -1,0 +1,112 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/cutscenes/prologue_cutscene.gd" id="1_director"]
+[ext_resource type="Script" path="res://src/world/outer_ward_blockout.gd" id="2_blockout"]
+[ext_resource type="Shader" path="res://assets/shaders/night_sky.gdshader" id="3_sky"]
+[ext_resource type="PackedScene" path="res://src/rendering/post_process.tscn" id="4_post"]
+[ext_resource type="AudioStream" path="res://assets/audio/music/festive_jig.wav" id="5_jig"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/bonfire.wav" id="6_fire"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/night_wind.wav" id="7_wind"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
+shader = ExtResource("3_sky")
+shader_parameter/zenith_color = Color(0.0, 0.008, 0.04, 1)
+shader_parameter/horizon_color = Color(0.05, 0.13, 0.38, 1)
+shader_parameter/ground_color = Color(0.01, 0.02, 0.05, 1)
+shader_parameter/horizon_sharpness = 2.4
+shader_parameter/moon_color = Color(0.85, 0.92, 1, 1)
+shader_parameter/moon_size = 0.01
+shader_parameter/halo_color = Color(0.2, 0.36, 0.85, 1)
+shader_parameter/halo_size = 0.6
+shader_parameter/halo_strength = 0.9
+shader_parameter/star_density = 0.022
+shader_parameter/star_brightness = 1.6
+shader_parameter/star_tint = Color(0.75, 0.86, 1, 1)
+shader_parameter/cloud_color = Color(0.025, 0.05, 0.16, 1)
+shader_parameter/cloud_lit_color = Color(0.32, 0.48, 0.95, 1)
+shader_parameter/cloud_coverage = 0.48
+shader_parameter/cloud_speed = 0.006
+shader_parameter/cloud_scale = 1.3
+shader_parameter/flare_direction = Vector3(0.1, 0.62, 0.78)
+shader_parameter/flare_color = Color(0.55, 0.75, 1, 1)
+shader_parameter/flare_strength = 1.0
+shader_parameter/flare_rays = 10.0
+
+[sub_resource type="Sky" id="Sky_festive"]
+sky_material = SubResource("ShaderMaterial_sky")
+radiance_size = 0
+
+[sub_resource type="Environment" id="Environment_festive"]
+background_mode = 2
+sky = SubResource("Sky_festive")
+ambient_light_source = 2
+ambient_light_color = Color(0.12, 0.15, 0.28, 1)
+ambient_light_energy = 1.25
+reflected_light_source = 1
+tonemap_mode = 2
+tonemap_exposure = 1.15
+glow_enabled = true
+glow_intensity = 0.8
+glow_bloom = 0.1
+glow_hdr_threshold = 0.9
+fog_enabled = true
+fog_light_color = Color(0.05, 0.08, 0.18, 1)
+fog_density = 0.012
+fog_sky_affect = 0.1
+adjustment_enabled = true
+adjustment_contrast = 1.08
+adjustment_saturation = 1.1
+
+[node name="Prologue" type="Node3D" node_paths=PackedStringArray("camera", "music", "wind", "post_process")]
+script = ExtResource("1_director")
+camera = NodePath("Camera3D")
+music = NodePath("Music")
+wind = NodePath("Wind")
+post_process = NodePath("PostProcess")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_festive")
+
+[node name="Moonlight" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.669, 0.128, 0)
+light_color = Color(0.5, 0.62, 1, 1)
+light_energy = 1.15
+shadow_enabled = true
+directional_shadow_mode = 0
+directional_shadow_max_distance = 40.0
+
+[node name="Blockout" type="Node3D" parent="."]
+script = ExtResource("2_blockout")
+festive = true
+horizon_colors = Array[Color]([Color(0.01, 0.02, 0.06, 1), Color(0.04, 0.07, 0.17, 1), Color(0.03, 0.05, 0.14, 1), Color(0.08, 0.13, 0.3, 1), Color(0.06, 0.1, 0.25, 1), Color(0.15, 0.24, 0.5, 1)])
+grass_tip = Color(0.12, 0.3, 0.22, 1)
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(-26, 16, 24)
+current = true
+fov = 55.0
+near = 0.05
+far = 170.0
+
+[node name="Music" type="AudioStreamPlayer3D" parent="."]
+position = Vector3(0, 2, -18.5)
+stream = ExtResource("5_jig")
+volume_db = 3.0
+unit_size = 12.0
+max_db = 4.0
+autoplay = true
+bus = &"Music"
+attenuation_filter_cutoff_hz = 2500.0
+
+[node name="Bonfire" type="AudioStreamPlayer3D" parent="."]
+position = Vector3(0, 1, -18.5)
+stream = ExtResource("6_fire")
+unit_size = 4.0
+autoplay = true
+bus = &"SFX"
+
+[node name="Wind" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("7_wind")
+bus = &"Ambience"
+
+[node name="PostProcess" parent="." instance=ExtResource("4_post")]

@@ -11,6 +11,8 @@ uniform vec4 tint : source_color = vec4(0.84, 0.92, 0.8, 1.0);
 uniform float vignette_strength : hint_range(0.0, 2.0) = 0.6;
 uniform float grain_strength : hint_range(0.0, 0.3) = 0.045;
 uniform float contrast : hint_range(0.5, 2.0) = 1.12;
+// Raises the blacks towards a smoky tone, like aged oil paint.
+uniform vec3 lift : source_color = vec3(0.0, 0.0, 0.0);
 // 0..1, driven by gameplay (curse / low health) in later phases.
 uniform float corruption : hint_range(0.0, 1.0) = 0.0;
 
@@ -35,6 +37,7 @@ void fragment() {
 	col = mix(col, vec3(luma), desaturation);
 	col = (col - 0.5) * contrast + 0.5;
 	col *= tint.rgb;
+	col = lift + col * (1.0 - lift);
 	col = mix(col, col * vec3(0.75, 1.1, 0.7), corruption * 0.6);
 
 	ivec2 cell = ivec2(mod(FRAGCOORD.xy, 4.0));
