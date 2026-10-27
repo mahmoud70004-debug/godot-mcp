@@ -5,6 +5,15 @@ extends Control
 ##   right: the whole right half drags the camera
 ##   right: action buttons (attack / block / interact) take priority
 ## Godot's GUI is single-pointer, so this node tracks each finger itself.
+##
+## Look deltas are computed here from each finger's own previous position.
+## InputEventScreenDrag.relative is NOT used: Godot's web platform stores the
+## previous position per slot of the browser's changedTouches list instead of
+## per finger, so with two fingers down a tiny jitter of one finger can be
+## reported relative to the *other* finger and fling the camera.
+
+## Largest look movement accepted from a single drag event (viewport pixels).
+const MAX_LOOK_STEP := 48.0
 
 @export_range(0.2, 0.8) var look_zone_start := 0.4
 
@@ -14,6 +23,7 @@ var _buttons: Array[TouchActionButton] = []
 var _joystick_finger := -1
 var _look_finger := -1
 var _button_fingers: Dictionary = {}
+var _last_positions: Dictionary = {}
 
 
 func _ready() -> void:
@@ -22,6 +32,13 @@ func _ready() -> void:
 	for node in find_children("*", "TouchActionButton", true, false):
 		_buttons.append(node as TouchActionButton)
 	visible = Settings.uses_touch_controls()
+	DebugBridge.register("touch", func() -> Dictionary:
+		return {"joystick": _joystick_finger, "look": _look_finger, "buttons": _button_fingers.size(), "fingers": _last_positions.size()})
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		release_all()
 
 
 func set_enabled(enabled: bool) -> void:
@@ -34,7 +51,9 @@ func release_all() -> void:
 	for finger in _button_fingers:
 		(_button_fingers[finger] as TouchActionButton).release()
 	_button_fingers.clear()
-	joystick.end_touch()
+	_last_positions.clear()
+	if joystick:
+		joystick.end_touch()
 	_joystick_finger = -1
 	_look_finger = -1
 
@@ -50,28 +69,45 @@ func _input(event: InputEvent) -> void:
 			_on_touch_up(touch.index)
 	elif event is InputEventScreenDrag:
 		var drag := event as InputEventScreenDrag
-		if drag.index == _joystick_finger:
-			joystick.update_touch(drag.position)
-		elif drag.index == _look_finger:
-			Events.look_input.emit(drag.relative * Settings.look_sensitivity_touch)
+		_on_drag(drag.index, drag.position)
 
 
 func _on_touch_down(finger: int, pos: Vector2) -> void:
+	# A finger id we still hold means its release was lost: forget it first.
+	_forget(finger)
 	if get_tree().paused:
 		return
+	_last_positions[finger] = pos
 	for button in _buttons:
 		if button.is_visible_in_tree() and button.contains_point(pos):
 			button.press()
 			_button_fingers[finger] = button
 			return
-	if _joystick_finger == -1 and joystick.contains_point(pos):
+	if joystick.contains_point(pos):
+		# Only one thumb fits on the stick: the newest touch always owns it.
 		_joystick_finger = finger
 		joystick.begin_touch(pos)
-	elif _look_finger == -1 and pos.x >= size.x * look_zone_start:
+	elif pos.x >= size.x * look_zone_start:
 		_look_finger = finger
 
 
+func _on_drag(finger: int, pos: Vector2) -> void:
+	if not _last_positions.has(finger):
+		return
+	var delta: Vector2 = pos - (_last_positions[finger] as Vector2)
+	_last_positions[finger] = pos
+	if finger == _joystick_finger:
+		joystick.update_touch(pos)
+	elif finger == _look_finger:
+		Events.look_input.emit(delta.limit_length(MAX_LOOK_STEP) * Settings.look_sensitivity_touch)
+
+
 func _on_touch_up(finger: int) -> void:
+	_forget(finger)
+
+
+func _forget(finger: int) -> void:
+	_last_positions.erase(finger)
 	if _button_fingers.has(finger):
 		(_button_fingers[finger] as TouchActionButton).release()
 		_button_fingers.erase(finger)

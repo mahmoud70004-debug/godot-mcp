@@ -64,6 +64,10 @@ func _ready() -> void:
 	if not Settings.uses_touch_controls():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_emit_initial_stats.call_deferred()
+	DebugBridge.register("player", func() -> Dictionary:
+		return {"yaw": snappedf(rotation_degrees.y, 0.01), "pitch": snappedf(_pitch, 0.01),
+			"pos": [snappedf(global_position.x, 0.01), snappedf(global_position.y, 0.01), snappedf(global_position.z, 0.01)],
+			"hp": health.current_health})
 
 
 func _emit_initial_stats() -> void:
@@ -94,7 +98,11 @@ func _physics_process(delta: float) -> void:
 	var input_dir := Vector2.ZERO
 	if input_enabled:
 		input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-		var look := Input.get_vector("look_left", "look_right", "look_up", "look_down")
+		# Right-stick look only with a real gamepad: some phones report phantom
+		# axes, and touch look arrives through Events.look_input instead.
+		var look := Vector2.ZERO
+		if not Input.get_connected_joypads().is_empty():
+			look = Input.get_vector("look_left", "look_right", "look_up", "look_down")
 		if look != Vector2.ZERO:
 			_apply_look(look * Settings.look_speed_gamepad * delta)
 
