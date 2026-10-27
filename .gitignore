@@ -26,3 +26,8 @@ Thumbs.db
 
 # Coverage directory
 coverage/
+
+# graphify: keep the report/graph, drop caches and machine-specific paths
+graphify-out/cache/
+graphify-out/.graphify_python
+graphify-out/.graphify_root

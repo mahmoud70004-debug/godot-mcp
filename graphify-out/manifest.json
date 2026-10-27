@@ -1,0 +1,44 @@
+{
+  ".github/FUNDING.yml": {
+    "mtime": 1793117147.4548125,
+    "seen": 1793121149.221194,
+    "ast_hash": "74deb41781ce6520c072cd8b82083c2c",
+    "semantic_hash": "74deb41781ce6520c072cd8b82083c2c"
+  },
+  "package.json": {
+    "mtime": 1793117147.4548125,
+    "seen": 1793121149.2212014,
+    "ast_hash": "c9cdaa1d7789712d32e9742a0873053f",
+    "semantic_hash": "c9cdaa1d7789712d32e9742a0873053f"
+  },
+  "scripts/build.js": {
+    "mtime": 1793117147.4548125,
+    "seen": 1793121149.221205,
+    "ast_hash": "b458c8202ac44fdc8ce81d7b7ffd8728",
+    "semantic_hash": "b458c8202ac44fdc8ce81d7b7ffd8728"
+  },
+  "src/index.ts": {
+    "mtime": 1793117147.4548125,
+    "seen": 1793121149.2212074,
+    "ast_hash": "668335800191977e6e32e00b89c34ebe",
+    "semantic_hash": "668335800191977e6e32e00b89c34ebe"
+  },
+  "tsconfig.json": {
+    "mtime": 1793117147.4603274,
+    "seen": 1793121149.2212088,
+    "ast_hash": "f50b83f537fc0768b0c3b6160070bf3f",
+    "semantic_hash": "f50b83f537fc0768b0c3b6160070bf3f"
+  },
+  "CONTRIBUTING.md": {
+    "mtime": 1793117147.4548125,
+    "seen": 1793121149.22121,
+    "ast_hash": "2e6b344e8f908b7259ce21852cc22dde",
+    "semantic_hash": "2e6b344e8f908b7259ce21852cc22dde"
+  },
+  "README.md": {
+    "mtime": 1793117147.4548125,
+    "seen": 1793121149.221212,
+    "ast_hash": "1b9af8e5a4016a1ae9981f124e7dc725",
+    "semantic_hash": "1b9af8e5a4016a1ae9981f124e7dc725"
+  }
+}
