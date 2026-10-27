@@ -16,4 +16,12 @@ Design: docs/GAME_DESIGN.md. Architecture: docs/ARCHITECTURE.md. Phases: docs/RO
 ## Before committing
 - `python3 tools/validate_project.py` must pass.
 - `gdparse` every changed .gd (pip install "gdtoolkit==4.*"); `gdlint src` uses ./gdlintrc.
-- If a Godot binary is available: `godot --headless --path . --import` then `--quit-after 2` on the test scene.
+- Godot: `export GODOT=$(tools/setup_godot.sh)` (downloads 4.4.1 + web templates only). Then
+  `$GODOT --headless --path . --import` and `$GODOT --headless --path . --quit-after 120 src/levels/test/visual_test.tscn` - no errors.
+
+## Every phase / feature: publish a phone-testable web build
+The user tests on their phone through GitHub Pages (https://mahmoud70004-debug.github.io/godot-mcp/, served from <repo>/docs).
+1. `tools/publish_web.sh` (exports the "Web" preset: Compatibility renderer, no threads, PWA).
+2. Serve ../docs locally and run `node tools/web_smoke_test.cjs http://localhost:PORT/index.html build/smoke`; look at the screenshots.
+3. Commit `../docs` together with the change and push.
+Web uses the Compatibility renderer: keep shaders/features working there too (e.g. generated audio needs PLAYBACK_TYPE_STREAM).

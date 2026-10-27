@@ -12,6 +12,8 @@ const SWING_ROT := Vector3(-1.35, -0.2, 1.3)
 const BLOCK_POS := Vector3(0.06, -0.24, -0.5)
 const BLOCK_ROT := Vector3(-0.15, 0.0, 1.45)
 const LOWERED_OFFSET := Vector3(0.0, -0.5, 0.1)
+## View-model scale; the models are built at world size.
+const MODEL_SCALE := 0.55
 
 @export var hitbox: HitboxComponent
 
@@ -50,6 +52,7 @@ func equip(weapon: WeaponData) -> void:
 		_model = null
 	if weapon:
 		_model = WeaponModelBuilder.build(weapon)
+		_model.scale = Vector3.ONE * MODEL_SCALE
 		add_child(_model)
 		_set_reach(weapon.reach)
 	_attacking = false

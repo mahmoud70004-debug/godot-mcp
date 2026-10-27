@@ -21,6 +21,8 @@ func _ready() -> void:
 	gen.buffer_length = 0.4
 	stream = gen
 	bus = &"Ambience"
+	# Web builds default to Web Audio "samples", which cannot play generated streams.
+	playback_type = AudioServer.PLAYBACK_TYPE_STREAM
 	play()
 	_playback = get_stream_playback() as AudioStreamGeneratorPlayback
 
