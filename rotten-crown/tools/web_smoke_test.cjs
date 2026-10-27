@@ -12,7 +12,10 @@ const UI_H = 360; // project viewport height
 
 (async () => {
   fs.mkdirSync(out, { recursive: true });
+  const remote = !/^https?:\/\/(localhost|127\.0\.0\.1)/.test(url);
+  const proxyUrl = process.env.HTTPS_PROXY || process.env.https_proxy;
   const browser = await chromium.launch({
+    ...(remote && proxyUrl ? { proxy: { server: proxyUrl } } : {}),
     args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--autoplay-policy=no-user-gesture-required'],
   });
   const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
