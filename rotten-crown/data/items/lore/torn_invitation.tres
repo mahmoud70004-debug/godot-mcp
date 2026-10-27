@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="LoreData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/lore_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "torn_invitation"
+display_name = "Torn Invitation"
+description = "A herald's invitation to the Victory Feast, trampled into the grass."
+category = 3
+tint = Color(0.8, 0.74, 0.58, 1)
+author = "The Royal Herald of Valdron"
+region_id = "moonlit_meadows"
+lore_text = "By decree of His Majesty the King of Valdron -
+
+Let every soul within the walls rejoice. Loris has fallen. Its towers are ash, its army sleeps in the river mud, and its sorcerers have burned.
+
+Come to the Outer Ward at moonrise. There shall be wine without end, music until dawn, and bread for every mouth.
+
+Bring nothing. Fear nothing.
+
+(The bottom of the page is soaked in something green that refuses to dry.)"

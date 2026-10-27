@@ -1,0 +1,5 @@
+# gdtoolkit (gdlint) settings for Rotten Crown.
+# Install: pip install "gdtoolkit==4.*"   Run: gdlint src
+max-line-length: 200
+disable:
+  - class-definitions-order

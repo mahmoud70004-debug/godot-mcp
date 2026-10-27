@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RegionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/world/region_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "moonlit_meadows"
+display_name = "The Moonlit Meadows"
+arabic_name = "سهول ضوء القمر"
+subtitle = "Where the knight fell asleep"
+description = "The grass plains outside the walls, once lit silver by the moon. The knight wakes here, alone, to a silence that should not exist."
+fog_color = Color(0.1, 0.12, 0.11, 1)
+fog_density = 0.04
+ambient_color = Color(0.16, 0.17, 0.2, 1)
+planned_phase = 1

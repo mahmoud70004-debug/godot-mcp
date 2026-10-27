@@ -1,0 +1,31 @@
+extends Node
+## Global signal bus. Systems that should not know about each other
+## (player, HUD, enemies, world) communicate through these signals.
+
+# Player
+signal player_health_changed(current: float, maximum: float)
+signal player_stamina_changed(current: float, maximum: float)
+signal player_damaged(amount: float)
+signal player_died
+
+# Input routed from the touch layer (degrees of yaw/pitch).
+signal look_input(delta_degrees: Vector2)
+
+# Interaction & items
+signal interaction_prompt_changed(text: String)
+signal item_picked_up(item: ItemData, quantity: int)
+signal consumable_used(item: ConsumableData)
+signal lore_discovered(lore: LoreData)
+signal lore_read_requested(lore: LoreData)
+
+# World
+signal enemy_killed(enemy_data: EnemyData)
+signal region_entered(region: RegionData)
+
+# UI
+signal message_requested(text: String, duration: float)
+signal menu_state_changed(is_open: bool)
+
+
+func show_message(text: String, duration: float = 2.5) -> void:
+	message_requested.emit(text, duration)

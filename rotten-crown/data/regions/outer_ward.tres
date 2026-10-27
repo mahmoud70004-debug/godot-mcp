@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RegionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/world/region_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "outer_ward"
+display_name = "The Outer Ward"
+arabic_name = "الساحة الخارجية"
+subtitle = "The feast that never ended"
+description = "The festival grounds behind the main gate. Tables still laid, banners still hanging, and every guest gone - or changed."
+fog_color = Color(0.09, 0.11, 0.08, 1)
+fog_density = 0.05
+ambient_color = Color(0.16, 0.17, 0.2, 1)
+planned_phase = 1

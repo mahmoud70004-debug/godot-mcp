@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RegionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/world/region_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "cathedral"
+display_name = "Cathedral of the Weeping Saint"
+arabic_name = "كاتدرائية القديسة الباكية"
+subtitle = "The choir sings with one mouth"
+description = "Where the victory hymn was sung. The congregation has grown together into something that still prays."
+fog_color = Color(0.09, 0.09, 0.11, 1)
+fog_density = 0.045
+ambient_color = Color(0.16, 0.17, 0.2, 1)
+planned_phase = 5

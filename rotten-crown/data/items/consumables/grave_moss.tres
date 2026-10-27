@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ConsumableData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/consumable_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "grave_moss"
+display_name = "Grave Moss"
+description = "Pale moss scraped from a tombstone. It tastes of cold earth, and it closes wounds anyway."
+category = 1
+stackable = true
+max_stack = 9
+tint = Color(0.42, 0.6, 0.32, 1)
+heal_amount = 35.0
+stamina_restore = 0.0
+use_message = "The moss knits the wound shut. It itches, deep down."

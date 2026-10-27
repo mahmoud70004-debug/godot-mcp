@@ -1,0 +1,140 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/ui/main_menu.gd" id="1_menu"]
+[ext_resource type="PackedScene" path="res://src/rendering/post_process.tscn" id="2_post"]
+
+[sub_resource type="Gradient" id="Gradient_ash"]
+colors = PackedColorArray(0.45, 0.45, 0.42, 0.0, 0.5, 0.5, 0.46, 0.7, 0.3, 0.32, 0.28, 0.0)
+offsets = PackedFloat32Array(0, 0.3, 1)
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.025, 0.028, 0.026, 1)
+
+[node name="Moon" type="ColorRect" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0
+anchor_right = 0.5
+anchor_bottom = 0
+offset_left = 120.0
+offset_top = 26.0
+offset_right = 148.0
+offset_bottom = 54.0
+color = Color(0.78, 0.8, 0.64, 0.85)
+
+[node name="Ash" type="CPUParticles2D" parent="."]
+position = Vector2(320, -10)
+amount = 60
+lifetime = 9.0
+preprocess = 9.0
+emission_shape = 3
+emission_rect_extents = Vector2(360, 4)
+direction = Vector2(0.2, 1)
+spread = 25.0
+gravity = Vector2(0, 6)
+initial_velocity_min = 6.0
+initial_velocity_max = 16.0
+scale_amount_min = 1.0
+scale_amount_max = 2.0
+color_ramp = SubResource("Gradient_ash")
+
+[node name="Title" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0
+anchor_right = 0.5
+anchor_bottom = 0
+offset_left = -260.0
+offset_top = 70.0
+offset_right = 260.0
+offset_bottom = 110.0
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.6, 0.08, 0.06, 1)
+theme_override_colors/font_shadow_color = Color(0.15, 0.25, 0.05, 1)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 36
+text = "ROTTEN CROWN"
+
+[node name="Subtitle" type="Label" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 0
+anchor_right = 0.5
+anchor_bottom = 0
+offset_left = -260.0
+offset_top = 112.0
+offset_right = 260.0
+offset_bottom = 126.0
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(0.5, 0.56, 0.42, 1)
+text = "The feast of Valdron never ended."
+
+[node name="Buttons" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 1
+anchor_right = 0.5
+anchor_bottom = 1
+offset_left = -80.0
+offset_top = -150.0
+offset_right = 80.0
+offset_bottom = -40.0
+theme_override_constants/separation = 6
+
+[node name="NewGameButton" type="Button" parent="Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+text = "Wake Up"
+
+[node name="ContinueButton" type="Button" parent="Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+text = "Remember (Continue)"
+
+[node name="QuitButton" type="Button" parent="Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+text = "Sleep Forever (Quit)"
+
+[node name="TouchToggle" type="CheckButton" parent="Buttons"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 8
+text = "Preview touch controls"
+
+[node name="Version" type="Label" parent="."]
+layout_mode = 1
+anchor_left = 1
+anchor_top = 1
+anchor_right = 1
+anchor_bottom = 1
+offset_left = -120.0
+offset_top = -16.0
+offset_right = -6.0
+offset_bottom = -4.0
+horizontal_alignment = 2
+theme_override_font_sizes/font_size = 8
+theme_override_colors/font_color = Color(0.3, 0.3, 0.27, 1)
+text = "phase 1 - skeleton"
+
+[node name="PostProcess" parent="." instance=ExtResource("2_post")]

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RegionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/world/region_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "lower_town"
+display_name = "Lower Town"
+arabic_name = "البلدة السفلى"
+subtitle = "Houses with their doors left open"
+description = "The crooked streets of the commoners. Every hearth is cold. Something is still sitting at every table."
+fog_color = Color(0.08, 0.09, 0.08, 1)
+fog_density = 0.06
+ambient_color = Color(0.16, 0.17, 0.2, 1)
+planned_phase = 3

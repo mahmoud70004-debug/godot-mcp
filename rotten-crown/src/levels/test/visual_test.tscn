@@ -1,0 +1,155 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/world/level.gd" id="1_level"]
+[ext_resource type="Script" path="res://src/world/outer_ward_blockout.gd" id="2_blockout"]
+[ext_resource type="PackedScene" path="res://src/player/player.tscn" id="3_player"]
+[ext_resource type="PackedScene" path="res://src/rendering/post_process.tscn" id="4_post"]
+[ext_resource type="PackedScene" path="res://src/enemies/hollow.tscn" id="5_hollow"]
+[ext_resource type="PackedScene" path="res://src/interaction/item_pickup.tscn" id="6_pickup"]
+[ext_resource type="Script" path="res://src/world/ambient_drone.gd" id="7_drone"]
+[ext_resource type="Script" path="res://src/world/region_trigger.gd" id="8_trigger"]
+[ext_resource type="Script" path="res://src/world/sky_billboard.gd" id="9_sky"]
+[ext_resource type="Shader" path="res://assets/shaders/moon.gdshader" id="10_moon_shader"]
+[ext_resource type="Resource" path="res://data/regions/moonlit_meadows.tres" id="11_r_meadows"]
+[ext_resource type="Resource" path="res://data/regions/outer_ward.tres" id="12_r_ward"]
+[ext_resource type="Resource" path="res://data/enemies/mourner.tres" id="13_mourner"]
+[ext_resource type="Resource" path="res://data/items/lore/torn_invitation.tres" id="14_i_invite"]
+[ext_resource type="Resource" path="res://data/items/lore/cooks_note.tres" id="15_i_cook"]
+[ext_resource type="Resource" path="res://data/items/lore/well_scratching.tres" id="16_i_well"]
+[ext_resource type="Resource" path="res://data/items/consumables/grave_moss.tres" id="17_i_moss"]
+[ext_resource type="Resource" path="res://data/items/consumables/feast_wine.tres" id="18_i_wine"]
+[ext_resource type="Resource" path="res://data/items/weapons/woodsman_axe.tres" id="19_i_axe"]
+[ext_resource type="Resource" path="res://data/items/relics/saint_orsa_eye.tres" id="20_i_eye"]
+
+[sub_resource type="Environment" id="Environment_night"]
+background_mode = 1
+background_color = Color(0.03, 0.04, 0.035, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.16, 0.17, 0.2, 1)
+ambient_light_energy = 0.45
+tonemap_mode = 2
+tonemap_exposure = 1.05
+glow_enabled = true
+glow_intensity = 0.7
+glow_bloom = 0.08
+glow_hdr_threshold = 0.9
+fog_enabled = true
+fog_light_color = Color(0.05, 0.062, 0.052, 1)
+fog_light_energy = 1.0
+fog_density = 0.05
+fog_sky_affect = 1.0
+adjustment_enabled = true
+adjustment_contrast = 1.08
+adjustment_saturation = 0.85
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_moon"]
+shader = ExtResource("10_moon_shader")
+
+[sub_resource type="QuadMesh" id="QuadMesh_moon"]
+material = SubResource("ShaderMaterial_moon")
+size = Vector2(5, 5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gate"]
+size = Vector3(7, 4, 3)
+
+[node name="VisualTest" type="Node3D" node_paths=PackedStringArray("player", "environment")]
+script = ExtResource("1_level")
+region = ExtResource("11_r_meadows")
+player = NodePath("Player")
+environment = NodePath("WorldEnvironment")
+announce_on_start = true
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_night")
+
+[node name="Moonlight" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.524, -2.634, 0)
+light_color = Color(0.56, 0.62, 0.78, 1)
+light_energy = 0.42
+shadow_enabled = true
+shadow_opacity = 0.85
+directional_shadow_mode = 0
+directional_shadow_max_distance = 40.0
+
+[node name="Moon" type="MeshInstance3D" parent="."]
+position = Vector3(-23, 27, -12)
+cast_shadow = 0
+mesh = SubResource("QuadMesh_moon")
+script = ExtResource("9_sky")
+
+[node name="Blockout" type="Node3D" parent="."]
+script = ExtResource("2_blockout")
+
+[node name="RegionTriggers" type="Node3D" parent="."]
+
+[node name="OuterWard" type="Area3D" parent="RegionTriggers"]
+position = Vector3(0, 2, 7)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("8_trigger")
+region = ExtResource("12_r_ward")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RegionTriggers/OuterWard"]
+shape = SubResource("BoxShape3D_gate")
+
+[node name="Pickups" type="Node3D" parent="."]
+
+[node name="TornInvitation" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(2.4, 0.25, 29.6)
+item = ExtResource("14_i_invite")
+
+[node name="CooksNote" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(3.2, 1.05, -3.0)
+item = ExtResource("15_i_cook")
+
+[node name="WellScratching" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(-6.75, 0.6, -18.0)
+item = ExtResource("16_i_well")
+
+[node name="FeastWine" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(-3.2, 1.1, -2.4)
+item = ExtResource("18_i_wine")
+
+[node name="GraveMossHouse" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(-18.5, 0.35, 1.0)
+item = ExtResource("17_i_moss")
+quantity = 2
+
+[node name="GraveMossHighTable" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(1.5, 1.05, -11.5)
+item = ExtResource("17_i_moss")
+
+[node name="WoodsmanAxe" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(15.5, 1.1, -11.7)
+item = ExtResource("19_i_axe")
+
+[node name="SaintOrsaEye" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(-8.0, 1.1, -16.95)
+item = ExtResource("20_i_eye")
+
+[node name="Enemies" type="Node3D" parent="."]
+
+[node name="FeastHollow" parent="Enemies" instance=ExtResource("5_hollow")]
+position = Vector3(0, 0, -7.5)
+start_dormant = true
+
+[node name="HouseHollow" parent="Enemies" instance=ExtResource("5_hollow")]
+position = Vector3(-19.6, 0, -12.4)
+rotation = Vector3(0, -1.4, 0)
+start_dormant = true
+
+[node name="DoorwayHollow" parent="Enemies" instance=ExtResource("5_hollow")]
+position = Vector3(14.2, 0, 0.6)
+rotation = Vector3(0, 1.2, 0)
+
+[node name="WellMourner" parent="Enemies" instance=ExtResource("5_hollow")]
+position = Vector3(-8, 0, -20.6)
+data = ExtResource("13_mourner")
+
+[node name="Player" parent="." instance=ExtResource("3_player")]
+position = Vector3(1.2, 0.05, 29.0)
+
+[node name="PostProcess" parent="." instance=ExtResource("4_post")]
+
+[node name="AmbientDrone" type="AudioStreamPlayer" parent="."]
+script = ExtResource("7_drone")

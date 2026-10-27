@@ -1,0 +1,26 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/retro_post.gdshader" id="1_post"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_post"]
+shader = ExtResource("1_post")
+shader_parameter/color_levels = 14.0
+shader_parameter/dither_strength = 0.7
+shader_parameter/desaturation = 0.35
+shader_parameter/tint = Color(0.84, 0.92, 0.8, 1)
+shader_parameter/vignette_strength = 0.6
+shader_parameter/grain_strength = 0.045
+shader_parameter/contrast = 1.12
+shader_parameter/corruption = 0.0
+
+[node name="PostProcess" type="CanvasLayer"]
+layer = 1
+
+[node name="Screen" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_post")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

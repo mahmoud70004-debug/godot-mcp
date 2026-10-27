@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/weapon_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "ceremonial_sword"
+display_name = "Ceremonial Blade"
+description = "Polished for the victory feast and never meant to taste blood. The gilt is already flaking from the hilt."
+category = 0
+tint = Color(0.74, 0.68, 0.48, 1)
+weapon_type = 0
+damage = 14.0
+attack_duration = 0.5
+stamina_cost = 14.0
+reach = 1.5
+knockback = 2.0
+block_reduction = 0.55
+max_upgrade_level = 3
+damage_per_upgrade = 4.0

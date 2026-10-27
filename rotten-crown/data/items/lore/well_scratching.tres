@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="LoreData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/lore_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "well_scratching"
+display_name = "Scratches on the Well"
+description = "Letters of Loris, gouged into the well stone by fingernails."
+category = 3
+tint = Color(0.5, 0.52, 0.46, 1)
+author = "A prisoner of Loris"
+region_id = "outer_ward"
+lore_text = "THE GRAND MAGUS DID NOT BURN.
+
+We saw Aleister walk out of the pyre wearing the smoke like a cloak. He looked at us in our chains and he was not angry. He was patient.
+
+He said: let them sing. When they sing loudest, they will be singing for me.
+
+They are singing now. Up there. All of them."

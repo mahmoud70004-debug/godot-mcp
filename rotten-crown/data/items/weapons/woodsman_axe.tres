@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="WeaponData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/weapon_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "woodsman_axe"
+display_name = "Woodsman's Axe"
+description = "Heavy, slow and honest. Someone left it buried in the smithy table, as if they had been interrupted mid-blow."
+category = 0
+tint = Color(0.44, 0.42, 0.4, 1)
+weapon_type = 1
+damage = 27.0
+attack_duration = 0.85
+stamina_cost = 26.0
+reach = 1.4
+knockback = 4.5
+block_reduction = 0.4
+max_upgrade_level = 3
+damage_per_upgrade = 6.0

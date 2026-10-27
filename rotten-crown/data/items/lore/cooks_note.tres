@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="LoreData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/lore_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "cooks_note"
+display_name = "Cook's Hurried Note"
+description = "Scrawled in charcoal on the back of a bill of fare."
+category = 3
+tint = Color(0.7, 0.62, 0.5, 1)
+author = "Bertram, under-cook"
+region_id = "outer_ward"
+lore_text = "Third barrel of the Lorisian wine is open. The Herald says it came from the sorcerer's own cellar - a trophy. Odd. The wax on the seals was still soft.
+
+The guests who drank first have gone quiet. They are smiling at nothing. Lady Merrin has not blinked since the toast. Her husband keeps touching his face as if it does not fit him any more.
+
+The music has stopped but they are still dancing.
+
+I am going for the physician. If anyone finds this, do not drink the -"

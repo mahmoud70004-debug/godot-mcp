@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RegionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/world/region_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "royal_keep"
+display_name = "The Royal Keep"
+arabic_name = "القلعة الملكية"
+subtitle = "The crown is rotten"
+description = "The King's palace at the heart of Valdron. The King is still on his throne. Aleister is waiting beside him."
+fog_color = Color(0.07, 0.06, 0.08, 1)
+fog_density = 0.05
+ambient_color = Color(0.16, 0.17, 0.2, 1)
+planned_phase = 6

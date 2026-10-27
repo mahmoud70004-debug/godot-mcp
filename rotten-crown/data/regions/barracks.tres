@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RegionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/world/region_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "barracks"
+display_name = "The Barracks"
+arabic_name = "الثكنات"
+subtitle = "Soldiers who never took their armour off"
+description = "Home of Valdron's victorious army. The curse took them in formation; they still drill in the yard."
+fog_color = Color(0.08, 0.08, 0.09, 1)
+fog_density = 0.055
+ambient_color = Color(0.16, 0.17, 0.2, 1)
+planned_phase = 4

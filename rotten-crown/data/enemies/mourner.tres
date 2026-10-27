@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/enemies/enemy_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "mourner"
+display_name = "The Mourner"
+bestiary_entry = "It stands where the well-keeper used to stand. It does not move while it is being watched - as if your gaze still means something to it.
+
+Look away, and it is closer."
+max_health = 45.0
+stagger_threshold = 12.0
+stagger_duration = 0.8
+knockback_resistance = 0.1
+chase_speed = 3.6
+acceleration = 14.0
+turn_speed = 9.0
+detection_range = 16.0
+lose_interest_range = 30.0
+dormant_wake_range = 9.0
+freezes_when_watched = true
+damage = 16.0
+knockback = 3.5
+attack_range = 1.6
+attack_windup = 0.55
+attack_active_time = 0.2
+attack_recovery = 1.2
+attack_cooldown = 1.4
+lunge_speed = 3.2
+twitch_intensity = 1.7
+head_tilt_degrees = 78.0
+body_scale = Vector3(0.9, 1.14, 0.9)
+drop_chance = 0.0

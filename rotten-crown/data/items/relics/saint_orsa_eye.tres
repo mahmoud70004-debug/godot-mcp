@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/relic_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "saint_orsa_eye"
+display_name = "Glass Eye of Saint Orsa"
+description = "A reliquary eye from the Cathedral. It is warm to the touch, and it is always turned towards the Keep.
+
+Carried: the Saint watches over your flesh."
+category = 2
+tint = Color(0.55, 0.75, 0.9, 1)
+max_health_bonus = 20.0
+max_stamina_bonus = 0.0
+damage_multiplier = 1.0

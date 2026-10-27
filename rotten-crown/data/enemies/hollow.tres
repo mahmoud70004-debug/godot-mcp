@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/enemies/enemy_data.gd" id="1_script"]
+[ext_resource type="Resource" path="res://data/items/consumables/grave_moss.tres" id="2_res"]
+
+[resource]
+script = ExtResource("1_script")
+id = "hollow"
+display_name = "The Hollow"
+bestiary_entry = "A reveller of the Victory Feast. Its festival clothes still fit. Nothing else about it does.
+
+It raises its arms slowly before it strikes, trembling, as though remembering how to."
+max_health = 60.0
+stagger_threshold = 14.0
+stagger_duration = 0.6
+knockback_resistance = 0.25
+chase_speed = 2.0
+acceleration = 6.0
+turn_speed = 3.5
+detection_range = 12.0
+lose_interest_range = 22.0
+dormant_wake_range = 5.0
+freezes_when_watched = false
+damage = 12.0
+knockback = 3.0
+attack_range = 1.7
+attack_windup = 0.8
+attack_active_time = 0.25
+attack_recovery = 0.9
+attack_cooldown = 1.1
+lunge_speed = 2.6
+twitch_intensity = 1.0
+head_tilt_degrees = 24.0
+body_scale = Vector3(1, 1, 1)
+drop_item = ExtResource("2_res")
+drop_chance = 0.4
