@@ -3,6 +3,8 @@
 #   GODOT=... tools/bake_sprites.sh [knight,villager,hollow,mourner]   (default: all)
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# Raw renders must never be imported (or exported) as project textures.
+mkdir -p build && touch build/.gdignore
 CHARS="${1:-}"
 RC_BAKE_CHARS="$CHARS" xvfb-run -a -s "-screen 0 1280x720x24" "$GODOT" --path . --rendering-driver opengl3 --audio-driver Dummy \
 	tools/sprite_baker/sprite_baker.tscn 2>&1 | grep -E "baked|SPRITE_BAKE_DONE|ERROR" || true

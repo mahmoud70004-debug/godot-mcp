@@ -28,3 +28,4 @@
 | review | router-reviewer | done | - | 3 blocking + 10 minor -> T24 (N) + T25 (H) |
 | T24 | N (router-normal) | done | pixel_sprite_3d.gd, sprite_creature_visual.gd | findings 8,9,10,13; H read diff |
 | T25 | H | done | grass_scatter, quality_manager, weather_controller, level, region_trigger, events, hud, bake_world, wood builder, baker | findings 1-6, 11a; verified headless (grass group 527, Low halves grass + no streaks, region re-entry restores fog/rain). Not done: 7 (32 m chunks: more draw calls, targets met), 11 C3 naming, horizon still runtime (cheap) |
+| T23 | H | done | docs/ (web build), export_presets.cfg, bake_sprites.sh (build/.gdignore) | pck 30 MB -> 11.5 MB (raw sprite renders were imported+exported); smoke PASS, touch PASS; Medium: spawn 8, Hollowmere 6.25, prologue 5.25 fps, load 5.2 s (phase 2: ~5 / - / 4.75 / 6.2); AC6 prologue fps + load time not met in absolute terms |
