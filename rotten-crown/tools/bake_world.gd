@@ -17,7 +17,11 @@ func _ready() -> void:
 	if what == "" or what == "prologue":
 		var root := _new_root("PrologueWorld")
 		var ward := OuterWardBlockout.new()
-		_copy_scene_props("res://src/cutscenes/prologue.tscn", "Blockout", ward)
+		# The night of the feast (palette of the first concept painting).
+		ward.festive = true
+		ward.horizon_colors = [Color(0.01, 0.02, 0.06), Color(0.04, 0.07, 0.17), Color(0.03, 0.05, 0.14),
+			Color(0.08, 0.13, 0.3), Color(0.06, 0.1, 0.25), Color(0.15, 0.24, 0.5)]
+		ward.grass_tip = Color(0.12, 0.3, 0.22)
 		ward.name = "Blockout"
 		root.add_child(ward)
 		await _finish(root, OUT_DIR + "prologue_world.scn")
@@ -30,19 +34,6 @@ func _new_root(root_name: String) -> Node3D:
 	root.name = root_name
 	add_child(root)
 	return root
-
-
-## Copies the exported property overrides of `node_name` in a .tscn (without
-## instancing it, so the cutscene director never runs).
-func _copy_scene_props(scene_path: String, node_name: String, target: Node) -> void:
-	var state := (load(scene_path) as PackedScene).get_state()
-	for i in state.get_node_count():
-		if state.get_node_name(i) != node_name:
-			continue
-		for j in state.get_node_property_count(i):
-			var prop := state.get_node_property_name(i, j)
-			if prop != &"script":
-				target.set(prop, state.get_node_property_value(i, j))
 
 
 func _finish(root: Node3D, path: String) -> void:

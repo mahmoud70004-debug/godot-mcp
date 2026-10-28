@@ -1,0 +1,190 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://src/world/level.gd" id="1_level"]
+[ext_resource type="PackedScene" path="res://src/levels/valdron/baked/overworld_world.scn" id="2_world"]
+[ext_resource type="Script" path="res://src/world/horizon_backdrop.gd" id="23_horizon"]
+[ext_resource type="Script" path="res://src/levels/valdron/overworld_populator.gd" id="24_populator"]
+[ext_resource type="AudioStream" path="res://assets/audio/ambience/night_wind.wav" id="25_wind"]
+[ext_resource type="PackedScene" path="res://src/player/player.tscn" id="3_player"]
+[ext_resource type="PackedScene" path="res://src/rendering/post_process.tscn" id="4_post"]
+[ext_resource type="PackedScene" path="res://src/enemies/hollow.tscn" id="5_hollow"]
+[ext_resource type="PackedScene" path="res://src/interaction/item_pickup.tscn" id="6_pickup"]
+[ext_resource type="Script" path="res://src/world/region_trigger.gd" id="8_trigger"]
+[ext_resource type="Shader" path="res://assets/shaders/night_sky.gdshader" id="10_moon_shader"]
+[ext_resource type="Resource" path="res://data/regions/moonlit_meadows.tres" id="11_r_meadows"]
+[ext_resource type="Resource" path="res://data/regions/outer_ward.tres" id="12_r_ward"]
+[ext_resource type="Resource" path="res://data/enemies/mourner.tres" id="13_mourner"]
+[ext_resource type="Resource" path="res://data/items/lore/torn_invitation.tres" id="14_i_invite"]
+[ext_resource type="Resource" path="res://data/items/lore/cooks_note.tres" id="15_i_cook"]
+[ext_resource type="Resource" path="res://data/items/lore/well_scratching.tres" id="16_i_well"]
+[ext_resource type="Resource" path="res://data/items/consumables/grave_moss.tres" id="17_i_moss"]
+[ext_resource type="Resource" path="res://data/items/consumables/feast_wine.tres" id="18_i_wine"]
+[ext_resource type="Resource" path="res://data/items/weapons/woodsman_axe.tres" id="19_i_axe"]
+[ext_resource type="Resource" path="res://data/items/relics/saint_orsa_eye.tres" id="20_i_eye"]
+[ext_resource type="Script" path="res://src/world/weather_controller.gd" id="22_weather"]
+[ext_resource type="NoiseTexture2D" path="res://assets/textures/cloud_noise.tres" id="21_cloud_noise"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
+shader = ExtResource("10_moon_shader")
+shader_parameter/zenith_color = Color(0.012, 0.016, 0.016, 1)
+shader_parameter/horizon_color = Color(0.3, 0.31, 0.23, 1)
+shader_parameter/ground_color = Color(0.03, 0.035, 0.025, 1)
+shader_parameter/horizon_sharpness = 3.2
+shader_parameter/moon_color = Color(0.95, 0.93, 0.76, 1)
+shader_parameter/moon_size = 0.04
+shader_parameter/halo_color = Color(0.42, 0.44, 0.34, 1)
+shader_parameter/halo_size = 0.55
+shader_parameter/halo_strength = 0.85
+shader_parameter/star_density = 0.006
+shader_parameter/star_brightness = 0.9
+shader_parameter/star_tint = Color(0.8, 0.85, 0.78, 1)
+shader_parameter/cloud_color = Color(0.018, 0.022, 0.022, 1)
+shader_parameter/cloud_lit_color = Color(0.66, 0.66, 0.52, 1)
+shader_parameter/cloud_coverage = 0.7
+shader_parameter/cloud_speed = 0.005
+shader_parameter/cloud_scale = 1.1
+shader_parameter/cloud_noise = ExtResource("21_cloud_noise")
+shader_parameter/flare_strength = 0.0
+
+[sub_resource type="Sky" id="Sky_gloom"]
+sky_material = SubResource("ShaderMaterial_sky")
+radiance_size = 0
+
+[sub_resource type="Environment" id="Environment_night"]
+background_mode = 2
+sky = SubResource("Sky_gloom")
+ambient_light_source = 2
+ambient_light_color = Color(0.22, 0.25, 0.2, 1)
+ambient_light_energy = 0.85
+reflected_light_source = 1
+tonemap_mode = 2
+tonemap_exposure = 1.2
+glow_enabled = true
+glow_intensity = 0.6
+glow_bloom = 0.06
+glow_hdr_threshold = 0.95
+fog_enabled = true
+fog_light_color = Color(0.14, 0.16, 0.12, 1)
+fog_light_energy = 1.0
+fog_density = 0.022
+fog_sky_affect = 0.15
+adjustment_enabled = true
+adjustment_contrast = 1.05
+adjustment_saturation = 0.8
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gate"]
+size = Vector3(7, 4, 3)
+
+[node name="ValdronOverworld" type="Node3D" node_paths=PackedStringArray("player", "environment", "weather")]
+script = ExtResource("1_level")
+region = ExtResource("11_r_meadows")
+player = NodePath("Player")
+environment = NodePath("WorldEnvironment")
+weather = NodePath("WeatherController")
+announce_on_start = true
+kill_height = -40.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_night")
+
+[node name="Moonlight" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.524, -2.634, 0)
+light_color = Color(0.72, 0.76, 0.62, 1)
+light_energy = 1.0
+shadow_enabled = true
+shadow_opacity = 0.85
+directional_shadow_mode = 0
+directional_shadow_max_distance = 40.0
+
+[node name="World" parent="." instance=ExtResource("2_world")]
+
+[node name="Horizon" type="Node3D" parent="."]
+script = ExtResource("23_horizon")
+base_height = -6.0
+
+[node name="Populator" type="Node" parent="." node_paths=PackedStringArray("world")]
+script = ExtResource("24_populator")
+world = NodePath("../World")
+
+[node name="RegionTriggers" type="Node3D" parent="."]
+
+[node name="OuterWard" type="Area3D" parent="RegionTriggers"]
+position = Vector3(0, 2, 7)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("8_trigger")
+region = ExtResource("12_r_ward")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RegionTriggers/OuterWard"]
+shape = SubResource("BoxShape3D_gate")
+
+[node name="Pickups" type="Node3D" parent="."]
+
+[node name="TornInvitation" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(2.4, 0.25, 29.6)
+item = ExtResource("14_i_invite")
+
+[node name="CooksNote" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(3.2, 1.05, -3.0)
+item = ExtResource("15_i_cook")
+
+[node name="WellScratching" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(-6.75, 0.6, -18.0)
+item = ExtResource("16_i_well")
+
+[node name="FeastWine" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(-3.2, 1.1, -2.4)
+item = ExtResource("18_i_wine")
+
+[node name="GraveMossHouse" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(-18.5, 0.35, 1.0)
+item = ExtResource("17_i_moss")
+quantity = 2
+
+[node name="GraveMossHighTable" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(1.5, 1.05, -11.5)
+item = ExtResource("17_i_moss")
+
+[node name="WoodsmanAxe" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(15.5, 1.1, -11.7)
+item = ExtResource("19_i_axe")
+
+[node name="SaintOrsaEye" parent="Pickups" instance=ExtResource("6_pickup")]
+position = Vector3(-8.0, 1.1, -16.95)
+item = ExtResource("20_i_eye")
+
+[node name="Enemies" type="Node3D" parent="."]
+
+[node name="FeastHollow" parent="Enemies" instance=ExtResource("5_hollow")]
+position = Vector3(0, 0, -7.5)
+start_dormant = true
+
+[node name="HouseHollow" parent="Enemies" instance=ExtResource("5_hollow")]
+position = Vector3(-19.6, 0, -12.4)
+rotation = Vector3(0, -1.4, 0)
+start_dormant = true
+
+[node name="DoorwayHollow" parent="Enemies" instance=ExtResource("5_hollow")]
+position = Vector3(14.2, 0, 0.6)
+rotation = Vector3(0, 1.2, 0)
+
+[node name="WellMourner" parent="Enemies" instance=ExtResource("5_hollow")]
+position = Vector3(-8, 0, -20.6)
+data = ExtResource("13_mourner")
+
+[node name="Player" parent="." instance=ExtResource("3_player")]
+position = Vector3(1.2, 0.05, 29.0)
+
+[node name="PostProcess" parent="." instance=ExtResource("4_post")]
+
+[node name="WeatherController" type="Node" parent="." node_paths=PackedStringArray("environment", "post")]
+script = ExtResource("22_weather")
+rain = 0.25
+environment = NodePath("../WorldEnvironment")
+post = NodePath("../PostProcess")
+
+[node name="Wind" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("25_wind")
+volume_db = -4.0
+autoplay = true
+bus = &"Ambience"

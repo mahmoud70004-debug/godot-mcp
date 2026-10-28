@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RegionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/world/region_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "thornfield"
+display_name = "Thornfield"
+arabic_name = "ثورنفيلد"
+subtitle = "The farm at the end of the field"
+description = "A lone farmstead in a sea of pale dead grass. The storm never leaves it."
+fog_color = Color(0.15, 0.16, 0.13, 1)
+fog_density = 0.028
+ambient_color = Color(0.2, 0.21, 0.19, 1)
+rain = 0.75
+planned_phase = 3

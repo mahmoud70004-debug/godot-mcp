@@ -5,7 +5,7 @@ extends Node3D
 ## beat inverts everything (music warps and dies, cold wind) and hands over to
 ## gameplay, where the same knight wakes up in the cursed kingdom.
 
-const NEXT_SCENE := "res://src/levels/test/visual_test.tscn"
+const NEXT_SCENE := "res://src/levels/valdron/valdron_overworld.tscn"
 const FIREWORK_SFX := preload("res://assets/audio/sfx/firework.wav")
 const BONFIRE := Vector3(0.0, 0.0, -18.5)
 

@@ -12,4 +12,5 @@ description = "The festival grounds behind the main gate. Tables still laid, ban
 fog_color = Color(0.09, 0.11, 0.08, 1)
 fog_density = 0.05
 ambient_color = Color(0.16, 0.17, 0.2, 1)
+rain = 0.1
 planned_phase = 1

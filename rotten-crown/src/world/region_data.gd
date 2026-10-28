@@ -12,5 +12,7 @@ extends Resource
 @export var fog_density := 0.05
 @export var ambient_color := Color(0.16, 0.17, 0.2)
 @export var music: AudioStream
+## Rain intensity while the player is in this region (WeatherController).
+@export_range(0.0, 1.0) var rain := 0.0
 ## Development phase in which this region is built (see docs/ROADMAP.md).
 @export var planned_phase := 1

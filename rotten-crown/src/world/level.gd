@@ -5,6 +5,10 @@ extends Node3D
 @export var region: RegionData
 @export var player: Player
 @export var environment: WorldEnvironment
+## Optional: regions change the rain when entered.
+@export var weather: WeatherController
+## Seconds to blend fog/rain when walking into another region.
+@export var region_blend_time := 4.0
 @export var kill_height := -25.0
 ## Announce the region as soon as the level starts (otherwise use RegionTrigger).
 @export var announce_on_start := false
@@ -21,6 +25,7 @@ func _ready() -> void:
 		player.global_position = GameState.pending_player_position
 		GameState.pending_player_position = null
 	_apply_dev_shot()
+	Events.region_entered.connect(_on_region_entered)
 	_apply_dev_perf_flags()
 	if player and GameState.get_flag("waking_up"):
 		GameState.flags.erase("waking_up")
@@ -69,6 +74,19 @@ func _apply_dev_shot() -> void:
 		player.head.rotation_degrees.x = v[4]
 
 
+func _on_region_entered(new_region: RegionData) -> void:
+	if environment == null or environment.environment == null or new_region == region:
+		return
+	region = new_region
+	var env := environment.environment
+	var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(env, "fog_light_color", new_region.fog_color, region_blend_time)
+	tw.tween_property(env, "fog_density", new_region.fog_density, region_blend_time)
+	tw.tween_property(env, "ambient_light_color", new_region.ambient_color, region_blend_time)
+	if weather:
+		weather.set_rain(new_region.rain, region_blend_time)
+
+
 func _announce_region() -> void:
 	Events.region_entered.emit(region)
 
@@ -85,3 +103,5 @@ func _apply_region_atmosphere() -> void:
 	env.fog_light_color = region.fog_color
 	env.fog_density = region.fog_density
 	env.ambient_light_color = region.ambient_color
+	if weather:
+		weather.rain = region.rain

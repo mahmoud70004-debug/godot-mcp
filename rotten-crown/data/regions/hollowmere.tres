@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RegionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/world/region_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "hollowmere"
+display_name = "Hollowmere"
+arabic_name = "هولومير"
+subtitle = "The harvest was plentiful"
+description = "A pumpkin village on the southern road. The fields grew fat on what the curse left behind."
+fog_color = Color(0.13, 0.15, 0.11, 1)
+fog_density = 0.03
+ambient_color = Color(0.2, 0.22, 0.18, 1)
+rain = 0.2
+planned_phase = 3

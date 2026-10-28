@@ -114,6 +114,12 @@ def load_scene(res: str) -> dict:
     if res in scene_cache:
         return scene_cache[res]
     path = res_to_path(res)
+    if path.suffix in (".scn", ".res"):
+        # Binary (baked) scenes are opaque: no node checks, any override allowed.
+        info = {"blocks": [], "ext": {}, "sub": set(), "nodes": {".": {"raw": ""}}, "unique": set(),
+                "root_script": None, "root_instance": None, "text": "", "binary": True}
+        scene_cache[res] = info
+        return info
     text = path.read_text(encoding="utf-8")
     blocks = parse_blocks(text)
     ext = {b["attrs"].get("id"): b["attrs"] for b in blocks if b["kind"] == "ext_resource"}
@@ -206,6 +212,8 @@ for f in sorted(ROOT.rglob("*.tscn")) + sorted(ROOT.rglob("*.tres")):
         im = re.search(r'instance=ExtResource\("([^"]+)"\)', b["raw"])
         if im and im.group(1) in scene["ext"]:
             inst = load_scene(scene["ext"][im.group(1)]["path"])
+            if inst.get("binary"):
+                continue
             allowed = script_chain_vars(scripts.get(inst["root_script"])) | COMMON_NODE_PROPS
             for key in b["props"]:
                 if key not in allowed and "/" not in key:
