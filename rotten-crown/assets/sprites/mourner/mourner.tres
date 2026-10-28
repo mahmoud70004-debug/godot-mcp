@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SpriteSheetData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/rendering/sprite_sheet_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/mourner/mourner.png" id="2_tex"]
+
+[resource]
+script = ExtResource("1_script")
+texture = ExtResource("2_tex")
+frame_size = Vector2i(137, 115)
+directions = 8
+anims = {"death": {"row": 0, "frames": 8, "fps": 8.0, "loop": false}, "idle": {"row": 8, "frames": 8, "fps": 4.0, "loop": true}, "stagger": {"row": 16, "frames": 4, "fps": 8.0, "loop": false}, "strike": {"row": 24, "frames": 3, "fps": 12.0, "loop": false}, "walk": {"row": 32, "frames": 8, "fps": 8.0, "loop": true}, "windup": {"row": 40, "frames": 6, "fps": 8.0, "loop": false}}
+pixel_size = 0.029665
+foot_offset_px = 9

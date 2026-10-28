@@ -6,8 +6,8 @@
 [resource]
 script = ExtResource("1_script")
 texture = ExtResource("2_tex")
-frame_size = Vector2i(106, 106)
+frame_size = Vector2i(135, 114)
 directions = 8
 anims = {"death": {"row": 0, "frames": 8, "fps": 8.0, "loop": false}, "idle": {"row": 8, "frames": 8, "fps": 4.0, "loop": true}, "stagger": {"row": 16, "frames": 4, "fps": 8.0, "loop": false}, "strike": {"row": 24, "frames": 3, "fps": 12.0, "loop": false}, "walk": {"row": 32, "frames": 8, "fps": 8.0, "loop": true}, "windup": {"row": 40, "frames": 6, "fps": 8.0, "loop": false}}
-pixel_size = 0.028832
-foot_offset_px = 11
+pixel_size = 0.028627
+foot_offset_px = 12

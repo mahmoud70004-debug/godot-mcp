@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SpriteSheetData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://src/rendering/sprite_sheet_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://assets/sprites/villager_0/villager_0.png" id="2_tex"]
+
+[resource]
+script = ExtResource("1_script")
+texture = ExtResource("2_tex")
+frame_size = Vector2i(55, 77)
+directions = 8
+anims = {"cheer": {"row": 0, "frames": 6, "fps": 6.0, "loop": true}, "dance": {"row": 8, "frames": 12, "fps": 8.0, "loop": true}, "idle": {"row": 16, "frames": 4, "fps": 3.0, "loop": true}, "music": {"row": 24, "frames": 8, "fps": 6.0, "loop": true}, "walk": {"row": 32, "frames": 8, "fps": 9.0, "loop": true}}
+pixel_size = 0.027916
+foot_offset_px = 1
