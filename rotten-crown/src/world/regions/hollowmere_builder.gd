@@ -1,80 +1,120 @@
 @tool
 class_name HollowmereBuilder
 extends RefCounted
-## Hollowmere (reference 2: the pumpkin farm and the village with the steeple),
-## after the curse: rows of fat pumpkins, some carved and glowing, some grown
-## into flesh, a village of ruined clapboard houses and a chapel with a broken spire.
+## Hollowmere (reference 2, "Over the Garden Wall": a pale dirt road curving out of a
+## pumpkin patch towards a village of pale houses and a church spire), after the curse.
+## Hero view: from the road in the fields (HERO) up the curving farm track to the
+## half-timbered village and the chapel spire. The harvest grew into flesh: pumpkins
+## with human teeth and eyes, villagers stitched to scarecrow posts, a house swallowed
+## by a breathing pumpkin-flesh mass, blood trails into the houses, burnt and collapsed
+## roofs, curse sigils on the doors, gibbet cages.
 ##
 ## Assumptions (contract C9, owned by the overworld assembler / OverworldSpec):
 ## - TerrainBuilder over OverworldSpec.make(); -Z is towards the castle.
 ## - Main road polyline OverworldSpec.MAIN_ROAD, road_width 3.2; it ends at (20, 322).
-## - Village plateau Vector4(22, 338, 44, 24) is flat; the chapel stands at (30, 368).
-## - Dry/field paint Vector3(-8, 270, 40) under the pumpkin fields (z 236..304).
+## - Village plateau Vector4(22, 338, 44, 24) is flat; FOREST_PATH ends at (34, 322).
 ## - Region node sits at the origin, so child positions are world positions.
-## - Markers: Spawn_Enemy_1..5, Lore_1..2, Pickup_1..2, Light_1..2 and Trigger
-##   (meta "radius" = 55). The two OmniLight3D nodes (chapel lantern, window candle)
-##   are built here too, named LanternLight / CandleLight; Light_N mark the same spots.
+## - Markers: Spawn_Enemy_1..5, Lore_1..2, Pickup_1..2, Light_1..4 and Trigger
+##   (meta "radius"). OmniLight3D nodes: LanternLight (chapel), CandleLight (window),
+##   WellLight (square), MawLight (the swallowed house); Light_N mark the same spots.
 ## - res://assets/materials/grass_field.tres exists (GrassScatter material).
+## Performance: organic detail is batched per material and 16 m cell (HollowmereBatch,
+## pumpkins with a near/far LOD); architecture and kit props are merged here per group
+## with their own visibility range (small props 60 m, fields 90 m, buildings 115 m).
 
-const OOZE_SHADER := preload("res://assets/shaders/ooze.gdshader")
 const GRASS_MAT := "res://assets/materials/grass_field.tres"
 const FIELD_Z0 := 236.0
-const FIELD_Z1 := 304.0
+const FIELD_Z1 := 308.0
 const SQUARE := Vector2(24.0, 343.0)
-const CHAPEL_POS := Vector2(30.0, 368.0)
-const LANE := [Vector2(20.0, 322.0), Vector2(27.0, 333.0), Vector2(21.0, 345.0), Vector2(28.0, 357.0), Vector2(30.0, 363.0)]
-const COTTAGES := [Vector2(7.0, 338.0), Vector2(9.0, 354.0), Vector2(40.0, 334.0), Vector2(43.0, 350.0),
-	Vector2(14.0, 371.0), Vector2(47.0, 366.0), Vector2(-6.0, 350.0), Vector2(34.0, 316.0)]
+const CHAPEL_POS := Vector2(28.0, 366.0)
+## Hero view: the reference composition (see docs, U8). RC_SHOT pose in the report.
+const HERO := Vector2(8.2, 268.0)
+## Curving farm track: leaves the road, sweeps east round the fields, back into the village.
+const TRACK := [Vector2(9.6, 262.0), Vector2(14.0, 266.5), Vector2(20.5, 272.5), Vector2(26.0, 280.0), Vector2(29.5, 289.0),
+	Vector2(30.5, 298.0), Vector2(28.5, 307.0), Vector2(25.5, 316.0), Vector2(23.4, 326.0), Vector2(23.0, 333.0)]
+const LANE := [Vector2(20.0, 322.0), Vector2(23.0, 333.0), Vector2(24.0, 343.0), Vector2(26.0, 352.0), Vector2(28.0, 359.0)]
+const LANE_WEST := [Vector2(24.0, 343.0), Vector2(14.0, 345.5), Vector2(3.0, 349.0)]
+const LANE_EAST := [Vector2(25.0, 341.0), Vector2(30.5, 332.0), Vector2(34.0, 322.0)]
+## [x, z, face_x, face_z, width, depth, storeys, ruin, opts]
+const HOUSES := [
+	[11.0, 339.0, 24.0, 343.0, 5.0, 6.0, 2, 0, {"lit": 2, "sigil": true, "door": "closed"}],
+	[12.5, 354.0, 24.0, 345.0, 4.6, 5.6, 2, 1, {"sigil": true, "door": "torn", "rust": true}],
+	[38.5, 329.5, 30.0, 333.0, 5.0, 6.0, 2, 2, {"door": "torn"}],
+	[38.5, 348.0, 24.0, 344.0, 5.0, 6.2, 2, 0, {"lit": 1, "door": "open"}],
+	[15.5, 365.0, 24.0, 350.0, 4.8, 5.8, 2, 2, {"door": "torn", "rust": true}],
+	[3.5, 321.0, 18.0, 322.0, 6.0, 7.0, 2, 0, {"lit": 3, "door": "closed", "sigil": true}],
+	[-5.0, 337.0, 10.0, 340.0, 4.4, 5.2, 1, 1, {"door": "open", "rust": true}],
+	[34.5, 311.0, 25.0, 313.0, 4.6, 5.4, 1, 2, {"door": "open", "rust": true}],
+	[46.5, 341.0, 30.0, 340.0, 4.4, 5.2, 1, 0, {"door": "closed", "sigil": true}],
+	[2.0, 358.5, 14.0, 348.0, 4.8, 5.6, 2, 1, {"door": "open", "lit": 1}],
+	[-6.5, 306.0, 10.0, 302.0, 7.0, 9.0, 1, 0, {"door": "closed", "rust": true}],
+]
+const SWALLOWED := 2
+const CANDLE_HOUSE := 3
+const SCARECROWS := [[Vector2(-5.5, 258.0), false], [Vector2(18.5, 257.0), true], [Vector2(21.5, 283.0), false],
+	[Vector2(1.0, 285.0), true], [Vector2(35.5, 296.0), false], [Vector2(15.4, 313.0), false], [Vector2(23.0, 309.5), true]]
+const TORSO_BEDS := [Vector2(-1.0, 249.0), Vector2(17.0, 289.0), Vector2(-4.5, 274.0), Vector2(31.0, 270.0)]
+const DEAD_TREE := Vector2(-3.5, 290.0)
+## A second bare tree in the island between road and track (left-middle of the hero view).
+const DEAD_TREE_2 := Vector2(23.0, 292.5)
+const MAWS := [Vector2(13.2, 276.0), Vector2(2.4, 262.0)]
 
-static var _ooze: ShaderMaterial
-static var _blood: ShaderMaterial
-static var _pulp: ShaderMaterial
+static var _reserved: Array[Vector3] = []
 
 
 static func build(root: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> Node3D:
-	_make_materials()
 	var region := Node3D.new()
 	region.name = "Hollowmere"
 	root.add_child(region)
-	var fields := _group(region, "PumpkinFields")
-	_pumpkin_fields(fields, terrain, rng)
-	_fences(region, terrain, rng)
+	var organic := _group(region, "Organic")
+	var fields := _group(region, "Fields")
 	var village := _group(region, "Village")
-	var doors := _village(village, terrain, rng)
-	_lane(village, terrain)
-	_chapel(village, terrain, rng)
-	_square_gore(village, terrain, rng, doors)
-	_scarecrow_ring(region, terrain, rng)
+	var small := _group(region, "SmallProps")
+	var b := HollowmereBatch.new(20.0, true)
+	var tf := HollowmereBatch.new(20.0, false)
+	var tv := HollowmereBatch.new(20.0, false)
+	_reserve_layout()
+	_ground_paths(b, tv, tf, terrain, rng)
+	var houses := _village(village, b, tv, terrain, rng)
+	_chapel_and_graves(village, small, b, tv, terrain, rng)
+	_square(village, small, b, tv, terrain, rng, houses)
+	_field_horrors(fields, b, tf, terrain, rng)
+	_pumpkin_fields(b, terrain, rng)
+	_fences(tf, terrain, rng)
 	_grass(region, terrain, rng)
 	_markers(region, terrain)
+	b.commit(organic, "HM_Organic")
+	tf.commit(fields, "HM_Fields")
+	tv.commit(village, "HM_Village")
+	_merge(small, 60.0)
+	_merge(fields, 90.0)
+	_merge(village, 115.0)
 	return region
 
 
-static func _make_materials() -> void:
-	_ooze = ShaderMaterial.new()
-	_ooze.shader = OOZE_SHADER
-	_blood = ShaderMaterial.new()
-	_blood.shader = OOZE_SHADER
-	_blood.set_shader_parameter("surface_color", Color(0.3, 0.02, 0.02))
-	_blood.set_shader_parameter("deep_color", Color(0.1, 0.0, 0.01))
-	_blood.set_shader_parameter("emission_strength", 0.0)
-	_blood.set_shader_parameter("bubble_amount", 0.0)
-	_blood.set_shader_parameter("roughness_value", 0.4)
-	_pulp = ShaderMaterial.new()
-	_pulp.shader = OOZE_SHADER
-	_pulp.set_shader_parameter("surface_color", Color(0.55, 0.26, 0.05))
-	_pulp.set_shader_parameter("deep_color", Color(0.14, 0.06, 0.01))
-	_pulp.set_shader_parameter("emission_strength", 0.25)
-	_pulp.set_shader_parameter("bubble_amount", 0.3)
-
-
-# --- Geometry helpers ----------------------------------------------------------
+# --- Helpers ---------------------------------------------------------------------
 
 static func _group(parent: Node3D, group_name: String) -> Node3D:
 	var node := Node3D.new()
 	node.name = group_name
 	parent.add_child(node)
 	return node
+
+
+## Merges a group's static meshes per material and 20 m cell with its own range; the
+## results are flagged so the overworld's merge leaves them alone.
+static func _merge(group: Node3D, range_end: float) -> void:
+	var before := {}
+	for c in group.get_children():
+		before[c] = true
+	MeshMerger.merge_static(group, 20.0, range_end)
+	for c in group.get_children():
+		if not before.has(c) and c is MeshInstance3D:
+			c.set_meta(MeshMerger.SKIP_META, true)
+	for node in group.find_children("*", "MeshInstance3D", true, false):
+		var mi := node as MeshInstance3D
+		if mi.visible and mi.visibility_range_end <= 0.0:
+			mi.visibility_range_end = range_end
 
 
 ## Main road centre x at world z (linear along the polyline).
@@ -99,219 +139,419 @@ static func _poly_dist(p: Vector2, pts: Array) -> float:
 	return best
 
 
-## Thin box between two points (vines, trail strips).
-static func _strip(parent: Node3D, a: Vector3, b: Vector3, thick: float, width: float, mat: Material) -> void:
-	var v := b - a
-	var mi := PartBuilder.box(parent, Vector3(maxf(v.length(), 0.01), thick, width), (a + b) * 0.5, mat)
-	mi.rotation.y = atan2(-v.z, v.x)
-	mi.rotation.z = asin(clampf(v.y / maxf(v.length(), 0.01), -1.0, 1.0))
+## Distance to any walkable way (road, track, lanes, forest path end).
+static func _path_dist(p: Vector2) -> float:
+	var d := minf(_poly_dist(p, OverworldSpec.MAIN_ROAD), _poly_dist(p, TRACK))
+	d = minf(d, minf(_poly_dist(p, LANE), _poly_dist(p, LANE_WEST)))
+	d = minf(d, minf(_poly_dist(p, LANE_EAST), _poly_dist(p, OverworldSpec.FOREST_PATH)))
+	return d
 
 
-static func _splat(parent: Node3D, mat: ShaderMaterial, pos: Vector3, size: float, rng: RandomNumberGenerator) -> void:
-	var mi := MeshInstance3D.new()
-	var plane := PlaneMesh.new()
-	plane.size = Vector2(size, size)
-	mi.mesh = plane
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	mi.position = pos
-	mi.rotation.y = rng.randf() * TAU
-	parent.add_child(mi)
-	mi.set_meta(MeshMerger.SEED_META, rng.randf())
+static func _free(p: Vector2, r: float) -> bool:
+	for c in _reserved:
+		if p.distance_to(Vector2(c.x, c.y)) < c.z + r:
+			return false
+	return true
 
 
-static func _clothes_heap(parent: Node3D, pos: Vector3, rng: RandomNumberGenerator) -> void:
-	var palette := [Color(0.3, 0.05, 0.05), Color(0.2, 0.22, 0.3), Color(0.35, 0.3, 0.2), Color(0.15, 0.25, 0.12), Color(0.4, 0.36, 0.3)]
-	var base_color: Color = palette[rng.randi() % palette.size()]
-	for i in 3:
-		var offset := Vector3(rng.randf_range(-0.35, 0.35), 0.04 + i * 0.04, rng.randf_range(-0.35, 0.35))
-		PartBuilder.box(parent, Vector3(rng.randf_range(0.5, 0.9), 0.06, rng.randf_range(0.4, 0.8)), pos + offset,
-			RetroMaterials.flat(base_color.darkened(i * 0.15)), Vector3(0.0, rng.randf() * TAU, rng.randf_range(-0.1, 0.1)))
-	_splat(parent, _ooze, pos + Vector3(0.0, 0.025, 0.0), 1.2, rng)
+static func _house_hit(p: Vector2, margin: float) -> bool:
+	for h in HOUSES:
+		var c := Vector2(h[0], h[1])
+		var half := maxf(float(h[4]), float(h[5])) * 0.5 + 0.6
+		if p.distance_to(c) < half + margin:
+			return true
+	return false
 
 
-static func _trail(parent: Node3D, from: Vector3, to: Vector3, rng: RandomNumberGenerator) -> void:
-	var steps := int(from.distance_to(to) / 0.7)
-	for i in steps:
-		var p := from.lerp(to, float(i) / steps) + Vector3(rng.randf_range(-0.2, 0.2), rng.randf_range(0.04, 0.06), rng.randf_range(-0.2, 0.2))
-		_splat(parent, _blood, p, rng.randf_range(0.3, 0.6), rng)
+static func _reserve_layout() -> void:
+	_reserved.clear()
+	for s in SCARECROWS:
+		var p: Vector2 = s[0]
+		_reserved.append(Vector3(p.x, p.y, 1.3))
+	for p: Vector2 in TORSO_BEDS:
+		_reserved.append(Vector3(p.x, p.y, 1.9))
+	for p: Vector2 in MAWS:
+		_reserved.append(Vector3(p.x, p.y, 3.0))
+	_reserved.append(Vector3(DEAD_TREE.x, DEAD_TREE.y, 2.6))
+	_reserved.append(Vector3(DEAD_TREE_2.x, DEAD_TREE_2.y, 2.2))
+	for m in _marker_spots().values():
+		var q: Vector2 = m
+		_reserved.append(Vector3(q.x, q.y, 1.3))
 
 
-# --- Pumpkin fields --------------------------------------------------------------
-
-static func _pumpkin_fields(fields: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> void:
-	var vine := RetroMaterials.flat(Color(0.05, 0.08, 0.035))
-	var leaf := RetroMaterials.flat(Color(0.07, 0.12, 0.05))
-	var offsets := [4.0, 6.8, 9.6, 12.4]
-	var smashed := 0
-	for side: float in [-1.0, 1.0]:
-		for off: float in offsets:
-			var vine_prev := Vector3.INF
-			var z := FIELD_Z0 + rng.randf_range(0.0, 1.0)
-			var since_vine := 0.0
-			while z < FIELD_Z1:
-				var x := _road_x(z) + side * (off + sin(z * 0.17 + off) * 0.2 + rng.randf_range(-0.15, 0.15))
-				var g := terrain.ground(x, z)
-				# Vine line along the row.
-				since_vine += 1.0
-				if since_vine >= 2.0:
-					since_vine = 0.0
-					var vp := g + Vector3(rng.randf_range(-0.25, 0.25), 0.04, 0.0)
-					if vine_prev != Vector3.INF:
-						_strip(fields, vine_prev, vp, 0.05, 0.06, vine)
-					vine_prev = vp
-					if rng.randf() < 0.45:
-						PartBuilder.box(fields, Vector3(0.38, 0.02, 0.3), vp + Vector3(rng.randf_range(-0.3, 0.3), 0.08, rng.randf_range(-0.2, 0.2)), leaf, Vector3(0, rng.randf() * TAU, 0.15))
-				z += rng.randf_range(0.9, 1.4)
-				if rng.randf() < 0.18:
-					continue  # gaps: harvested / eaten
-				var roll := rng.randf()
-				var sz := rng.randf_range(0.55, 1.05)
-				if rng.randf() < 0.06:
-					sz = rng.randf_range(1.3, 1.7)
-				if roll < 0.04 and smashed < 16:
-					smashed += 1
-					_smashed_pumpkin(fields, g, sz, rng)
-					continue
-				var pk := PropKit.pumpkin(sz, rng, roll > 0.88, roll > 0.76 and roll <= 0.88)
-				pk.position = g - Vector3(0.0, sz * 0.03, 0.0)
-				pk.rotation.y = (PI * 0.5 if side < 0.0 else -PI * 0.5) + rng.randf_range(-0.6, 0.6)
-				fields.add_child(pk)
-	# Body-horror clusters: a half-buried person with pumpkins fused around.
-	var spots := [Vector2(-1.0, 248.0), Vector2(1.0, 261.0), Vector2(-1.0, 276.0), Vector2(1.0, 290.0), Vector2(-1.0, 297.0)]
-	var idx := 0
-	for spot: Vector2 in spots:
-		var z := spot.y
-		var x := _road_x(z) + spot.x * (8.2 + rng.randf_range(-0.5, 0.5))
-		_torso_cluster(fields, terrain.ground(x, z), rng, idx)
-		idx += 1
+static func _marker_spots() -> Dictionary:
+	return {"Spawn_Enemy_1": Vector2(19.0, 346.0), "Spawn_Enemy_2": Vector2(29.0, 341.0), "Spawn_Enemy_3": Vector2(24.0, 352.0),
+		"Spawn_Enemy_4": Vector2(_road_x(262.0) + 8.0, 262.0), "Spawn_Enemy_5": Vector2(_road_x(282.0) - 8.0, 282.0),
+		"Lore_1": Vector2(31.5, 357.0), "Lore_2": Vector2(_road_x(250.0) - 3.4, 250.0),
+		"Pickup_1": Vector2(13.0, 333.0), "Pickup_2": Vector2(40.0, 340.0)}
 
 
-static func _smashed_pumpkin(parent: Node3D, g: Vector3, sz: float, rng: RandomNumberGenerator) -> void:
-	var mat := RetroMaterials.pumpkin()
-	for i in 3:
+## Terrain-hugging strip along `pts` (dirt track, cobbled lanes). Returns nothing; pieces go
+## into `tb` (textured); ruts / puddles into `b`.
+static func _ribbon(tb: HollowmereBatch, mat: Material, terrain: TerrainBuilder, pts: Array, width: float, lift: float, rng: RandomNumberGenerator) -> void:
+	var samples := OverworldSpec.sample_path(pts, 1.2)
+	var grid := PackedVector3Array()
+	var cols := PackedColorArray()
+	var hints := PackedVector3Array()
+	var white := Color(1, 1, 1)
+	for k in samples.size():
+		var p := samples[k]
+		var dir := (samples[mini(k + 1, samples.size() - 1)] - samples[maxi(k - 1, 0)]).normalized()
+		var side := Vector2(-dir.y, dir.x)
+		var w := width * 0.5 * (1.0 + 0.12 * sin(p.x * 0.9 + p.y * 0.7))
+		for f: float in [-1.0, -0.5, 0.0, 0.5, 1.0]:
+			var q := p + side * f * w * (1.0 if absf(f) < 1.0 else rng.randf_range(0.9, 1.1))
+			grid.append(terrain.ground(q.x, q.y) + Vector3(0, lift - absf(f) * 0.015, 0))
+			cols.append(white)
+			hints.append(Vector3.UP)
+	tb.at(terrain.ground(samples[0].x, samples[0].y), 100.0, false)
+	# Commit in runs of ~16 m so each piece lands in its own merge cell.
+	var run := 14
+	var start := 0
+	while start < samples.size() - 1:
+		var end := mini(start + run, samples.size() - 1)
+		var mid := samples[(start + end) / 2]
+		tb.at(Vector3(mid.x, 0, mid.y), 100.0, false)
+		var sub := grid.slice(start * 5, (end + 1) * 5)
+		tb.grid(mat, sub, 5, end - start + 1, false, cols.slice(start * 5, (end + 1) * 5), hints.slice(start * 5, (end + 1) * 5))
+		start = end
+
+
+# --- Paths: farm track, cobbled lanes, the square -------------------------------
+
+static func _ground_paths(b: HollowmereBatch, tv: HollowmereBatch, tf: HollowmereBatch, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> void:
+	_ribbon(tf, RetroMaterials.mud(), terrain, TRACK, 2.7, 0.05, rng)
+	# Wheel ruts and puddles along the track.
+	var org := HollowmereProps.organic()
+	var samples := OverworldSpec.sample_path(TRACK, 1.5)
+	for k in samples.size() - 1:
+		var a := samples[k]
+		var c := samples[k + 1]
+		var dir := (c - a).normalized()
+		var side := Vector2(-dir.y, dir.x)
+		b.at(Vector3(a.x, 0, a.y), 70.0)
+		for s: float in [-0.55, 0.55]:
+			var p0 := a + side * s
+			var p1 := c + side * s
+			b.beam(org, terrain.ground(p0.x, p0.y) + Vector3(0, 0.065, 0), terrain.ground(p1.x, p1.y) + Vector3(0, 0.065, 0), 0.02, 0.22, Color(0.16, 0.11, 0.08))
+		if rng.randf() < 0.12:
+			HollowmereProps.ground_pool(b, org, terrain, a + side * rng.randf_range(-0.5, 0.5), rng.randf_range(0.35, 0.7), Color(0.07, 0.06, 0.06), Color(0.14, 0.11, 0.09), rng, 0.075)
+	var cobble := RetroMaterials.cobble()
+	for lane: Array in [LANE, LANE_WEST, LANE_EAST]:
+		_ribbon(tv, cobble, terrain, lane, 3.0, 0.06, rng)
+	# Cobbled square: rings round the well.
+	var segs := 18
+	var rings := [0.0, 2.0, 4.5, 7.5]
+	var pts := PackedVector3Array()
+	var cols := PackedColorArray()
+	var hints := PackedVector3Array()
+	for r: float in rings:
+		for k in segs:
+			var a := TAU * k / segs
+			var rr := r * (1.0 + (0.12 * sin(a * 3.0 + 1.0) if r > 7.0 else 0.0))
+			var q := SQUARE + Vector2(cos(a), sin(a)) * rr
+			pts.append(terrain.ground(q.x, q.y) + Vector3(0, 0.07, 0))
+			cols.append(Color(1, 1, 1))
+			hints.append(Vector3.UP)
+	tv.at(Vector3(SQUARE.x, 0, SQUARE.y), 115.0, false)
+	tv.grid(cobble, pts, segs, rings.size(), true, cols, hints)
+	# Mud and puddles over the cobbles.
+	b.at(Vector3(SQUARE.x, 0, SQUARE.y), 70.0)
+	for k in 14:
 		var a := rng.randf() * TAU
-		var chunk := PartBuilder.sphere(parent, sz * rng.randf_range(0.18, 0.3), g + Vector3(cos(a) * sz * 0.35, sz * 0.08, sin(a) * sz * 0.35), mat, true, 6)
-		chunk.rotation = Vector3(rng.randf_range(-1.2, 1.2), rng.randf() * TAU, rng.randf_range(-1.2, 1.2))
-	PartBuilder.sphere(parent, sz * 0.3, g + Vector3(0, sz * 0.12, 0), RetroMaterials.flat(Color(0.35, 0.14, 0.03)), true, 6)
-	_splat(parent, _pulp, g + Vector3(0, 0.03, 0), sz * 2.2, rng)
+		var q := SQUARE + Vector2(cos(a), sin(a)) * rng.randf_range(2.0, 9.0)
+		HollowmereProps.ground_pool(b, org, terrain, q, rng.randf_range(0.5, 1.3), Color(0.11, 0.08, 0.06), Color(0.16, 0.12, 0.08), rng, 0.085)
 
 
-static func _torso_cluster(parent: Node3D, g: Vector3, rng: RandomNumberGenerator, idx: int) -> void:
-	var skin := RetroMaterials.skin()
-	var rag := RetroMaterials.rag()
-	var c := _group(parent, "TorsoCluster_%d" % (idx + 1))
-	c.position = g
-	c.rotation.y = rng.randf() * TAU
-	_splat(c, _blood, Vector3(0, 0.03, 0), 3.0, rng)
-	# Torso breaking out of the soil, ribs showing.
-	var torso := PartBuilder.box(c, Vector3(0.62, 0.34, 0.34), Vector3(0, 0.12, 0), skin, Vector3(0.0, 0.3, 0.45))
-	torso.name = "Torso"
-	PartBuilder.box(c, Vector3(0.5, 0.06, 0.3), Vector3(0.05, 0.3, 0.03), RetroMaterials.flat(Color(0.35, 0.05, 0.05)), Vector3(0.0, 0.3, 0.45))
-	for i in 4:
-		PartBuilder.box(c, Vector3(0.04, 0.04, 0.3), Vector3(-0.15 + i * 0.1, 0.34, 0.03), RetroMaterials.flat(Color(0.8, 0.76, 0.62)), Vector3(0.0, 0.3, 0.45))
-	PartBuilder.box(c, Vector3(0.5, 0.05, 0.3), Vector3(-0.3, 0.22, 0.2), rag, Vector3(0.2, 0.5, 0.1))
-	# Arm reaching up, fingers curled.
-	var s := Vector3(0.28, 0.18, 0.1)
-	var e := s + Vector3(0.18, 0.6, 0.05)
-	_strip(c, s, e, 0.13, 0.13, skin)
-	var h := e + Vector3(0.25, 0.4, -0.05)
-	_strip(c, e, h, 0.1, 0.1, skin)
-	PartBuilder.box(c, Vector3(0.1, 0.12, 0.05), h + Vector3(0.03, 0.06, 0), skin, Vector3(0, 0, -0.5))
-	for i in 4:
-		PartBuilder.box(c, Vector3(0.025, 0.12, 0.025), h + Vector3(0.07 + i * 0.002, 0.15, -0.035 + i * 0.025), skin, Vector3(0, 0, -0.3 - i * 0.12))
-	# Pumpkins fused around it.
-	var n := 6
-	for i in n:
-		var a := TAU * i / n + rng.randf_range(-0.2, 0.2)
-		var sz := rng.randf_range(0.7, 1.1)
-		var pk := PropKit.pumpkin(sz, rng, false, i % 2 == 0)
-		pk.position = Vector3(cos(a) * 0.85, -sz * 0.05, sin(a) * 0.85)
-		pk.rotation.y = -a + PI * 0.5 + rng.randf_range(-0.3, 0.3)
-		if i % 2 == 0:
-			pk.rotation.x = -0.75  # flesh face tips up towards the sky
-		c.add_child(pk)
-	# Veins/roots tying them together.
-	var vein := RetroMaterials.flat(Color(0.3, 0.05, 0.06))
-	for i in n:
-		var a := TAU * i / n
-		_strip(c, Vector3(0, 0.1, 0), Vector3(cos(a) * 0.8, 0.12, sin(a) * 0.8), 0.04, 0.05, vein)
+# --- Pumpkin fields ---------------------------------------------------------------
+
+static func _field_ok(p: Vector2, side: float) -> bool:
+	var z_end := 300.0 if side < 0.0 else FIELD_Z1
+	if p.y < FIELD_Z0 or p.y > z_end:
+		return false
+	if _poly_dist(p, OverworldSpec.MAIN_ROAD) < 2.5 or _poly_dist(p, TRACK) < 2.1:
+		return false
+	if _house_hit(p, 0.8):
+		return false
+	return _free(p, 0.6)
 
 
-# --- Fences ------------------------------------------------------------------------
-
-static func _fences(region: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> void:
-	var fences := _group(region, "Fences")
+static func _pumpkin_fields(b: HollowmereBatch, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> void:
+	var org := HollowmereProps.organic()
+	var counts := {"pumpkins": 0, "leaves": 0}
 	for side: float in [-1.0, 1.0]:
-		var pts := PackedVector3Array()
-		var z := FIELD_Z0 - 4.0
-		while z <= FIELD_Z1 + 4.0:
-			var p := terrain.ground(_road_x(z) + side * 2.8, z)
-			pts.append(p)
-			z += 6.0
-		fences.add_child(PropKit.fence_run(pts, 0.35, rng))
+		var rows := 7 if side < 0.0 else 9
+		for row in rows:
+			var off := (2.9 if side < 0.0 else 3.6) + row * 2.35
+			var t := float(row) / (rows - 1)
+			var step_lo := lerpf(0.95, 1.5, t)
+			var step_hi := lerpf(1.3, 2.3, t)
+			var z := FIELD_Z0 + rng.randf_range(0.0, 1.5)
+			var furrow := PackedVector3Array()
+			while z < FIELD_Z1 + 1.0:
+				var x := _road_x(z) + side * (off + sin(z * 0.09 + off) * 0.5)
+				var p := Vector2(x, z)
+				var ok := _field_ok(p, side)
+				if ok:
+					furrow.append(terrain.ground(x, z))
+				if (not ok or z + step_lo >= FIELD_Z1 + 1.0) and furrow.size() > 1:
+					_furrow(b, furrow, rng)
+					furrow = PackedVector3Array()
+				elif not ok:
+					furrow = PackedVector3Array()
+				if ok and rng.randf() > 0.13:
+					var g := terrain.ground(x + rng.randf_range(-0.25, 0.25), z)
+					var pk := HollowmereProps.roll_pumpkin(rng, 0.09)
+					b.at(g, 34.0, true)
+					HollowmereProps.pumpkin(b, g, pk, 0)
+					b.at(g, 95.0, false, 34.0)
+					HollowmereProps.pumpkin(b, g, pk, 1)
+					counts["pumpkins"] = int(counts["pumpkins"]) + 1
+					b.at(g, 70.0)
+					for k in rng.randi_range(2, 3):
+						var a := rng.randf() * TAU
+						var lp := g + Vector3(cos(a), 0, sin(a)) * (float(pk["size"]) * 0.5 + rng.randf_range(0.15, 0.45))
+						lp.y = terrain.height_at(lp.x, lp.z) + 0.06
+						var dead := rng.randf() < 0.35
+						var col := HollowmereProps.jit(HollowmereProps.pick(HollowmereProps.LEAF_DEAD if dead else HollowmereProps.LEAF_GREEN, rng), rng)
+						HollowmereProps.leaf(b, lp, rng.randf_range(0.28, 0.5), rng.randf() * TAU, rng.randf_range(-0.35, 0.35), col, col.darkened(0.35))
+						counts["leaves"] = int(counts["leaves"]) + 1
+				elif ok and rng.randf() < 0.5:
+					b.at(terrain.ground(x, z), 70.0)
+					HollowmereProps.ground_pool(b, org, terrain, p, 0.35, Color(0.13, 0.09, 0.06), HollowmereProps.SOIL, rng, 0.11)
+				z += rng.randf_range(step_lo, step_hi)
+	print("Hollowmere fields: %d pumpkins, %d leaves" % [counts["pumpkins"], counts["leaves"]])
 
 
-# --- Village -----------------------------------------------------------------------
-
-## Builds the cottages and returns their door positions (world) for gore trails.
-static func _village(village: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> Array[Vector3]:
-	var doors: Array[Vector3] = []
-	var board := RetroMaterials.wood()
-	var i := 0
-	for spot: Vector2 in COTTAGES:
-		var size := Vector3(rng.randf_range(4.2, 5.0), rng.randf_range(2.5, 2.9), rng.randf_range(4.6, 5.6))
-		var ruined := i != 0 and i != 5
-		var cot := PropKit.cottage(size, rng, ruined)
-		cot.name = "Cottage_%d" % (i + 1)
-		var to_square := SQUARE - spot
-		var yaw := atan2(to_square.x, to_square.y) + rng.randf_range(-0.25, 0.25)
-		cot.position = terrain.ground(spot.x + rng.randf_range(-1.0, 1.0), spot.y + rng.randf_range(-1.0, 1.0))
-		cot.rotation.y = yaw
-		village.add_child(cot)
-		var xf := cot.transform
-		var front := size.z * 0.5
-		# Open door leaf hanging from the hinge.
-		var hinge := PartBuilder.pivot(cot, "DoorLeaf", Vector3(-0.5, 0.0, front + 0.1))
-		hinge.rotation.y = rng.randf_range(1.1, 1.8)
-		PartBuilder.box(hinge, Vector3(0.95, 1.85, 0.06), Vector3(0.48, 0.93, 0), board)
-		PartBuilder.box(hinge, Vector3(0.9, 0.08, 0.07), Vector3(0.48, 1.2, 0), RetroMaterials.iron())
-		doors.append(xf * Vector3(0.0, 0.0, front + 1.0))
-		# Boarded windows.
-		if ruined and size.x >= 3.5:
-			for sx: float in [-1.0, 1.0]:
-				var wp := Vector3(sx * size.x * 0.3, size.y * 0.55, front + 0.2)
-				for b in 3:
-					PartBuilder.box(cot, Vector3(1.0, 0.14, 0.04), wp + Vector3(0, (b - 1) * 0.28, b * 0.01), board, Vector3(0, 0, rng.randf_range(-0.4, 0.4)))
-		# Wrecked interior: clothes and a bloody smear.
-		if rng.randf() < 0.7:
-			_clothes_heap(cot, Vector3(rng.randf_range(-1.0, 1.0), 0.05, rng.randf_range(-1.0, 1.0)), rng)
-		i += 1
-	return doors
+## Mounded soil row with the vine running along its crest.
+static func _furrow(b: HollowmereBatch, pts: PackedVector3Array, rng: RandomNumberGenerator) -> void:
+	var org := HollowmereProps.organic()
+	var grid := PackedVector3Array()
+	var cols := PackedColorArray()
+	var hints := PackedVector3Array()
+	var vine := PackedVector3Array()
+	var radii := PackedFloat32Array()
+	for k in pts.size():
+		var dir := (pts[mini(k + 1, pts.size() - 1)] - pts[maxi(k - 1, 0)])
+		dir.y = 0.0
+		dir = dir.normalized()
+		var side := Vector3(-dir.z, 0, dir.x)
+		for f: float in [-1.0, 0.0, 1.0]:
+			grid.append(pts[k] + side * f * 0.75 + Vector3(0, 0.03 + (0.13 if f == 0.0 else 0.0), 0))
+			cols.append(HollowmereProps.SOIL.lightened(0.08) if f == 0.0 else HollowmereProps.SOIL.darkened(0.25))
+			hints.append(Vector3.UP)
+		vine.append(pts[k] + side * sin(k * 1.7) * 0.25 + Vector3(0, 0.17, 0))
+		radii.append(0.035)
+	b.at(pts[pts.size() / 2], 95.0)
+	b.grid(org, grid, 3, pts.size(), false, cols, hints)
+	b.at(pts[pts.size() / 2], 70.0)
+	b.tube(org, vine, radii, 3, HollowmereProps.VINE)
+	for k in pts.size():
+		if rng.randf() < 0.5:
+			var lp := vine[k] + Vector3(rng.randf_range(-0.3, 0.3), -0.04, rng.randf_range(-0.3, 0.3))
+			var col := HollowmereProps.jit(HollowmereProps.pick(HollowmereProps.LEAF_GREEN, rng), rng)
+			HollowmereProps.leaf(b, lp, rng.randf_range(0.22, 0.38), rng.randf() * TAU, rng.randf_range(-0.3, 0.3), col, col.darkened(0.3))
 
 
-## Beaten dirt lane winding from the main road end to the chapel.
-static func _lane(village: Node3D, terrain: TerrainBuilder) -> void:
-	var lane := _group(village, "Lane")
-	var mat := RetroMaterials.red_earth()
-	for k in LANE.size() - 1:
-		var a: Vector2 = LANE[k]
-		var b: Vector2 = LANE[k + 1]
-		_strip(lane, terrain.ground(a.x, a.y) + Vector3(0, 0.05, 0), terrain.ground(b.x, b.y) + Vector3(0, 0.05, 0), 0.06, 3.2, mat)
-	# Dirt patch of the square.
-	var sq := PartBuilder.cylinder(lane, 5.5, 5.5, 0.06, terrain.ground(SQUARE.x, SQUARE.y) + Vector3(0, 0.05, 0), mat, 12)
-	sq.name = "Square"
+static func _field_horrors(fields: Node3D, b: HollowmereBatch, tf: HollowmereBatch, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> void:
+	# The dead tree at the field edge with a cage hanging from it.
+	var tree_base := terrain.ground(DEAD_TREE.x, DEAD_TREE.y)
+	tf.at(tree_base, 110.0)
+	var hangs := HollowmereProps.dead_tree(tf, tree_base, 9.5, Vector3(1, 0, 0.4), rng)
+	var tree_body := HollowmereProps.body(fields, "DeadTreeCollider")
+	HollowmereProps.shape_cyl(tree_body, 0.6, 4.0, tree_base + Vector3(0, 2.0, 0))
+	var best := hangs[0]
+	for h in hangs:
+		if Vector2(h.x - tree_base.x, h.z - tree_base.z).length() > Vector2(best.x - tree_base.x, best.z - tree_base.z).length():
+			best = h
+	b.at(tree_base, 115.0)
+	HollowmereProps.gibbet_cage(tf, b, best, maxf(best.y - tree_base.y - 2.4, 0.6), rng)
+	var tree2 := terrain.ground(DEAD_TREE_2.x, DEAD_TREE_2.y)
+	tf.at(tree2, 110.0)
+	HollowmereProps.dead_tree(tf, tree2, 7.5, Vector3(-0.6, 0, 1), rng)
+	HollowmereProps.shape_cyl(tree_body, 0.45, 3.0, tree2 + Vector3(0, 1.5, 0))
+	# Villagers stitched to the scarecrow posts.
+	for s in SCARECROWS:
+		var p: Vector2 = s[0]
+		var to_road := Vector2(_road_x(p.y), p.y) - p
+		var yaw := atan2(to_road.x, to_road.y) + rng.randf_range(-0.5, 0.5)
+		tf.at(terrain.ground(p.x, p.y), 90.0)
+		b.at(terrain.ground(p.x, p.y), 70.0)
+		HollowmereProps.stitched_scarecrow(fields, tf, b, terrain, p, yaw, rng, bool(s[1]))
+	for p: Vector2 in TORSO_BEDS:
+		b.at(terrain.ground(p.x, p.y), 70.0)
+		HollowmereProps.torso_bed(b, terrain, p, rng)
+	# Giant maws: pumpkins grown into gaping human mouths by the road.
+	for p: Vector2 in MAWS:
+		var g := terrain.ground(p.x, p.y)
+		var to_road := Vector2(_road_x(p.y), p.y - 6.0) - p
+		var pk := {"kind": 4, "size": rng.randf_range(2.1, 2.5), "tint": HollowmereProps.PUMPKINS[0], "ribs": 9, "squash": 0.72, "rot": 0.25,
+			"seed": rng.randi(), "yaw": atan2(to_road.x, to_road.y), "tilt": -0.12}
+		b.at(g, 115.0)
+		HollowmereProps.pumpkin(b, g, pk, 0)
+		HollowmereProps.ground_pool(b, HollowmereProps.flesh(), terrain, p + to_road.normalized() * 1.3, 0.9,
+				HollowmereProps.wa(HollowmereProps.BLOOD_DARK, 0.0), HollowmereProps.wa(HollowmereProps.BLOOD, 0.0), rng)
+	# Blood dragged from the field to the road.
+	b.at(terrain.ground(TORSO_BEDS[2].x, TORSO_BEDS[2].y), 70.0)
+	HollowmereProps.blood_trail(b, terrain, TORSO_BEDS[2], Vector2(_road_x(279.0) - 1.0, 279.0), rng)
+	b.at(terrain.ground(TORSO_BEDS[1].x, TORSO_BEDS[1].y), 70.0)
+	HollowmereProps.blood_trail(b, terrain, TORSO_BEDS[1], Vector2(_road_x(293.0) + 0.5, 293.0), rng)
+	# Carved lanterns glowing along the road into the village.
+	for z: float in [246.0, 259.0, 271.0, 284.0, 297.0, 309.0, 316.0]:
+		for s: float in [-1.0, 1.0]:
+			if rng.randf() < 0.4:
+				continue
+			var p := Vector2(_road_x(z) + s * rng.randf_range(2.3, 2.8), z + rng.randf_range(-1.0, 1.0))
+			if _poly_dist(p, TRACK) < 1.6:
+				continue
+			_jack(b, terrain.ground(p.x, p.y), atan2(-s, 0.0) + rng.randf_range(-0.4, 0.4), rng)
 
 
-static func _chapel(village: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> void:
-	var chapel := PropKit.chapel(rng, true)
-	chapel.position = terrain.ground(CHAPEL_POS.x, CHAPEL_POS.y)
+static func _jack(b: HollowmereBatch, g: Vector3, yaw: float, rng: RandomNumberGenerator) -> void:
+	var pk := HollowmereProps.roll_pumpkin(rng, 0.0)
+	pk["kind"] = 0
+	pk["rot"] = 0.1
+	pk["yaw"] = yaw
+	pk["tilt"] = 0.0
+	pk["size"] = rng.randf_range(0.6, 0.85)
+	pk["squash"] = 0.78
+	b.at(g, 115.0)
+	HollowmereProps.pumpkin(b, g, pk, 0)
+	var size: float = pk["size"]
+	var hy := size * 0.5 * 0.78
+	HollowmereProps.carve_face(b, g + Vector3(0, hy * 0.86 - size * 0.03, 0), Basis(Vector3.UP, yaw), size * 0.5 * 0.93, hy)
+
+
+static func _fences(tf: HollowmereBatch, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> void:
+	# Right of the road up to the track junction, then round the outside of the track curve.
+	var runs: Array = []
+	var east := PackedVector2Array()
+	var z := FIELD_Z0 - 2.0
+	while z < 258.0:
+		east.append(Vector2(_road_x(z) + 2.75, z))
+		z += 2.7
+	runs.append(east)
+	var outer := PackedVector2Array()
+	var samples := OverworldSpec.sample_path(TRACK.slice(0, 7), 2.7)
+	for k in samples.size():
+		var a := samples[maxi(k - 1, 0)]
+		var c := samples[mini(k + 1, samples.size() - 1)]
+		var dir := (c - a).normalized()
+		outer.append(samples[k] + Vector2(dir.y, -dir.x) * 2.3)
+	runs.append(outer)
+	# Left of the road beyond the hero, broken, and the western field edge.
+	var west := PackedVector2Array()
+	z = 275.0
+	while z < 312.0:
+		west.append(Vector2(_road_x(z) - 2.75, z))
+		z += 2.7
+	runs.append(west)
+	var edge := PackedVector2Array()
+	z = FIELD_Z0
+	while z < 298.0:
+		edge.append(Vector2(_road_x(z) - 19.5, z))
+		z += 2.7
+	runs.append(edge)
+	var skip := func(p: Vector2) -> bool:
+		return _house_hit(p, 0.5) or not _free(p, 0.3) or _poly_dist(p, OverworldSpec.MAIN_ROAD) < 1.9
+	for k in runs.size():
+		var pts: PackedVector2Array = runs[k]
+		var mid := pts[pts.size() / 2]
+		tf.at(terrain.ground(mid.x, mid.y), 90.0)
+		HollowmereProps.zigzag_fence(tf, terrain, pts, 0.12 if k < 2 else 0.35, rng, skip)
+
+
+# --- Village --------------------------------------------------------------------------
+
+## Builds the houses (HollowmereProps.house); returns their info dictionaries.
+static func _village(village: Node3D, b: HollowmereBatch, tv: HollowmereBatch, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> Array:
+	var out: Array = []
+	for i in HOUSES.size():
+		var h: Array = HOUSES[i]
+		var c := Vector2(h[0], h[1])
+		var face := Vector2(h[2], h[3]) - c
+		var yaw := atan2(face.x, face.y) + rng.randf_range(-0.12, 0.12)
+		var w: float = h[4]
+		var d: float = h[5]
+		var low := INF
+		for cx: float in [-1.0, 1.0]:
+			for cz: float in [-1.0, 1.0]:
+				var q := c + Vector2(cx * w * 0.5, cz * d * 0.5).rotated(-yaw)
+				low = minf(low, terrain.height_at(q.x, q.y))
+		var pos := Vector3(c.x, low, c.y)
+		var node := _group(village, "House_%d" % (i + 1))
+		tv.at(pos, 115.0)
+		b.at(pos, 115.0)
+		var info := HollowmereProps.house(node, tv, b, pos, yaw, w, d, int(h[6]), int(h[7]), rng, h[8])
+		out.append(info)
+		# Curse growths swelling out of walls and roofs (not on the untouched houses).
+		var spots: Array = (info["anchors"] as Array) + (info["roof"] as Array)
+		var growths := 0 if i == 0 or i == 8 else (3 if int(h[7]) > 0 else 1)
+		if i == SWALLOWED:
+			growths = 4
+		for k in growths:
+			var s: Array = spots[rng.randi() % spots.size()]
+			b.at(pos, 115.0)
+			HollowmereProps.flesh_growth(b, s[0], s[1], rng.randf_range(0.6, 1.1), rng)
+		if i == SWALLOWED:
+			_swallowed(village, b, terrain, info, w, d, rng)
+	# The candle in one window of the house across the square.
+	var cinfo: Dictionary = out[CANDLE_HOUSE]
+	var cxf: Transform3D = cinfo["xf"]
+	var cp := cxf * Vector3(0.0, 4.2, 3.55)
+	var candle := OmniLight3D.new()
+	candle.name = "CandleLight"
+	candle.position = cp + Vector3(0, 0.1, 0)
+	candle.light_color = Color(1.0, 0.6, 0.25)
+	candle.light_energy = 0.9
+	candle.omni_range = 4.0
+	candle.shadow_enabled = false
+	village.add_child(candle)
+	return out
+
+
+static func _swallowed(village: Node3D, b: HollowmereBatch, terrain: TerrainBuilder, info: Dictionary, w: float, d: float, rng: RandomNumberGenerator) -> void:
+	var xf: Transform3D = info["xf"]
+	var centre := xf * Vector3(w * 0.62, 2.0, d * 0.3)
+	var lane_pt := Vector3(30.5, centre.y, 332.0)
+	var grips: Array = []
+	for r in info["roof"]:
+		grips.append((r as Array)[0])
+	for a in info["anchors"]:
+		grips.append((a as Array)[0])
+	grips = grips.slice(0, 6)
+	b.at(centre, 115.0)
+	HollowmereProps.flesh_mass(village, b, terrain, centre, 4.3, lane_pt - centre, grips, rng)
+	var dir := (lane_pt - centre)
+	dir.y = 0.0
+	var light := OmniLight3D.new()
+	light.name = "MawLight"
+	light.position = centre + dir.normalized() * 5.0 + Vector3(0, -0.6, 0)
+	light.light_color = Color(1.0, 0.35, 0.15)
+	light.light_energy = 1.1
+	light.omni_range = 6.0
+	light.shadow_enabled = false
+	village.add_child(light)
+
+
+static func _chapel_and_graves(village: Node3D, small: Node3D, b: HollowmereBatch, tv: HollowmereBatch, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> void:
+	var chapel := PropKit.chapel(rng, false)
+	var cpos := terrain.ground(CHAPEL_POS.x, CHAPEL_POS.y)
+	chapel.position = cpos
 	chapel.rotation.y = PI  # door faces the village (-Z)
 	village.add_child(chapel)
+	var cxf := chapel.transform
+	# Flesh creeping up the tower and out of the nave; the crown sigil over the door.
+	b.at(cpos, 115.0)
+	HollowmereProps.flesh_growth(b, cxf * Vector3(1.5, 5.2, 6.9), cxf.basis * Vector3(0.6, 0, 1).normalized(), 1.3, rng)
+	HollowmereProps.flesh_growth(b, cxf * Vector3(-2.7, 2.2, -1.0), cxf.basis * Vector3.LEFT, 1.0, rng)
+	HollowmereProps.flesh_growth(b, cxf * Vector3(2.7, 1.0, 2.5), cxf.basis * Vector3.RIGHT, 0.9, rng)
+	HollowmereProps.curse_sigil(b, cxf * HollowmereProps.xfm(Basis.IDENTITY, Vector3(0, 3.4, 6.92)), 1.0, rng)
+	HollowmereProps.blood_trail(b, terrain, Vector2(28.0, 357.5), Vector2(27.2, 352.0), rng, 0.3)
 	# Sickly green lantern by the door (light + mesh, pos in region space).
-	var lp := chapel.transform * Vector3(1.1, 2.4, 7.2)
-	var hook := PartBuilder.box(village, Vector3(0.06, 0.5, 0.06), lp + Vector3(0, 0.45, 0), RetroMaterials.iron())
-	hook.name = "LanternHook"
+	var lp := cxf * Vector3(1.1, 2.4, 7.2)
+	tv.at(lp, 115.0)
+	tv.box(RetroMaterials.iron(), HollowmereProps.xfm(Basis.IDENTITY, lp + Vector3(0, 0.45, 0)), Vector3(0.06, 0.5, 0.06), Color(1, 1, 1))
 	PartBuilder.box(village, Vector3(0.22, 0.3, 0.22), lp, RetroMaterials.flat(Color(0.4, 0.9, 0.35), 1.6))
 	var light := OmniLight3D.new()
 	light.name = "LanternLight"
@@ -321,101 +561,222 @@ static func _chapel(village: Node3D, terrain: TerrainBuilder, rng: RandomNumberG
 	light.omni_range = 6.5
 	light.shadow_enabled = false
 	village.add_child(light)
-
-
-static func _square_gore(village: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator, doors: Array[Vector3]) -> void:
-	var gore := _group(village, "Gore")
-	# A smashed cart on the lane.
-	var cart := PropKit.cart_wreck(rng)
-	cart.position = terrain.ground(15.0, 331.0)
-	cart.rotation.y = 0.9
-	gore.add_child(cart)
-	# Empty clothes where the villagers stood.
-	for i in 9:
-		var a := rng.randf() * TAU
-		var r := rng.randf_range(1.5, 14.0)
-		var p := SQUARE + Vector2(cos(a), sin(a)) * r
-		if _poly_dist(p, LANE) < 1.4:
+	# Graveyard east of the chapel and behind it: leaning stones, crosses, statues, open graves.
+	var graves: Array[Vector2] = []
+	for row in 4:
+		for k in 5:
+			graves.append(Vector2(33.0 + k * 2.1 + rng.randf_range(-0.4, 0.4), 361.0 + row * 3.3 + rng.randf_range(-0.5, 0.5)))
+	for k in 6:
+		graves.append(Vector2(21.0 + k * 2.3 + rng.randf_range(-0.4, 0.4), 375.5 + rng.randf_range(-0.6, 0.6)))
+	var wood := RetroMaterials.wood()
+	for i in graves.size():
+		var p := graves[i]
+		if not _free(p, 0.6) or _path_dist(p) < 1.6:
 			continue
-		_clothes_heap(gore, terrain.ground(p.x, p.y), rng)
-	# Ooze and blood splats around the square.
-	for i in 20:
-		var a := rng.randf() * TAU
-		var r := rng.randf_range(1.0, 22.0)
-		var p := SQUARE + Vector2(cos(a), sin(a)) * r
-		var g := terrain.ground(p.x, p.y) + Vector3(0, 0.07, 0)
-		if i % 3 == 0:
-			_splat(gore, _ooze, g, rng.randf_range(0.8, 2.4), rng)
+		var g := terrain.ground(p.x, p.y)
+		tv.at(g, 115.0)
+		b.at(g, 70.0)
+		var kind := rng.randi_range(0, 3)
+		if kind == 3:
+			var lean := Basis(Vector3.UP, rng.randf_range(-0.3, 0.3)) * Basis(Vector3(0, 0, 1), rng.randf_range(-0.35, 0.35))
+			tv.box(wood, HollowmereProps.xfm(lean, g + lean * Vector3(0, 0.6, 0)), Vector3(0.1, 1.3, 0.1), Color(1, 1, 1))
+			tv.box(wood, HollowmereProps.xfm(lean, g + lean * Vector3(0, 0.95, 0)), Vector3(0.6, 0.1, 0.08), Color(1, 1, 1))
 		else:
-			_splat(gore, _blood, g, rng.randf_range(0.5, 1.6), rng)
-	# A blood trail from the square into the first house.
-	var door := doors[0]
-	var start := terrain.ground(SQUARE.x + 1.0, SQUARE.y - 1.0)
-	_trail(gore, start, Vector3(door.x, terrain.height_at(door.x, door.z), door.z), rng)
-	# A candle in one window of a ruined house (cottage 3).
-	var cot := village.get_node("Cottage_3") as Node3D
-	var cp := cot.transform * Vector3(1.2, 1.4, 1.6)
-	PartBuilder.cylinder(village, 0.03, 0.03, 0.14, cp - Vector3(0, 0.07, 0), RetroMaterials.flat(Color(0.8, 0.75, 0.6)), 5)
-	PartBuilder.sphere(village, 0.035, cp + Vector3(0, 0.03, 0), RetroMaterials.flat(Color(1.0, 0.7, 0.3), 2.0), false, 5)
-	var candle := OmniLight3D.new()
-	candle.name = "CandleLight"
-	candle.position = cp + Vector3(0, 0.2, 0)
-	candle.light_color = Color(1.0, 0.6, 0.25)
-	candle.light_energy = 0.8
-	candle.omni_range = 4.0
-	candle.shadow_enabled = false
-	village.add_child(candle)
-
-
-static func _scarecrow_ring(region: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> void:
-	var ring := _group(region, "ScarecrowRing")
-	var center := Vector2(22.0, 330.0)
-	var n := 10
-	for i in n:
-		var a := TAU * i / n + 0.3
-		var p := center + Vector2(cos(a), sin(a)) * 10.0
-		if _poly_dist(p, LANE) < 2.6 or _poly_dist(p, OverworldSpec.MAIN_ROAD) < 2.6:
+			HollowmereVillage.gravestone(tv, g, PI + rng.randf_range(-0.2, 0.2), kind, rng)
+		# Grave mound, some dug open from below.
+		var mound := g + Vector3(0, 0, 1.1)
+		if i % 6 == 2:
+			HollowmereProps.ground_pool(b, HollowmereProps.organic(), terrain, Vector2(mound.x, mound.z), 0.7, Color(0.02, 0.015, 0.01), Color(0.12, 0.08, 0.05), rng, 0.05, Vector2(0.7, 1.4))
+			b.blob(HollowmereProps.organic(), mound + Vector3(0.9, 0.0, 0), Basis.IDENTITY, Vector3(0.45, 0.3, 0.8), 7, 4, HollowmereProps.SOIL, 0.2, rng.randf())
+			var hand := mound + Vector3(-0.1, 0.05, -0.3)
+			b.tube(HollowmereProps.flesh(), PackedVector3Array([hand - Vector3(0, 0.2, 0), hand + Vector3(0.05, 0.35, 0.05), hand + Vector3(0.12, 0.55, 0.0)]),
+				PackedFloat32Array([0.05, 0.04, 0.03]), 4, HollowmereProps.wa(HollowmereProps.SKIN_GREY, 0.3))
+		else:
+			b.blob(HollowmereProps.organic(), mound + Vector3(0, -0.12, 0), Basis.IDENTITY, Vector3(0.45, 0.22, 0.9), 7, 3, HollowmereProps.SOIL.lightened(0.05), 0.15, rng.randf())
+	for p: Vector2 in [Vector2(32.2, 359.6), Vector2(27.5, 378.5)]:
+		var st := AssetKit.place(small, "gothic_statue", terrain.ground(p.x, p.y), rng.randf_range(2.6, 3.6), 1.05)
+		st.name = "GothicStatue"
+		var sb := HollowmereProps.body(village, "StatueCollider")
+		HollowmereProps.shape_box(sb, Vector3(1.1, 1.8, 1.1), HollowmereProps.xfm(Basis.IDENTITY, terrain.ground(p.x, p.y) + Vector3(0, 0.9, 0)))
+	# Iron railing along the graveyard's lane side, half fallen.
+	var iron := RetroMaterials.iron()
+	for k in 16:
+		var p := Vector2(31.6, 357.5) + Vector2(0.75 * k, 0.0)
+		if rng.randf() < 0.18 or not _free(p, 0.2):
 			continue
-		var sc := PropKit.scarecrow(rng, true)
-		sc.position = terrain.ground(p.x, p.y)
-		sc.rotation.y = atan2(cos(a), sin(a)) + rng.randf_range(-0.3, 0.3)
-		ring.add_child(sc)
+		var g := terrain.ground(p.x, p.y)
+		var tilt := Basis(Vector3.RIGHT, rng.randf_range(-0.1, 0.1) + (0.9 if k > 11 else 0.0))
+		tv.at(g, 115.0)
+		for q in 3:
+			var x := float(q) * 0.25 - 0.25
+			tv.box(iron, HollowmereProps.xfm(tilt, g + tilt * Vector3(x, 0.65, 0)), Vector3(0.035, 1.3, 0.035), Color(1, 1, 1))
+		tv.box(iron, HollowmereProps.xfm(tilt, g + tilt * Vector3(0, 1.1, 0)), Vector3(0.78, 0.04, 0.04), Color(1, 1, 1))
+		tv.box(iron, HollowmereProps.xfm(tilt, g + tilt * Vector3(0, 0.25, 0)), Vector3(0.78, 0.04, 0.04), Color(1, 1, 1))
+
+
+static func _square(village: Node3D, small: Node3D, b: HollowmereBatch, tv: HollowmereBatch, terrain: TerrainBuilder, rng: RandomNumberGenerator, houses: Array) -> void:
+	var white := Color(1, 1, 1)
+	var g := terrain.ground(SQUARE.x, SQUARE.y)
+	tv.at(g, 115.0)
+	b.at(g, 70.0)
+	var bucket := HollowmereVillage.blood_well(village, tv, b, g, 0.4, rng)
+	AssetKit.place(small, "wooden_bucket_01", bucket - Vector3(0, 0.5, 0), 0.3, 1.0)
+	# Warm lantern on a post at the well (the square's one light).
+	var post := g + Vector3(2.0, 0, -1.6)
+	tv.box(HollowmereProps.timber(), HollowmereProps.xfm(Basis.IDENTITY, post + Vector3(0, 1.3, 0)), Vector3(0.14, 2.6, 0.14), white)
+	tv.beam(HollowmereProps.timber(), post + Vector3(0, 2.5, 0), post + Vector3(0.6, 2.5, 0), 0.1, 0.1, white)
+	AssetKit.place(small, "wooden_lantern_01", post + Vector3(0.55, 1.95, 0), 0.0, 1.0)
+	tv.box(HollowmereProps.glow(), HollowmereProps.xfm(Basis.IDENTITY, post + Vector3(0.55, 2.18, 0)), Vector3(0.09, 0.14, 0.09), white)
+	var wl := OmniLight3D.new()
+	wl.name = "WellLight"
+	wl.position = post + Vector3(0.55, 2.2, 0)
+	wl.light_color = Color(1.0, 0.66, 0.32)
+	wl.light_energy = 1.0
+	wl.omni_range = 6.5
+	wl.shadow_enabled = false
+	village.add_child(wl)
+	# Market stalls: produce, and the butcher's hooks.
+	var counter := HollowmereVillage.market_stall(village, tv, b, terrain.ground(17.0, 337.0), atan2(SQUARE.x - 17.0, SQUARE.y - 337.0), rng)
+	for k in 5:
+		var pk := HollowmereProps.roll_pumpkin(rng, 0.2)
+		pk["size"] = rng.randf_range(0.3, 0.45)
+		HollowmereProps.pumpkin(b, counter + Vector3(rng.randf_range(-0.9, 0.9), 0.0, rng.randf_range(-0.2, 0.2)), pk, 0)
+	var bpos := terrain.ground(31.0, 349.0)
+	tv.at(bpos, 115.0)
+	b.at(bpos, 70.0)
+	HollowmereVillage.market_stall(village, tv, b, bpos, atan2(SQUARE.x - 31.0, SQUARE.y - 349.0), rng, true)
+	HollowmereProps.ground_pool(b, HollowmereProps.flesh(), terrain, Vector2(30.6, 348.4), 1.0,
+			HollowmereProps.wa(HollowmereProps.BLOOD_DARK, 0.0), HollowmereProps.wa(HollowmereProps.BLOOD, 0.0), rng)
+	# Gibbet cages: one in the square, one at the village gate.
+	for spot: Array in [[Vector2(32.5, 343.5), 0.3], [Vector2(15.8, 318.5), PI]]:
+		var p: Vector2 = spot[0]
+		var gp := terrain.ground(p.x, p.y)
+		tv.at(gp, 115.0)
+		b.at(gp, 115.0)
+		var hang := HollowmereProps.gallows(village, tv, gp, float(spot[1]))
+		HollowmereProps.gibbet_cage(tv, b, hang, 0.5, rng)
+		HollowmereProps.ground_pool(b, HollowmereProps.flesh(), terrain, Vector2(hang.x, hang.z), 0.6,
+				HollowmereProps.wa(HollowmereProps.BLOOD_DARK, 0.0), HollowmereProps.wa(HollowmereProps.BLOOD, 0.0), rng)
+	# The smashed cart, its load of pumpkins burst across the lane.
+	var cart := PropKit.cart_wreck(rng)
+	cart.position = terrain.ground(15.0, 329.5)
+	cart.rotation.y = 0.9
+	small.add_child(cart)
+	b.at(cart.position, 70.0)
+	for k in 7:
+		var p := Vector2(16.5, 330.5) + Vector2(rng.randf_range(-1.5, 2.0), rng.randf_range(-1.5, 1.5))
+		if _path_dist(p) < 1.0:
+			continue
+		var pk := HollowmereProps.roll_pumpkin(rng, 0.15)
+		pk["size"] = rng.randf_range(0.45, 0.8)
+		pk["kind"] = 3 if k % 2 == 0 else int(pk["kind"])
+		HollowmereProps.pumpkin(b, terrain.ground(p.x, p.y), pk, 0)
+	HollowmereProps.blood_trail(b, terrain, Vector2(16.0, 331.0), Vector2(19.5, 335.0), rng)
+	AssetKit.place(small, "rusted_wheel_rim_01", terrain.ground(13.6, 331.6) + Vector3(0, 0.03, 0), 0.6, 1.4).rotation.x = PI * 0.5
+	# Blood from the square into the houses, pools, the clothes of the vanished.
+	for hi: int in [0, 3, 1]:
+		var door: Vector3 = (houses[hi] as Dictionary)["door"]
+		var from := SQUARE + (Vector2(door.x, door.z) - SQUARE).normalized() * 2.5
+		b.at(door, 70.0)
+		HollowmereProps.blood_trail(b, terrain, from, Vector2(door.x, door.z), rng)
+	for k in 10:
+		var a := rng.randf() * TAU
+		var p := SQUARE + Vector2(cos(a), sin(a)) * rng.randf_range(2.0, 10.0)
+		b.at(terrain.ground(p.x, p.y), 70.0)
+		HollowmereProps.ground_pool(b, HollowmereProps.flesh(), terrain, p, rng.randf_range(0.3, 1.0),
+				HollowmereProps.wa(HollowmereProps.BLOOD_DARK, 0.0), HollowmereProps.wa(HollowmereProps.BLOOD, 0.0), rng, 0.09)
+	b.at(g, 70.0)
+	for k in 9:
+		var a := TAU * k / 9.0 + rng.randf_range(-0.2, 0.2)
+		var p := SQUARE + Vector2(cos(a), sin(a)) * rng.randf_range(2.2, 3.5)
+		if not _free(p, 0.5):
+			continue
+		_clothes(b, terrain.ground(p.x, p.y), rng)
+	_kit_props(small, tv, terrain, rng, houses)
+
+
+static func _clothes(b: HollowmereBatch, pos: Vector3, rng: RandomNumberGenerator) -> void:
+	var col: Color = HollowmereProps.CLOTH[rng.randi() % HollowmereProps.CLOTH.size()]
+	for i in 3:
+		var off := Vector3(rng.randf_range(-0.3, 0.3), 0.07 + i * 0.04, rng.randf_range(-0.3, 0.3))
+		var basis := Basis(Vector3.UP, rng.randf() * TAU) * Basis(Vector3(0, 0, 1), rng.randf_range(-0.1, 0.1))
+		b.box(HollowmereProps.organic(), HollowmereProps.xfm(basis, pos + off), Vector3(rng.randf_range(0.5, 0.9), 0.05, rng.randf_range(0.4, 0.75)), col.darkened(i * 0.15))
+	b.box(HollowmereProps.organic(), HollowmereProps.xfm(Basis(Vector3.UP, rng.randf() * TAU), pos + Vector3(0.4, 0.08, 0.1)), Vector3(0.12, 0.1, 0.26), Color(0.12, 0.08, 0.05))
+
+
+## Scanned kit props round the houses and the square.
+static func _kit_props(small: Node3D, tv: HollowmereBatch, terrain: TerrainBuilder, rng: RandomNumberGenerator, houses: Array) -> void:
+	var picks := ["wine_barrel_01", "wooden_crate_01", "wooden_crate_02", "wooden_bucket_01", "wine_barrel_01", "wooden_crate_02"]
+	for i in houses.size():
+		var info: Dictionary = houses[i]
+		var xf: Transform3D = info["xf"]
+		var h: Array = HOUSES[i]
+		var w: float = h[4]
+		var d: float = h[5]
+		for k in rng.randi_range(1, 3):
+			var lp := Vector3((1.0 if k % 2 == 0 else -1.0) * (w * 0.5 + 0.55), 0.0, rng.randf_range(-d * 0.3, d * 0.4))
+			var wp := xf * lp
+			if _path_dist(Vector2(wp.x, wp.z)) < 1.7 or not _free(Vector2(wp.x, wp.z), 0.6):
+				continue
+			var model: String = picks[(i + k) % picks.size()]
+			var node := AssetKit.place(small, model, terrain.ground(wp.x, wp.z), rng.randf() * TAU, rng.randf_range(0.95, 1.1))
+			if model == "wine_barrel_01" and rng.randf() < 0.35:
+				node.rotation = Vector3(PI * 0.5, rng.randf() * TAU, 0)
+				node.position.y += 0.38
+	# Square furniture: benches (one kicked over), a table on its side, stools, a spinning wheel.
+	var bench := AssetKit.place(small, "painted_wooden_bench", terrain.ground(20.5, 340.0), 1.1, 1.0)
+	bench.rotation.z = 0.0
+	var tipped := AssetKit.place(small, "painted_wooden_bench", terrain.ground(27.6, 346.4) + Vector3(0, 0.25, 0), 2.4, 1.0)
+	tipped.rotation.x = PI * 0.5
+	var table := AssetKit.place(small, "WoodenTable_01", terrain.ground(19.6, 333.8) + Vector3(0, 0.33, 0), 0.4, 1.0)
+	table.rotation.x = -PI * 0.5
+	AssetKit.place(small, "wooden_stool_01", terrain.ground(21.0, 335.2), 0.8, 1.0)
+	AssetKit.place(small, "spinning_wheel_01", terrain.ground(8.4, 338.0), 1.4, 1.0)
+	AssetKit.place(small, "wooden_ladder", terrain.ground(15.0, 351.0), 0.8, 1.6).rotation.x = -0.3
+	for p: Vector2 in [Vector2(34.0, 345.0), Vector2(35.0, 346.0), Vector2(18.5, 324.5), Vector2(8.0, 327.5)]:
+		if _path_dist(p) > 1.5 and _free(p, 0.5):
+			AssetKit.place(small, picks[rng.randi() % picks.size()], terrain.ground(p.x, p.y), rng.randf() * TAU, 1.0)
+	# Lantern posts at the village gate.
+	for p: Vector2 in [Vector2(17.6, 320.5), Vector2(23.0, 321.5)]:
+		var g := terrain.ground(p.x, p.y)
+		tv.at(g, 115.0)
+		tv.box(HollowmereProps.timber(), HollowmereProps.xfm(Basis.IDENTITY, g + Vector3(0, 1.1, 0)), Vector3(0.14, 2.2, 0.14), Color(1, 1, 1))
+		AssetKit.place(small, "wooden_lantern_01", g + Vector3(0, 2.2, 0), rng.randf() * TAU, 1.0)
 
 
 static func _grass(region: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> void:
 	var mat := load(GRASS_MAT) as Material
 	if mat == null:
 		return
-	var cottage_spots: Array = COTTAGES
 	var accept := func(p: Vector2) -> bool:
-		if _poly_dist(p, OverworldSpec.MAIN_ROAD) <= 2.4 or _poly_dist(p, LANE) <= 2.4:
+		if _path_dist(p) <= 2.0 or p.distance_to(SQUARE) < 8.0 or _house_hit(p, 0.0):
 			return false
-		if p.distance_to(SQUARE) < 6.0 or p.distance_to(CHAPEL_POS) < 6.5:
+		if p.distance_to(CHAPEL_POS) < 7.0:
 			return false
-		for c: Vector2 in cottage_spots:
-			if absf(p.x - c.x) < 3.2 and absf(p.y - c.y) < 3.6:
-				return false
-		# Between the pumpkin rows only at the field edge.
-		if p.y > FIELD_Z0 - 2.0 and p.y < FIELD_Z1 + 2.0 and absf(p.x - _road_x(p.y)) < 14.5:
-			return false
+		if p.y > FIELD_Z0 - 2.0 and p.y < FIELD_Z1 + 2.0 and absf(p.x - _road_x(p.y)) < 25.0:
+			return false  # the furrows are bare soil
 		return true
 	GrassScatter.scatter(region, terrain, Rect2(-34.0, 226.0, 100.0, 170.0), 1500, mat, Vector2(0.8, 0.6), rng, accept)
 
 
 static func _markers(region: Node3D, terrain: TerrainBuilder) -> void:
 	var markers := _group(region, "Markers")
-	var enemy := [Vector2(19.0, 346.0), Vector2(29.0, 341.0), Vector2(24.0, 352.0),
-		Vector2(_road_x(262.0) + 8.0, 262.0), Vector2(_road_x(282.0) - 8.0, 282.0)]
-	for i in enemy.size():
-		_marker(markers, "Spawn_Enemy_%d" % (i + 1), terrain, enemy[i])
-	_marker(markers, "Lore_1", terrain, Vector2(31.5, 357.0))
-	_marker(markers, "Lore_2", terrain, Vector2(_road_x(250.0) - 3.4, 250.0))
-	_marker(markers, "Pickup_1", terrain, Vector2(13.0, 333.0))
-	_marker(markers, "Pickup_2", terrain, Vector2(40.0, 340.0))
-	_marker(markers, "Light_1", terrain, CHAPEL_POS + Vector2(-1.1, -7.2)).position.y += 2.4
-	_marker(markers, "Light_2", terrain, Vector2(43.0, 350.0)).position.y += 1.4
-	var trig := _marker(markers, "Trigger", terrain, SQUARE)
-	trig.set_meta("radius", 55.0)
+	var spots := _marker_spots()
+	for id: String in spots:
+		_marker(markers, id, terrain, spots[id])
+	var village := region.get_node("Village")
+	var i := 1
+	for light_name: String in ["LanternLight", "CandleLight", "WellLight", "MawLight"]:
+		var l := village.get_node_or_null(light_name) as Node3D
+		if l:
+			var m := Marker3D.new()
+			m.name = "Light_%d" % i
+			m.position = l.position
+			markers.add_child(m)
+		i += 1
+	# Covers the fields (the hero view) and the village.
+	var trig := _marker(markers, "Trigger", terrain, Vector2(20.0, 305.0))
+	trig.set_meta("radius", 66.0)
 
 
 static func _marker(parent: Node3D, marker_name: String, terrain: TerrainBuilder, xz: Vector2) -> Marker3D:
