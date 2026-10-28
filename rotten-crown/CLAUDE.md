@@ -11,7 +11,13 @@ Design: docs/GAME_DESIGN.md. Architecture: docs/ARCHITECTURE.md. Phases: docs/RO
 - Physics layers: 1 world, 2 player, 3 enemies, 4 interactables, 5 player_hurtbox, 6 enemy_hurtbox.
 - Horror rule: no jump scares. Fear comes from uncanny bodies and behaviour (see CreatureRig).
 - Keep mobile budgets in mind: 640x360 internal resolution, <= 8 omni lights per mesh, no shadows on omni lights.
-- Player-facing text is English for now (Arabic localisation is Phase 7); docs are Arabic.
+- Player-facing text is English for now (Arabic localisation is Phase 8); docs are Arabic.
+
+## Content pipelines (baked content)
+- The world is baked, not generated at runtime. After changing `src/world`, `src/levels/valdron`, regions or props, run `GODOT=... tools/bake_world.sh overworld` and `... prologue`, and commit the regenerated `src/levels/valdron/baked/*.scn` with the change.
+- After changing a character (rig, `creature_rig.gd`, `tools/sprite_baker/characters.json`), run `GODOT=... tools/bake_sprites.sh <char>` and commit `assets/sprites/<char>/`.
+- The sprite direction convention lives in `SpriteSheetData.direction_index` (`src/rendering/sprite_sheet_data.gd`). The baker and `PixelSprite3D` must agree: change both or neither.
+- `hollow.tscn` is sprite based (`SpriteCreatureVisual`). The baker poses creatures through `tools/sprite_baker/creature_rig.tscn`, not through the hollow scene.
 
 ## Before committing
 - `python3 tools/validate_project.py` must pass.
