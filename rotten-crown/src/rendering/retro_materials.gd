@@ -67,6 +67,43 @@ static func linen() -> StandardMaterial3D:
 	return mat
 
 
+## --- Props palettes (PropKit) ---
+static func clapboard() -> StandardMaterial3D:
+	return _cached("clapboard", [Color(0.46, 0.44, 0.37), Color(0.54, 0.51, 0.43), Color(0.4, 0.38, 0.32), Color(0.58, 0.56, 0.47)], FastNoiseLite.TYPE_VALUE, 0.4, 0.5)
+
+
+static func rust_roof() -> StandardMaterial3D:
+	return _cached("rust_roof", [Color(0.22, 0.08, 0.05), Color(0.3, 0.11, 0.06), Color(0.37, 0.15, 0.07), Color(0.18, 0.07, 0.05)], FastNoiseLite.TYPE_CELLULAR, 0.3, 0.6)
+
+
+static func pumpkin() -> StandardMaterial3D:
+	return _cached("pumpkin", [Color(0.45, 0.17, 0.03), Color(0.58, 0.24, 0.04), Color(0.68, 0.3, 0.05), Color(0.5, 0.2, 0.03)], FastNoiseLite.TYPE_SIMPLEX, 0.3, 0.7)
+
+
+static func moss() -> StandardMaterial3D:
+	return _cached("moss", [Color(0.05, 0.1, 0.04), Color(0.08, 0.16, 0.05), Color(0.11, 0.21, 0.06), Color(0.06, 0.12, 0.04)], FastNoiseLite.TYPE_SIMPLEX, 0.35, 0.6)
+
+
+static func straw() -> StandardMaterial3D:
+	return _cached("straw", [Color(0.4, 0.3, 0.1), Color(0.5, 0.4, 0.15), Color(0.62, 0.5, 0.2)], FastNoiseLite.TYPE_VALUE, 0.5, 0.8)
+
+
+static func skin() -> StandardMaterial3D:
+	return _cached("skin", [Color(0.6, 0.46, 0.42), Color(0.68, 0.55, 0.48), Color(0.74, 0.62, 0.55)], FastNoiseLite.TYPE_SIMPLEX, 0.3, 0.8)
+
+
+static func sack() -> StandardMaterial3D:
+	return _cached("sack", [Color(0.3, 0.23, 0.15), Color(0.36, 0.29, 0.19), Color(0.42, 0.34, 0.22)], FastNoiseLite.TYPE_VALUE, 0.5, 0.9)
+
+
+static func brick() -> StandardMaterial3D:
+	return _cached("brick", [Color(0.2, 0.08, 0.06), Color(0.28, 0.12, 0.08), Color(0.33, 0.14, 0.09), Color(0.25, 0.15, 0.12)], FastNoiseLite.TYPE_CELLULAR, 0.4, 0.8)
+
+
+static func rag() -> StandardMaterial3D:
+	return _cached("rag", [Color(0.07, 0.05, 0.05), Color(0.12, 0.09, 0.07), Color(0.17, 0.12, 0.09)], FastNoiseLite.TYPE_SIMPLEX, 0.3, 0.8)
+
+
 static func flat(color: Color, emission_energy: float = 0.0) -> StandardMaterial3D:
 	var key := "flat_%s_%.2f" % [color.to_html(), emission_energy]
 	if _cache.has(key):
