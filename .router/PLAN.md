@@ -86,6 +86,15 @@ func flash(color := Color(1, 0.2, 0.15), time := 0.15) -> void
 Billboard FIXED_Y, nearest filter, alpha-cut discard, shaded = true, double-sided, centred so feet sit at node
 origin. Non-looping anims hold the last frame and emit `animation_finished`. One draw call per character.
 
+**Direction convention (shared by baker and runtime — do not change one without the other):**
+the baker renders direction `k` (0..dirs-1) with the camera on world +Z looking -Z and the model yawed by
+`theta_k = PI + k * TAU / dirs` (k=0: the character faces the camera). At runtime, with
+`v = global_basis.inverse() * (camera_pos - global_position)` (y ignored) and `phi = atan2(v.x, v.z)`,
+`k = posmod(roundi((-phi - PI) / (TAU / dirs)), dirs)`. Implement it once as
+`static func direction_index(local_to_camera: Vector3, dirs: int) -> int` in SpriteSheetData.
+Raw frames: `build/sprites_raw/<char>/<anim>_<k>_<frame>.png` (RGBA, transparent background) plus
+`build/sprites_raw/<char>/meta.json` = {"dirs", "render_px", "camera_size", "anims": {name: {"frames","fps","loop"}}}.
+
 ### C3 Rig sampling (bake-time) — `src/characters/humanoid_rig.gd`, `src/enemies/creature_rig.gd`
 ```gdscript
 func pose_at(anim: StringName, t: float) -> void   # deterministic pose, no _process accumulation

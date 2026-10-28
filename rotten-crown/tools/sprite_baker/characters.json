@@ -1,0 +1,55 @@
+{
+  "_comment": "Sprite bake specs. duration = seconds of animation sampled; loops sample [0, duration), one-shots [0, duration]. Humanoid periods: walk 0.898 s, cheer 1.257 s, dance/music 1.904 s.",
+  "knight": {
+    "kind": "humanoid", "script": "res://src/characters/knight_model.gd", "props": {},
+    "height_px": 76, "palette": 40, "camera_size": 2.7, "center_y": 1.05,
+    "anims": {
+      "idle": {"frames": 4, "fps": 3, "loop": true, "duration": 4.83},
+      "walk": {"frames": 8, "fps": 9, "loop": true, "duration": 0.898},
+      "toast": {"frames": 4, "fps": 4, "loop": true, "duration": 2.0},
+      "cheer": {"frames": 6, "fps": 6, "loop": true, "duration": 1.257},
+      "stretch": {"frames": 6, "fps": 4, "loop": false, "duration": 1.5},
+      "lie": {"frames": 1, "fps": 1, "loop": false, "duration": 0.0}
+    }
+  },
+  "villager": {
+    "kind": "humanoid", "script": "res://src/characters/villager_model.gd",
+    "variants": [
+      {"seed": 11, "wears_dress": false}, {"seed": 12, "wears_dress": true}, {"seed": 13, "wears_dress": false},
+      {"seed": 14, "wears_dress": false}, {"seed": 15, "wears_dress": true}, {"seed": 16, "wears_dress": false},
+      {"seed": 17, "wears_dress": true}, {"seed": 18, "wears_dress": false, "holds_instrument": true}
+    ],
+    "height_px": 66, "palette": 28, "camera_size": 2.5, "center_y": 0.95,
+    "anims": {
+      "idle": {"frames": 4, "fps": 3, "loop": true, "duration": 4.83},
+      "walk": {"frames": 8, "fps": 9, "loop": true, "duration": 0.898},
+      "dance": {"frames": 12, "fps": 8, "loop": true, "duration": 1.904},
+      "cheer": {"frames": 6, "fps": 6, "loop": true, "duration": 1.257},
+      "music": {"frames": 8, "fps": 6, "loop": true, "duration": 1.904}
+    }
+  },
+  "hollow": {
+    "kind": "creature", "scene": "res://src/enemies/hollow.tscn", "data": "res://data/enemies/hollow.tres", "look_at_viewer": true,
+    "height_px": 84, "palette": 30, "camera_size": 3.0, "center_y": 1.2,
+    "anims": {
+      "idle": {"frames": 8, "fps": 4, "loop": true, "duration": 3.0},
+      "walk": {"frames": 8, "fps": 8, "loop": true, "duration": 1.0},
+      "windup": {"frames": 6, "fps": 8, "loop": false, "duration": 0.75},
+      "strike": {"frames": 3, "fps": 12, "loop": false, "duration": 0.2},
+      "stagger": {"frames": 4, "fps": 8, "loop": false, "duration": 0.5},
+      "death": {"frames": 8, "fps": 8, "loop": false, "duration": 1.2}
+    }
+  },
+  "mourner": {
+    "kind": "creature", "scene": "res://src/enemies/hollow.tscn", "data": "res://data/enemies/mourner.tres", "look_at_viewer": true,
+    "height_px": 92, "palette": 30, "camera_size": 3.2, "center_y": 1.3,
+    "anims": {
+      "idle": {"frames": 8, "fps": 4, "loop": true, "duration": 3.0},
+      "walk": {"frames": 8, "fps": 8, "loop": true, "duration": 1.0},
+      "windup": {"frames": 6, "fps": 8, "loop": false, "duration": 0.6},
+      "strike": {"frames": 3, "fps": 12, "loop": false, "duration": 0.2},
+      "stagger": {"frames": 4, "fps": 8, "loop": false, "duration": 0.5},
+      "death": {"frames": 8, "fps": 8, "loop": false, "duration": 1.2}
+    }
+  }
+}

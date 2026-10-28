@@ -9,3 +9,4 @@
 | T01 | N (router-normal) | done | humanoid_rig.gd, creature_rig.gd, knight_model.gd | first attempt blocked; retry in a pre-made worktree passed; verified by H |
 | T10 | N (router-normal) | done | prop_kit.gd, retro_materials.gd (palettes), prop_gallery | verified by H render; gnarled canopy + chapel spire to refine in T13/T14 |
 | T09 | H | done | terrain_spec.gd, terrain_builder.gd, terrain.gdshader, grass_scatter.gd, terrain_preview | crash traced to "".split_floats() engine bug in the preview, not terrain |
+| T03 | H | done | tools/sprite_baker/*, tools/bake_sprites.sh | hollow: 296 frames in 6.8 s; head faces viewer in all 8 dirs |
