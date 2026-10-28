@@ -29,3 +29,17 @@
 | T24 | N (router-normal) | done | pixel_sprite_3d.gd, sprite_creature_visual.gd | findings 8,9,10,13; H read diff |
 | T25 | H | done | grass_scatter, quality_manager, weather_controller, level, region_trigger, events, hud, bake_world, wood builder, baker | findings 1-6, 11a; verified headless (grass group 527, Low halves grass + no streaks, region re-entry restores fog/rain). Not done: 7 (32 m chunks: more draw calls, targets met), 11 C3 naming, horizon still runtime (cheap) |
 | T23 | H | done | docs/ (web build), export_presets.cfg, bake_sprites.sh (build/.gdignore) | pck 30 MB -> 11.5 MB (raw sprite renders were imported+exported); smoke PASS, touch PASS; Medium: spawn 8, Hollowmere 6.25, prologue 5.25 fps, load 5.2 s (phase 2: ~5 / - / 4.75 / 6.2); AC6 prologue fps + load time not met in absolute terms |
+
+## Phase 3b (quality upgrade after the user's Phase 3 report)
+| task | tier used | status | files | note |
+|---|---|---|---|---|
+| plan 3b | H | approved by user (Blender route, no PixelLab) | .router/PLAN.md | skills: taste/pixel-art/pxl downloaded; install into the project denied by auto-mode classifier -> user to decide |
+| U1 | H | done | docs/ART_DIRECTION.md | palettes, texel density, sprite scale |
+| U2+U6 | N (router-normal) | done | tools/assets/*, assets/models (38 CC0 GLB), assets/textures/world (12) | verified gallery; pines sparse |
+| U3 | N | done | tools/pixelize_sprites.py, tools/sprite_compare.py | crisp downscale, OKLab ramps, selective outline; verified compare sheets |
+| U3c | N | done | sprite_sheet_data.gd, pixel_sprite_3d.gd, pixel_sprite.gdshader, test sheet | v2 runtime (indexed, trimmed); verified contact sheet; + extra_offset follow-up |
+| U3b | N | done | tools/pixelize_sprites.py | v2 writer: material ramps, palette variants, L8 atlas |
+| U4 | H | rendering | tools/blender/* (rig, materials, renderer, knight) | knight 150 px, 51 frames x 8 dirs; material-id pass |
+| U5 | H | rendering | tools/blender/characters/{villager,creature}.py | 3 villager types + variants; hollow, mourner |
+| R1 | H | done | retro_materials.gd, terrain shader/builder, asset_kit.gd | scanned textures on all procedural world surfaces |
+| U7/U8/U9 | H (router-hard x3) | running | regions | parallel worktrees |
