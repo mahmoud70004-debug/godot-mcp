@@ -8,7 +8,10 @@ signal animation_finished(anim: StringName)
 	set(value):
 		sheet = value
 		_apply_sheet()
-@export var anim: StringName = &"idle"
+@export var anim: StringName = &"idle":
+	set(value):
+		anim = value
+		_refresh_anim_info()
 @export var speed_scale := 1.0
 ## >= 0 always shows that baked direction (e.g. a pose that must not flip as the camera moves).
 @export var fixed_direction := -1
@@ -16,6 +19,13 @@ signal animation_finished(anim: StringName)
 var _time := 0.0
 var _finished := false
 var _flash_tween: Tween
+# Cached info of the current anim (refreshed when anim or sheet changes).
+var _has_info := false
+var _frames := 1
+var _fps := 1.0
+var _loop := true
+var _row := 0
+var _last_region_key := -1
 
 
 func _ready() -> void:
@@ -24,18 +34,13 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if sheet == null:
+	if not _has_info:
 		return
-	var info: Dictionary = sheet.anims.get(anim, {})
-	if info.is_empty():
-		return
-	var frames: int = info["frames"]
-	var fps: float = info["fps"]
 	if not _finished:
 		_time += delta * speed_scale
-		if not bool(info["loop"]) and _time * fps >= frames:
+		if not _loop and _time * _fps >= _frames:
 			_finished = true
-			_time = (frames - 1) / maxf(fps, 0.001)
+			_time = (_frames - 1) / maxf(_fps, 0.001)
 			animation_finished.emit(anim)
 	_update_region()
 
@@ -44,6 +49,7 @@ func play(anim_name: StringName, restart := false) -> void:
 	if anim_name == anim and not restart:
 		return
 	anim = anim_name
+	_refresh_anim_info()
 	_time = 0.0
 	_finished = false
 	_update_region()
@@ -84,19 +90,34 @@ func _apply_sheet() -> void:
 	centered = true
 	# Centre horizontally; lift so the feet (foot_offset_px above the frame bottom) sit at the origin.
 	offset = Vector2(0.0, sheet.frame_size.y * 0.5 - sheet.foot_offset_px)
+	_refresh_anim_info()
 
 
-func _update_region() -> void:
+func _refresh_anim_info() -> void:
+	_has_info = false
+	_last_region_key = -1
 	if sheet == null:
 		return
 	var info: Dictionary = sheet.anims.get(anim, {})
 	if info.is_empty():
 		return
-	var frames: int = info["frames"]
-	var frame := clampi(int(_time * float(info["fps"])), 0, frames - 1)
-	if bool(info["loop"]):
-		frame = int(_time * float(info["fps"])) % frames
-	var row: int = int(info["row"]) + get_direction_index()
+	_frames = maxi(int(info["frames"]), 1)
+	_fps = float(info["fps"])
+	_loop = bool(info["loop"])
+	_row = int(info["row"])
+	_has_info = true
+
+
+func _update_region() -> void:
+	if not _has_info:
+		return
+	var step := int(_time * _fps)
+	var frame := step % _frames if _loop else clampi(step, 0, _frames - 1)
+	var row := _row + get_direction_index()
+	var key := row * 4096 + frame
+	if key == _last_region_key:
+		return
+	_last_region_key = key
 	region_rect = Rect2(
 		Vector2(frame * sheet.frame_size.x, row * sheet.frame_size.y), Vector2(sheet.frame_size)
 	)

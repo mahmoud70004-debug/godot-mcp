@@ -23,6 +23,9 @@ var _twitch_wait := 3.0
 var _twitch_left := 0.0
 var _walk_ref_speed := 2.0
 var _hold_anim: StringName = &"idle"
+var _move_scale := 1.0
+var _base_offset := Vector2.ZERO
+var _missing_sheet := false
 
 
 func _init() -> void:
@@ -35,7 +38,11 @@ func _init() -> void:
 
 
 func setup(data: EnemyData) -> void:
+	_missing_sheet = data.sprite_sheet == null
+	if _missing_sheet:
+		push_error("SpriteCreatureVisual: no sprite_sheet in %s" % data.resource_path)
 	sprite.sheet = data.sprite_sheet
+	_base_offset = sprite.offset
 	_twitch_intensity = data.twitch_intensity
 	_walk_ref_speed = maxf(data.chase_speed, 0.5)
 	sprite.play(&"idle", true)
@@ -48,7 +55,7 @@ func set_look_target(_target: Node3D) -> void:
 func set_move_speed(speed: float) -> void:
 	_moving = speed > WALK_THRESHOLD
 	if _moving:
-		sprite.speed_scale = clampf(speed / _walk_ref_speed, 0.5, 1.6)
+		_move_scale = clampf(speed / _walk_ref_speed, 0.5, 1.6)
 	if _busy or not _alive:
 		return
 	_play_locomotion()
@@ -84,6 +91,9 @@ func play_death() -> Signal:
 	_busy = true
 	_reset_twitch()
 	sprite.speed_scale = 1.0
+	if _missing_sheet:
+		death_finished.emit.call_deferred()
+		return death_finished
 	sprite.play(&"death", true)
 	return death_finished
 
@@ -104,21 +114,19 @@ func _process(delta: float) -> void:
 
 
 func _apply_twitch(strength: float) -> void:
+	# Screen-space jitter (sprite pixels): rotation/position are invisible under BILLBOARD_FIXED_Y.
 	var k := strength * _twitch_intensity
-	sprite.position = Vector3(
-		_rng.randf_range(-0.04, 0.04), _rng.randf_range(-0.015, 0.03), 0.0
-	) * k
-	sprite.rotation.z = deg_to_rad(_rng.randf_range(-4.0, 4.0)) * k
+	sprite.offset = _base_offset + Vector2(_rng.randf_range(-3.0, 3.0), _rng.randf_range(-2.0, 1.0)) * k
 
 
 func _reset_twitch() -> void:
-	sprite.position = Vector3.ZERO
-	sprite.rotation.z = 0.0
+	sprite.offset = _base_offset
 	_twitch_left = 0.0
 
 
 func _play_locomotion() -> void:
 	if _moving:
+		sprite.speed_scale = _move_scale
 		sprite.play(&"walk")
 	else:
 		sprite.play(&"idle")
