@@ -244,3 +244,7 @@ The bundled script accepts operation type and parameters as JSON, allowing for f
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Rotten Crown prototype
+
+The standalone Godot game prototype is in [`rotten-crown/`](rotten-crown/README.md). It does not change the MCP server setup.

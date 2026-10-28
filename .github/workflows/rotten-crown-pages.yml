@@ -1,0 +1,39 @@
+name: Publish Rotten Crown preview
+
+on:
+  push:
+    branches:
+      - arena/9d0420eb-godot-mcp
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: rotten-crown-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test and build the web preview
+        run: |
+          cd rotten-crown/preview
+          python3 -m unittest -v
+          python3 build_static.py "$RUNNER_TEMP/rotten-crown-site"
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/rotten-crown-site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
