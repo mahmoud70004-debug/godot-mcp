@@ -65,6 +65,11 @@ func _apply_dev_perf_flags() -> void:
 ## Dev aid for rendering review shots: RC_SHOT="x,y,z,yaw_deg,pitch_deg".
 func _apply_dev_shot() -> void:
 	var shot := OS.get_environment("RC_SHOT")
+	if OS.has_feature("web"):
+		# ?tp=x,y,z,yaw (yaw 180 faces +Z); pitch is level.
+		var q: Variant = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('tp') || ''", true)
+		if q != null and str(q) != "":
+			shot = str(q) + ",0"
 	if shot == "" or player == null:
 		return
 	var v := shot.split_floats(",")

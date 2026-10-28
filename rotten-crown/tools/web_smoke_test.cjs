@@ -25,7 +25,7 @@ const UI_H = 360; // project viewport height
   page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}`));
   const cdp = await ctx.newCDPSession(page);
 
-  await page.goto(url);
+  await page.goto(url + (url.includes('?') ? '&' : '?') + 'debug=1');
   await page.waitForFunction(() => document.querySelector('#status') && getComputedStyle(document.querySelector('#status')).display === 'none' || performance.now() > 60000, null, { timeout: 90000 }).catch(() => {});
   await page.waitForTimeout(4000);
   const box = await page.locator('canvas').boundingBox();
@@ -41,7 +41,13 @@ const UI_H = 360; // project viewport height
   await shot('02a_prologue');
   const skip = P(uiW - 39, 16);
   await page.touchscreen.tap(skip.x, skip.y); // "SKIP >>"
-  await page.waitForTimeout(12000);
+  let scene = '';
+  for (let i = 0; i < 240 && scene !== 'ValdronOverworld'; i++) { // up to 60 s
+    scene = await page.evaluate(() => (window.rcState && window.rcState.scene) || '').catch(() => '');
+    if (scene !== 'ValdronOverworld') await page.waitForTimeout(250);
+  }
+  if (scene !== 'ValdronOverworld') logs.push(`[pageerror] expected scene ValdronOverworld after SKIP, got "${scene}"`);
+  await page.waitForTimeout(4000);
   await shot('02_wake');      // eyes opening in the meadow
   await page.waitForTimeout(8000); // wake-up animation keeps input locked
   await shot('02b_awake');
