@@ -41,7 +41,7 @@ class ScriptInfo:
         self.vars = set(re.findall(r"^(?:@export\S*\s+)*(?:@onready\s+)?(?:static\s+)?var\s+(\w+)", self.text, re.M))
         self.vars |= set(re.findall(r"^@export\S*(?:\([^)]*\))?\s+var\s+(\w+)", self.text, re.M))
         self.dollar_paths = set(re.findall(r"\$([A-Za-z0-9_/]+)", self.text))
-        self.unique_names = set(re.findall(r"%([A-Za-z_][A-Za-z0-9_]*)", self.text))
+        self.unique_names = set(re.findall(r"%([A-Z][A-Za-z0-9_]*)", self.text))
         # Ignore format specifiers inside strings such as "%d" / "%s".
         self.unique_names = {u for u in self.unique_names if not re.fullmatch(r"[dsfxXic]", u)}
 

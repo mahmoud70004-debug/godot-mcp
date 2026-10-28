@@ -1,0 +1,27 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tools/galleries/terrain_preview.gd" id="1_s"]
+
+[sub_resource type="Environment" id="Environment_1"]
+background_mode = 1
+background_color = Color(0.12, 0.13, 0.12, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.3, 0.32, 0.28, 1)
+fog_enabled = true
+fog_light_color = Color(0.14, 0.16, 0.12, 1)
+fog_density = 0.008
+
+[node name="TerrainPreview" type="Node3D"]
+script = ExtResource("1_s")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_1")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+rotation = Vector3(-0.7, 0.6, 0)
+light_energy = 1.2
+
+[node name="Camera3D" type="Camera3D" parent="."]
+position = Vector3(0, 60, -40)
+current = true
+far = 600.0

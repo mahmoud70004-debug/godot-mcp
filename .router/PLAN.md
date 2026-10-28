@@ -121,6 +121,26 @@ Same methods Enemy already calls: `setup(data)`, `set_look_target(n)`, `set_move
 `src/rendering/quality_manager.gd` (autoload `Quality`) applies content scale, shadows, grass density
 (group "grass_chunks" visibility), post features.
 
+### C9 Overworld layout (metres; -Z = towards the castle; the existing Outer Ward/meadow sit at the origin, flat at y=0)
+- Terrain: `TerrainSpec` min (-260,-70) max (260,450), flat_center (0,10) r 58 (+45 falloff). Query ground with
+  `terrain.ground(x, z)` / `terrain.height_at(x, z)` — never assume y=0 outside the flat circle.
+- Roads (xz polylines): main road gate -> Hollowmere `(0,10) (0,60) (-10,120) (5,200) (10,270) (20,322)`;
+  farm track `(-10,120) (-60,136) (-116,148)`; forest path `(0,60) (45,72) (100,112) (140,172) (130,242) (82,300) (34,322)`.
+- **Thornfield** (ref 1): farmhouse at (-122,152), plateau Vector4(-122,152,16,14); dry field Vector3(-95,128,58)
+  of tall pale grass on both sides of the farm track; huge dead tree at (-104,146); broken fences along the track.
+- **Hollowmere** (ref 2): village plateau Vector4(22,338,44,24) with ~8 cottages + chapel at (30,368);
+  pumpkin fields both sides of the main road z 236..304 (Vector3(-8,270,40) dry/field paint), split-rail fences.
+- **Whispering Wood** (ref 3): forest zones Vector3 along the forest path: (60,85,30) (110,125,34) (140,180,34)
+  (132,240,34) (96,292,30); gnarled trees in two rows 3.5-5 m either side of the path, limbs arching over it.
+- Region builders: `class_name <X>Builder extends RefCounted`, `static func build(root: Node3D, terrain: TerrainBuilder,
+  rng: RandomNumberGenerator) -> Node3D` returning a Node3D named after the region that contains its props plus
+  `Marker3D` children named `Spawn_Enemy_N`, `Lore_N`, `Pickup_N`, `Light_N`, and one `RegionTrigger` area marker
+  `Trigger` (Marker3D with meta "radius"). Grass via `GrassScatter.scatter(...)` with
+  `res://assets/materials/grass_field.tres` / `grass_dry_tall.tres`. All meshes StandardMaterial3D (mergeable),
+  ooze/blood splats via the existing ooze shader with `MeshMerger.SEED_META`. Keep omni lights <= 3 per region,
+  range <= 7 m, no shadows. Terrain spec additions (plateaus/fields/forests) are owned by the overworld assembler (T15),
+  builders only document what they assume in their header comment.
+
 ## 5. Tasks
 Tiers: E haiku, N sonnet, H opus (me). `[ ]` open, `[x]` done (see PROGRESS.md).
 
@@ -134,7 +154,7 @@ Tiers: E haiku, N sonnet, H opus (me). `[ ]` open, `[x]` done (see PROGRESS.md).
 | T06 | Bake all characters: knight, 8 villager variants, hollow, mourner | E | T04,T05 | characters.json, assets/sprites/** | sheets + .tres for all 11 characters |
 | T07 | SpriteCreatureVisual (C5) + hollow.tscn swap + EnemyData.sprite_sheet | N | T05,T06 | src/enemies/*, data/enemies/*.tres | headless run of overworld: no ERROR; enemy states animate in a review render |
 | T08 | Prologue on sprites (SpriteActor helpers in director) | N | T05,T06 | src/cutscenes/prologue_cutscene.gd | Movie Maker render of prologue: all beats present, no 3D villagers |
-| T09 | TerrainBuilder + terrain.gdshader + HeightMapShape collider | H | - | src/world/terrain_builder.gd, assets/shaders/terrain.gdshader | review shot of hills/roads; player walks without falling (headless walk test) |
+| T09 | TerrainBuilder + terrain.gdshader + HeightMapShape collider (+ GrassScatter) | H | - | src/world/terrain_builder.gd, assets/shaders/terrain.gdshader | review shot of hills/roads; player walks without falling (headless walk test) |
 | T10 | PropKit (fences, trees, pumpkins, scarecrow, signpost, cottage, chapel, cart) | N | - | src/world/props/prop_kit.gd | gdparse; prop gallery render |
 | T11 | Tall dry grass + field grass variants (grass.gdshader params, wind gusts) | E | - | assets/shaders/grass.gdshader | render shows pale bent tall grass (ref 1) |
 | T12 | Thornfield builder (ref 1) | N | T09,T10,T11 | src/world/regions/thornfield_builder.gd | review shot vs ref 1 |
