@@ -193,7 +193,7 @@ static func _build_grass(region: Node3D, terrain: TerrainBuilder, rng: RandomNum
 		return not _near_track(p, ROAD_CLEAR)
 	var dry := load("res://assets/materials/grass_dry_tall.tres") as Material
 	GrassScatter.scatter(region, terrain, Rect2(FIELD.x - FIELD.z, FIELD.y - FIELD.z, FIELD.z * 2.0, FIELD.z * 2.0),
-		2200, dry, Vector2(1.0, 1.1), rng, tall, 60.0)
+		3600, dry, Vector2(1.0, 1.1), rng, tall, 60.0)
 	var yard := func(p: Vector2) -> bool:
 		return p.distance_to(HOUSE) > 5.5 and p.distance_to(HOUSE) < 17.0 and not _near_track(p, ROAD_CLEAR)
 	var short := load("res://assets/materials/grass_field.tres") as Material

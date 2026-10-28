@@ -41,7 +41,15 @@ void fragment() {
 		col = texture(dry_tex, uv * 1.3).rgb * dry_tint;
 	}
 	if (paint.r + d * 0.5 > 0.5) {
-		col = texture(road_tex, uv).rgb * road_tint;
+		vec3 road = texture(road_tex, uv).rgb * road_tint;
+		float luma = dot(road, vec3(0.3, 0.59, 0.11));
+		// Muddy brown with only a hint of the red earth, then the same road
+		// changes with the land it crosses: a pale, moonlit dirt path under the
+		// trees, a worn olive track through the dry fields.
+		road = mix(road, vec3(luma) * vec3(1.45, 1.25, 0.95), 0.55);
+		road = mix(road, vec3(luma) * vec3(1.9, 1.8, 1.6), smoothstep(0.2, 0.6, paint.b));
+		road = mix(road, mix(vec3(luma) * vec3(1.6, 1.55, 1.05), col, 0.35), smoothstep(0.2, 0.6, paint.g));
+		col = road;
 	}
 	ALBEDO = col;
 	ROUGHNESS = 1.0;

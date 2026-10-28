@@ -5,8 +5,9 @@ extends HumanoidRig
 ## silhouettes return stretched and wrong.)
 
 const SKIN := [Color(0.78, 0.6, 0.48), Color(0.66, 0.48, 0.36), Color(0.52, 0.36, 0.26), Color(0.85, 0.7, 0.58)]
-const CLOTH := [Color(0.55, 0.12, 0.1), Color(0.2, 0.32, 0.55), Color(0.25, 0.42, 0.2), Color(0.62, 0.5, 0.2),
-	Color(0.45, 0.25, 0.45), Color(0.7, 0.62, 0.48), Color(0.3, 0.2, 0.12)]
+# Muted, homespun dyes: the sprite bake lights and contrast-boosts them, so brighter values read as neon.
+const CLOTH := [Color(0.4, 0.1, 0.08), Color(0.16, 0.22, 0.36), Color(0.2, 0.3, 0.16), Color(0.44, 0.36, 0.16),
+	Color(0.3, 0.18, 0.28), Color(0.46, 0.4, 0.31), Color(0.24, 0.16, 0.1)]
 const HAIR := [Color(0.12, 0.08, 0.05), Color(0.35, 0.22, 0.1), Color(0.6, 0.45, 0.2), Color(0.7, 0.7, 0.68)]
 
 @export var seed := 0

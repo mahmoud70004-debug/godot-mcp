@@ -17,3 +17,9 @@
 | T17 | N (router-normal) | done | weather_controller.gd, retro_post rain/flash, rain+thunder wavs | verified by H renders |
 | T02 | N (router-normal) | done | knight_model.gd, part_builder.gd, knight_turntable | verified by H render; sword looks thin from the side (minor) |
 | T04+T05 | N (router-normal) | done | pixelize_sprites.py, sprite_sheet_data.gd, pixel_sprite_3d.gd, hollow sheet | verified dirs/feet in renders; death framing widened in characters.json |
+| T15 | H | done | tools/bake_world.*, src/levels/valdron/*, data/regions/*, prologue | overworld baked (2.3M tri verts after budget cuts); region triggers + rain verified in renders |
+| T06 | E (router-easy) | done | assets/sprites/* (11 sheets, 3256 frames) | contact sheet checked by H; one non-fatal ERR_CANT_OPEN in bake log -> T21 |
+| T19 | E (router-easy) | done | data/items/lore/{farmers_ledger,harvest_hymn,chapel_confession,hunters_warning}.tres | validator OK |
+| T07 | N (router-normal) | done | sprite_creature_visual.gd, enemy.gd, enemy_data.gd, hollow.tscn, enemy data | verified by H (montage); baker now uses tools/sprite_baker/creature_rig.tscn (old rig scene) since hollow.tscn is sprite-based |
+| T08 | N (router-normal) | done | prologue_cutscene.gd | verified by H Movie Maker sheet; H follow-up: rim light back, lie pose = full billboard + fixed side direction (PixelSprite3D.fixed_direction) |
+| T21a | H | done | terrain.gdshader, grass_dry_tall.tres, thornfield_builder.gd, valdron_overworld.tscn, villager_model.gd, bake_sprites.sh | road muddy brown/pale in forest, brighter overworld env, denser dry grass, muted villager dyes (re-baked), bake_sprites expands variants |

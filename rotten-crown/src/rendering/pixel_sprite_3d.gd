@@ -10,6 +10,8 @@ signal animation_finished(anim: StringName)
 		_apply_sheet()
 @export var anim: StringName = &"idle"
 @export var speed_scale := 1.0
+## >= 0 always shows that baked direction (e.g. a pose that must not flip as the camera moves).
+@export var fixed_direction := -1
 
 var _time := 0.0
 var _finished := false
@@ -50,6 +52,8 @@ func play(anim_name: StringName, restart := false) -> void:
 func get_direction_index() -> int:
 	if sheet == null:
 		return 0
+	if fixed_direction >= 0:
+		return fixed_direction % sheet.directions
 	var cam := get_viewport().get_camera_3d()
 	if cam == null:
 		return 0

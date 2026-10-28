@@ -29,7 +29,7 @@
     }
   },
   "hollow": {
-    "kind": "creature", "scene": "res://src/enemies/hollow.tscn", "data": "res://data/enemies/hollow.tres", "look_at_viewer": true,
+    "kind": "creature", "scene": "res://tools/sprite_baker/creature_rig.tscn", "data": "res://data/enemies/hollow.tres", "look_at_viewer": true,
     "height_px": 84, "palette": 30, "camera_size": 3.8, "center_y": 1.0,
     "anims": {
       "idle": {"frames": 8, "fps": 4, "loop": true, "duration": 3.0},
@@ -41,7 +41,7 @@
     }
   },
   "mourner": {
-    "kind": "creature", "scene": "res://src/enemies/hollow.tscn", "data": "res://data/enemies/mourner.tres", "look_at_viewer": true,
+    "kind": "creature", "scene": "res://tools/sprite_baker/creature_rig.tscn", "data": "res://data/enemies/mourner.tres", "look_at_viewer": true,
     "height_px": 92, "palette": 30, "camera_size": 4.0, "center_y": 1.1,
     "anims": {
       "idle": {"frames": 8, "fps": 4, "loop": true, "duration": 3.0},

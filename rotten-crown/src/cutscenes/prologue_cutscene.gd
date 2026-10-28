@@ -110,6 +110,7 @@ func _run() -> void:
 
 	_fireworks = false
 	_knight.position = Vector3(0.0, 0.0, 8.0)
+	_add_knight_rim_light()
 	camera.global_position = Vector3(0.0, 2.4, 3.2)
 	_follow = true
 	_say("...to rest beneath the stars, on the soft grass outside the walls.", 0.8, 6.0)
@@ -135,6 +136,9 @@ func _lie_down() -> void:
 	_knight.play(&"stretch", true)
 	await _knight.animation_finished
 	_knight.speed_scale = 1.0
+	# The lying frame is a side view; a full billboard keeps it readable from the overhead shot.
+	_knight.fixed_direction = 2
+	_knight.billboard = BaseMaterial3D.BILLBOARD_ENABLED
 	_knight.play(&"lie")
 
 
@@ -341,6 +345,16 @@ func _spawn_knight() -> void:
 	_knight.position = Vector3(0.6, 0.0, -10.6)
 	_knight.rotation.y = PI
 	add_child(_knight)
+
+
+## Cool moonlit rim so the knight stays readable once he leaves the lanterns behind.
+func _add_knight_rim_light() -> void:
+	var rim := OmniLight3D.new()
+	rim.light_color = Color(0.55, 0.68, 1.0)
+	rim.light_energy = 0.9
+	rim.omni_range = 4.5
+	rim.position = Vector3(0.8, 2.4, 1.8)
+	_knight.add_child(rim)
 
 
 func _launch_firework() -> void:
