@@ -9,16 +9,9 @@ const NEXT_SCENE := "res://src/levels/valdron/valdron_overworld.tscn"
 const FIREWORK_SFX := preload("res://assets/audio/sfx/firework.wav")
 const BONFIRE := Vector3(0.0, 0.0, -18.5)
 const KNIGHT_SHEET := preload("res://assets/sprites/knight/knight.tres")
-const VILLAGER_SHEETS: Array[SpriteSheetData] = [
-	preload("res://assets/sprites/villager_0/villager_0.tres"),
-	preload("res://assets/sprites/villager_1/villager_1.tres"),
-	preload("res://assets/sprites/villager_2/villager_2.tres"),
-	preload("res://assets/sprites/villager_3/villager_3.tres"),
-	preload("res://assets/sprites/villager_4/villager_4.tres"),
-	preload("res://assets/sprites/villager_5/villager_5.tres"),
-	preload("res://assets/sprites/villager_6/villager_6.tres"),
-	preload("res://assets/sprites/villager_7/villager_7.tres"),
-]
+const VILLAGER_MAN := preload("res://assets/sprites/villager_man/villager_man.tres")
+const VILLAGER_WOMAN := preload("res://assets/sprites/villager_woman/villager_woman.tres")
+const VILLAGER_MUSICIAN := preload("res://assets/sprites/villager_musician/villager_musician.tres")
 
 @export var camera: Camera3D
 @export var music: AudioStreamPlayer3D
@@ -132,7 +125,7 @@ func _run() -> void:
 
 ## Stretch (slowed so the whole beat lasts about 2.4 s), then settle into the lying frame.
 func _lie_down() -> void:
-	_knight.speed_scale = 0.62
+	_knight.speed_scale = 0.83
 	_knight.play(&"stretch", true)
 	await _knight.animation_finished
 	_knight.speed_scale = 1.0
@@ -315,7 +308,7 @@ func _spawn_crowd() -> void:
 		seed_i += 1
 	# Musicians and a few guests around the high table.
 	for x in [-5.2, 5.2]:
-		var m := _villager(crowd, seed_i, BONFIRE + Vector3(x, 0.0, 1.5), atan2(x, 1.5))
+		var m := _villager(crowd, seed_i, BONFIRE + Vector3(x, 0.0, 1.5), atan2(x, 1.5), true)
 		m.anim = &"music"
 		seed_i += 1
 	for p in [Vector3(-1.6, 0, -10.4), Vector3(2.1, 0, -10.2), Vector3(3.2, 0, -10.8), Vector3(-2.8, 0, -10.0)]:
@@ -325,9 +318,17 @@ func _spawn_crowd() -> void:
 		seed_i += 1
 
 
-func _villager(parent: Node3D, seed_value: int, pos: Vector3, yaw: float) -> PixelSprite3D:
+## Body type and palette variant come from the seed: every third guest is a woman.
+func _villager(parent: Node3D, seed_value: int, pos: Vector3, yaw: float, musician := false) -> PixelSprite3D:
 	var v := PixelSprite3D.new()
-	v.sheet = VILLAGER_SHEETS[seed_value % VILLAGER_SHEETS.size()]
+	if musician:
+		v.sheet = VILLAGER_MUSICIAN
+	elif seed_value % 3 == 0:
+		v.sheet = VILLAGER_WOMAN
+		v.variant = int(seed_value / 3.0) % VILLAGER_WOMAN.variants
+	else:
+		v.sheet = VILLAGER_MAN
+		v.variant = seed_value % VILLAGER_MAN.variants
 	v.position = pos
 	v.rotation.y = yaw
 	v.speed_scale = _rng.randf_range(0.85, 1.15)
