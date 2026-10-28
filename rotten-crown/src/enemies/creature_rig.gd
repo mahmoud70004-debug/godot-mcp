@@ -15,6 +15,10 @@ extends Node3D
 @export var twitch_intensity := 1.0
 @export var head_tilt_degrees := 22.0
 
+## Offline sampling: when set, pose_at points the head straight at viewer_position (world space).
+var look_at_viewer := false
+var viewer_position := Vector3.ZERO
+
 var _flesh_meshes: Array[GeometryInstance3D] = []
 var _look_target: Node3D
 var _move_speed := 0.0
@@ -30,6 +34,8 @@ var _twitch_cooldown := 1.5
 var _flash := 0.0
 var _alive := true
 var _rng := RandomNumberGenerator.new()
+var _rest_y := 0.0
+var _rest_known := false
 
 
 func _ready() -> void:
@@ -122,6 +128,80 @@ func _twitch(strength: float) -> void:
 	_twitch_offset = Vector3(_rng.randf_range(-0.5, 0.5), _rng.randf_range(-0.8, 0.8), _rng.randf_range(-0.7, 0.7)) * twitch_intensity * strength
 	_twitch_hold = _rng.randf_range(0.05, 0.2)
 	_twitch_cooldown = _rng.randf_range(0.8, 4.0) / maxf(twitch_intensity, 0.1)
+
+
+# --- Deterministic sampling (offline baking) -----------------------------------
+
+## Stateless hash of x into 0..1 (replaces the RNG so sampling is repeatable).
+static func _hash01(x: float) -> float:
+	return fposmod(sin(x * 12.9898 + 78.233) * 43758.5453, 1.0)
+
+
+## Deterministic pose for `anim` at `t` seconds since the animation began.
+## anim: idle, walk, windup, strike, stagger, death.
+func pose_at(anim: StringName, t: float) -> void:
+	if not _rest_known:
+		_rest_y = position.y
+		_rest_known = true
+	rotation.x = 0.0
+	position.y = _rest_y
+	var speed := 0.0
+	var arm := 0.0
+	var tremble := 0.0
+	var jolt := 0.0
+	var twitch := Vector3.ZERO
+	var amp := maxf(twitch_intensity, 0.0)
+	match anim:
+		&"walk":
+			speed = 1.5
+		&"windup":
+			arm = Tween.interpolate_value(0.0, 1.25, minf(t, 0.75), 0.75, Tween.TRANS_SINE, Tween.EASE_OUT)
+			tremble = 1.0
+		&"strike":
+			var k := clampf(t / 0.1, 0.0, 1.0)
+			arm = lerpf(1.25, 0.5, k * k)
+		&"stagger":
+			arm = lerpf(0.0, -0.2, clampf(t / 0.15, 0.0, 1.0))
+			jolt = exp(-maxf(t, 0.0) * 6.0)
+			twitch = Vector3(0.4, 0.6, -0.5) * 2.5 * amp * (1.0 if t < 0.15 else 0.0)
+		&"death":
+			var fall := clampf(t / 0.9, 0.0, 1.0)
+			rotation.x = Tween.interpolate_value(0.0, -1.5, fall * 0.9, 0.9, Tween.TRANS_BOUNCE, Tween.EASE_OUT)
+			position.y = lerpf(_rest_y, 0.12, fall)
+		_:
+			# A frozen jolt of ~0.1 s every ~1.5 s.
+			var cycle := floorf(t / 1.5)
+			if t - cycle * 1.5 < 0.1:
+				twitch = Vector3(_hash01(cycle * 3.1 + 1.0) - 0.5, (_hash01(cycle * 7.7 + 2.0) - 0.5) * 1.6, (_hash01(cycle * 5.3 + 3.0) - 0.5) * 1.4) * amp
+	var dead := anim == &"death"
+	var breath := 0.0 if dead else sin(t * 1.7) * 0.035
+	var gait := sin(t * (3.5 + speed * 1.8))
+	var tremor := Vector3.ZERO
+	if tremble > 0.0:
+		var n := floorf(t * 30.0)
+		tremor = Vector3(_hash01(n + 0.1) * 2.0 - 1.0, _hash01(n + 0.2) * 2.0 - 1.0, _hash01(n + 0.3) * 2.0 - 1.0) * 0.05 * tremble
+	if spine:
+		spine.rotation = _base_spine_rotation + Vector3(breath - arm * 0.22 + jolt * 0.3, 0.0, gait * 0.05 * minf(speed, 2.5)) + tremor * 0.4
+	var sway_amp := 0.0 if dead else 0.07 + speed * 0.12
+	if shoulder_left:
+		var sway := sin(t * (2.6 + speed * 2.2)) * sway_amp
+		shoulder_left.rotation = Vector3(sway + arm * 2.4, 0.0, -0.07 - arm * 0.25) + tremor
+	if shoulder_right:
+		var sway_r := sin(t * (2.3 + speed * 2.0) + 2.1) * sway_amp
+		shoulder_right.rotation = Vector3(sway_r + arm * 2.4, 0.0, 0.07 + arm * 0.25) - tremor
+	if leg_left and leg_right:
+		var stride := gait * 0.4 * minf(speed, 2.5)
+		leg_left.rotation.x = stride
+		leg_right.rotation.x = -stride
+	if head:
+		var desired := Basis()
+		var parent := head.get_parent() as Node3D
+		if look_at_viewer and parent and parent.is_inside_tree():
+			var local_dir := parent.global_basis.orthonormalized().inverse() * (viewer_position - head.global_position)
+			if local_dir.length_squared() > 0.001:
+				desired = Basis.looking_at(local_dir.normalized(), Vector3.UP)
+		desired = desired * Basis.from_euler(Vector3(0.0, 0.0, deg_to_rad(head_tilt_degrees)))
+		head.basis = desired * Basis.from_euler(twitch)
 
 
 # --- Poses -------------------------------------------------------------------

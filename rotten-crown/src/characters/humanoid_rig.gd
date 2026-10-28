@@ -21,6 +21,9 @@ var mode: Mode = Mode.IDLE
 var tempo := 1.0
 var _time := 0.0
 var _pose_lock := false
+var _from_process := false
+var _rest_known := false
+var _rest_y := 0.0
 var _rng := RandomNumberGenerator.new()
 
 
@@ -40,22 +43,46 @@ func _process(delta: float) -> void:
 	_time += delta * tempo
 	if _pose_lock:
 		return
-	var t := _time
-	shoulder_l.rotation.z = -0.08
-	shoulder_r.rotation.z = 0.08
-	spine.rotation.y = 0.0
-	head.rotation = Vector3.ZERO
-	match mode:
-		Mode.IDLE:
-			_set_limbs(0.05 * sin(t * 1.3), -0.05 * sin(t * 1.3), 0.0, 0.0, 0.1, 0.1)
-			spine.rotation.x = 0.03 * sin(t * 1.7)
-			hips.position.y = _hip_height()
+	_from_process = true
+	pose_at(_anim_name(mode), _time)
+	_from_process = false
+
+
+## Name of the animation that corresponds to a runtime mode.
+func _anim_name(m: Mode) -> StringName:
+	match m:
 		Mode.WALK:
+			return &"walk"
+		Mode.DANCE:
+			return &"dance"
+		Mode.CHEER:
+			return &"cheer"
+		Mode.MUSIC:
+			return &"music"
+		Mode.SIT:
+			return &"sit"
+	return &"idle"
+
+
+## Deterministic pose for animation `anim` at time `t` (seconds). Resets every
+## pivot to neutral first, so calls can be made in any order (offline baking).
+## anim: idle, walk, dance, cheer, music, sit, toast, stretch, lie.
+func pose_at(anim: StringName, t: float) -> void:
+	if not _from_process:
+		# Only offline sampling touches the node's own transform (lie).
+		if not _rest_known:
+			_rest_y = position.y
+			_rest_known = true
+		rotation.x = 0.0
+		position.y = _rest_y
+	_reset_pose()
+	match anim:
+		&"walk":
 			var s := sin(t * 7.0)
 			_set_limbs(-s * 0.45, s * 0.45, s * 0.5, -s * 0.5, 0.25, 0.25)
 			hips.position.y = _hip_height() + absf(cos(t * 7.0)) * 0.04
 			spine.rotation.x = -0.05
-		Mode.DANCE:
+		&"dance":
 			# A jig: hop on alternate feet, arms out, body twisting.
 			var hop := absf(sin(t * 6.6))
 			hips.position.y = _hip_height() + hop * 0.12
@@ -63,18 +90,52 @@ func _process(delta: float) -> void:
 			shoulder_l.rotation.z = -0.9
 			shoulder_r.rotation.z = 0.9
 			spine.rotation.y = sin(t * 3.3) * 0.35
-		Mode.CHEER:
+		&"cheer":
 			var wave := sin(t * 5.0)
 			_set_limbs(0.0, 0.0, 2.6 + wave * 0.25, 2.8 - wave * 0.25, 0.4, 0.3)
 			hips.position.y = _hip_height() + absf(wave) * 0.05
 			head.rotation.x = -0.25
-		Mode.MUSIC:
+		&"music":
 			_set_limbs(0.0, 0.0, 0.9, 0.7 + sin(t * 10.0) * 0.25, 1.4, 1.2)
 			spine.rotation.x = 0.08 * sin(t * 3.3)
 			head.rotation.z = 0.15 * sin(t * 3.3)
-		Mode.SIT:
+		&"sit":
 			hips.position.y = _hip_height() * 0.55
 			_set_limbs(1.5, 1.5, 0.4, 0.4, 0.8, 0.8)
+		&"toast":
+			# Goblet held high in the right hand, a small sway; left arm relaxed.
+			_set_limbs(0.0, 0.0, 0.05 * sin(t * 1.3), 2.7 + 0.08 * sin(t * 2.1), 0.1, 0.45)
+			shoulder_r.rotation.z = 0.15 + 0.04 * sin(t * 1.7)
+			spine.rotation.x = 0.03 * sin(t * 1.7)
+			head.rotation.x = -0.18
+		&"stretch":
+			# A yawn: both arms up and back, head tilted back, slight back arch.
+			var k := 0.5 + 0.5 * sin(t * 1.4)
+			_set_limbs(0.0, 0.0, 2.9 + 0.2 * k, 2.9 + 0.2 * k, 0.15, 0.15)
+			shoulder_l.rotation.z = -0.35 - 0.1 * k
+			shoulder_r.rotation.z = 0.35 + 0.1 * k
+			spine.rotation.x = -0.12 - 0.06 * k
+			head.rotation.x = -0.5 - 0.1 * k
+		&"lie":
+			# End state of lie_down: on the back, resting on the ground, arms at the sides.
+			rotation.x = PI * 0.5
+			position.y = _rest_y + 0.22
+			_set_limbs(0.0, 0.0, 0.15, 0.15, 0.0, 0.0)
+			head.rotation.x = -0.2
+		_:
+			_set_limbs(0.05 * sin(t * 1.3), -0.05 * sin(t * 1.3), 0.0, 0.0, 0.1, 0.1)
+			spine.rotation.x = 0.03 * sin(t * 1.7)
+			hips.position.y = _hip_height()
+
+
+## Puts every animated pivot back to neutral.
+func _reset_pose() -> void:
+	hips.position.y = _hip_height()
+	spine.rotation = Vector3.ZERO
+	head.rotation = Vector3.ZERO
+	shoulder_l.rotation = Vector3(0.0, 0.0, -0.08)
+	shoulder_r.rotation = Vector3(0.0, 0.0, 0.08)
+	_set_limbs(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)
 
 
 func _hip_height() -> float:

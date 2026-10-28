@@ -19,6 +19,13 @@ func set_rim_light(on: bool) -> void:
 	_rim.visible = on
 
 
+## Only the toast shows the goblet when sampled offline; runtime code owns it otherwise.
+func pose_at(anim: StringName, t: float) -> void:
+	super.pose_at(anim, t)
+	if not _from_process:
+		goblet.visible = anim == &"toast"
+
+
 func _build() -> void:
 	var plate := PartBuilder.steel(Color(0.6, 0.62, 0.66))
 	var dark := PartBuilder.steel(Color(0.28, 0.28, 0.31))
