@@ -174,6 +174,8 @@ static func pumpkin(size: float, rng: RandomNumberGenerator, carved := false, fl
 	root.name = "Pumpkin"
 	var mat := RetroMaterials.pumpkin()
 	var dark := RetroMaterials.flat(Color(0.015, 0.01, 0.01))
+	if carved:
+		dark = RetroMaterials.flat(Color(0.95, 0.5, 0.1), 0.9)  # faint inner glow
 	var cy := size * 0.38
 	var core := PartBuilder.sphere(root, size * 0.42, Vector3(0, cy, 0), mat, false, 10)
 	core.scale = Vector3(1, 0.82, 1)
@@ -214,6 +216,11 @@ static func pumpkin(size: float, rng: RandomNumberGenerator, carved := false, fl
 			var tx := (float(i) - 2.5) * size * 0.055
 			var tzz := tz + size * 0.005
 			PartBuilder.box(root, Vector3(size * 0.045, size * 0.08, size * 0.03), Vector3(pc.x + tx, pc.y, tzz), tooth)
+		# A bloodshot eye bulging from the orange side, and a vein across the rind.
+		var eye_c := Vector3(-size * 0.2, size * 0.5, size * 0.3)
+		PartBuilder.sphere(root, size * 0.09, eye_c, RetroMaterials.flat(Color(0.82, 0.8, 0.7)), false, 8)
+		PartBuilder.sphere(root, size * 0.035, eye_c + Vector3(0, 0, size * 0.075), dark, false, 6)
+		PartBuilder.box(root, Vector3(size * 0.04, size * 0.5, size * 0.03), Vector3(-size * 0.28, size * 0.3, size * 0.3), lip, Vector3(0, 0.3, 0.4))
 	root.rotation.y = rng.randf_range(-0.4, 0.4)
 	return root
 
@@ -477,27 +484,37 @@ static func chapel(rng: RandomNumberGenerator, ruined := false) -> Node3D:
 		for cz in [-1.0, 1.0]:
 			PartBuilder.box(root, Vector3(0.45, 2.2, 0.45), Vector3(cx * (tw * 0.5 - 0.22), by, tz + cz * (tw * 0.5 - 0.22)), stone)
 	PartBuilder.box(root, Vector3(tw + 0.2, 0.25, tw + 0.2), Vector3(0, th + 2.3, tz), stone)
-	# Spire (4-sided pyramid), snapped when ruined.
+	# Pinnacles on the tower corners.
+	for cx in [-1.0, 1.0]:
+		for cz in [-1.0, 1.0]:
+			var pin := PartBuilder.cylinder(root, 0.01, 0.2, 1.1, Vector3(cx * (tw * 0.5 + 0.0), th + 2.95, tz + cz * (tw * 0.5)), roof, 4)
+			pin.rotation.y = PI / 4
+	# Tall needle spire (6 sides, sharp tip), snapped and leaning when ruined.
 	var sb := th + 2.4
-	var sh := 6.5
-	var sr := 1.9
+	var sh := 10.5
+	var sr := 1.65
 	if not ruined:
-		var cone := PartBuilder.cylinder(root, 0.02, sr, sh, Vector3(0, sb + sh * 0.5, tz), roof, 4)
-		cone.rotation.y = PI / 4
-		_cross(root, Vector3(0, sb + sh, tz), iron)
+		var cone := PartBuilder.cylinder(root, 0.0, sr, sh, Vector3(0, sb + sh * 0.5, tz), roof, 6)
+		cone.rotation.y = PI / 6
+		PartBuilder.cylinder(root, 0.0, 0.07, 1.2, Vector3(0, sb + sh + 0.5, tz), iron, 4)
+		_cross(root, Vector3(0, sb + sh + 1.0, tz), iron)
 		PartBuilder.cylinder(root, 0.15, 0.4, 0.7, Vector3(0, by - 0.2, tz), iron, 8)
 		PartBuilder.sphere(root, 0.1, Vector3(0, by - 0.6, tz), iron, false, 6)
 	else:
-		var cut := 0.35
+		var cut := 0.3
 		var lo_h := sh * cut
 		var r_cut := sr * (1.0 - cut)
-		var lower := PartBuilder.cylinder(root, r_cut, sr, lo_h, Vector3(0, sb + lo_h * 0.5, tz), roof, 4)
-		lower.rotation.y = PI / 4
+		var lower := PartBuilder.cylinder(root, r_cut, sr, lo_h, Vector3(0, sb + lo_h * 0.5, tz), roof, 6)
+		lower.rotation.y = PI / 6
+		for i in 4:
+			var ang := TAU * i / 4.0 + 0.4
+			PartBuilder.box(root, Vector3(0.12, rng.randf_range(0.5, 1.2), 0.12), Vector3(cos(ang) * r_cut * 0.8, sb + lo_h + 0.3, tz + sin(ang) * r_cut * 0.8), roof,
+				Vector3(rng.randf_range(-0.4, 0.4), 0, rng.randf_range(-0.4, 0.4)))
 		var up_h := sh - lo_h
 		var snap := PartBuilder.pivot(root, "SnappedSpire", Vector3(0.1, sb + lo_h, tz))
 		snap.rotation = Vector3(0.15, 0, -0.55)
-		var upper := PartBuilder.cylinder(snap, 0.02, r_cut, up_h, Vector3(0, up_h * 0.5, 0), roof, 4)
-		upper.rotation.y = PI / 4
+		var upper := PartBuilder.cylinder(snap, 0.0, r_cut, up_h, Vector3(0, up_h * 0.5, 0), roof, 6)
+		upper.rotation.y = PI / 6
 		_cross(snap, Vector3(0, up_h, 0), iron)
 		# Fallen bell beside the tower.
 		var bell := PartBuilder.pivot(root, "FallenBell", Vector3(tw * 0.5 + 1.4, 0.35, tz + 1.8))
