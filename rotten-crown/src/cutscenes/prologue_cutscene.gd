@@ -8,15 +8,25 @@ extends Node3D
 const NEXT_SCENE := "res://src/levels/valdron/valdron_overworld.tscn"
 const FIREWORK_SFX := preload("res://assets/audio/sfx/firework.wav")
 const BONFIRE := Vector3(0.0, 0.0, -18.5)
+const KNIGHT_SHEET := preload("res://assets/sprites/knight/knight.tres")
+const VILLAGER_SHEETS: Array[SpriteSheetData] = [
+	preload("res://assets/sprites/villager_0/villager_0.tres"),
+	preload("res://assets/sprites/villager_1/villager_1.tres"),
+	preload("res://assets/sprites/villager_2/villager_2.tres"),
+	preload("res://assets/sprites/villager_3/villager_3.tres"),
+	preload("res://assets/sprites/villager_4/villager_4.tres"),
+	preload("res://assets/sprites/villager_5/villager_5.tres"),
+	preload("res://assets/sprites/villager_6/villager_6.tres"),
+	preload("res://assets/sprites/villager_7/villager_7.tres"),
+]
 
 @export var camera: Camera3D
 @export var music: AudioStreamPlayer3D
 @export var wind: AudioStreamPlayer
 @export var post_process: CanvasLayer
 
-var _knight: KnightModel
-var _crowd: Array[VillagerModel] = []
-var _cheerers: Array[VillagerModel] = []
+var _knight: PixelSprite3D
+var _cheerers: Array[PixelSprite3D] = []
 var _ring: Node3D
 var _fireworks := false
 var _firework_timer := 0.0
@@ -77,22 +87,20 @@ func _run() -> void:
 		return
 
 	_say("Among them was a young knight of the King's guard.", 0.5, 5.0)
-	_knight.goblet.visible = true
-	_knight.hold_pose(0.1, 2.7, 0.2, 0.5, -0.2, -0.05, 0.7)
+	_knight.play(&"toast")
 	for v in _cheerers:
-		v.mode = HumanoidRig.Mode.CHEER
+		v.anim = &"cheer"
 	await _shot(Vector3(2.4, 1.8, -7.4), Vector3(0.6, 1.65, -10.6), Vector3(1.5, 1.75, -8.4), Vector3(0.6, 1.7, -10.6), 6.0, 50.0)
 	if _skipped:
 		return
 
 	_say("When the wine grew heavy, he slipped away from the noise...", 0.5, 5.5)
-	_knight.goblet.visible = false
-	_knight.hold_pose(3.0, 3.0, 0.3, 0.3, -0.5, -0.15, 1.2)
+	_knight.play(&"cheer")
 	_shot(Vector3(-2.6, 1.6, -5.5), Vector3(0.6, 1.5, -10.6), Vector3(-2.4, 1.6, -2.0), Vector3(0.0, 1.3, -4.0), 7.0, 58.0)
 	await get_tree().create_timer(2.2).timeout
 	if _skipped:
 		return
-	_knight.release_pose(HumanoidRig.Mode.WALK)
+	_knight.play(&"walk")
 	var walk_in := create_tween()
 	walk_in.tween_property(_knight, "rotation:y", PI, 0.6)
 	walk_in.parallel().tween_property(_knight, "position", Vector3(0.0, 0.0, -1.5), 4.6)
@@ -102,7 +110,6 @@ func _run() -> void:
 
 	_fireworks = false
 	_knight.position = Vector3(0.0, 0.0, 8.0)
-	_knight.set_rim_light(true)
 	camera.global_position = Vector3(0.0, 2.4, 3.2)
 	_follow = true
 	_say("...to rest beneath the stars, on the soft grass outside the walls.", 0.8, 6.0)
@@ -113,14 +120,22 @@ func _run() -> void:
 		return
 
 	_follow = false
-	_knight.mode = HumanoidRig.Mode.IDLE
 	_say("He closed his eyes. Only for a moment.", 2.5, 5.0)
-	_knight.lie_down(2.4)
+	_lie_down()
 	await _shot(camera.global_position, Vector3(1.2, 0.8, 27.4), Vector3(1.2, 2.6, 25.4), Vector3(1.2, 0.3, 26.6), 3.0, 55.0)
 	await _shot(Vector3(1.2, 2.6, 25.4), Vector3(1.2, 0.3, 26.6), Vector3(1.0, 8.0, 25.8), Vector3(1.2, 0.0, 26.4), 6.0, 55.0)
 	if _skipped:
 		return
 	await _invert_and_finish()
+
+
+## Stretch (slowed so the whole beat lasts about 2.4 s), then settle into the lying frame.
+func _lie_down() -> void:
+	_knight.speed_scale = 0.62
+	_knight.play(&"stretch", true)
+	await _knight.animation_finished
+	_knight.speed_scale = 1.0
+	_knight.play(&"lie")
 
 
 ## Everything turns: the music slows and groans into silence, cold wind rises.
@@ -275,9 +290,10 @@ func _spawn_crowd() -> void:
 		var z := -8.6
 		while z < -1.0:
 			var v := _villager(crowd, seed_i, Vector3(side * 4.65, 0.0, z + _rng.randf_range(-0.2, 0.2)), side * PI * 0.5)
-			v.mode = HumanoidRig.Mode.CHEER if _rng.randf() < 0.35 else HumanoidRig.Mode.IDLE
-			v.tempo = _rng.randf_range(0.8, 1.2)
-			if v.mode == HumanoidRig.Mode.IDLE:
+			var cheering := _rng.randf() < 0.35
+			v.anim = &"cheer" if cheering else &"idle"
+			v.speed_scale = _rng.randf_range(0.8, 1.2)
+			if not cheering:
 				_cheerers.append(v)
 			seed_i += 1
 			z += 1.45
@@ -290,35 +306,37 @@ func _spawn_crowd() -> void:
 		var a := TAU * i / 10.0
 		var p := Vector3(cos(a) * 3.3, 0.0, sin(a) * 3.3)
 		var v := _villager(_ring, seed_i, p, atan2(p.x, p.z) + PI * 0.5)
-		v.mode = HumanoidRig.Mode.DANCE
-		v.tempo = 1.0
+		v.anim = &"dance"
+		v.speed_scale = _rng.randf_range(0.9, 1.1)
 		seed_i += 1
 	# Musicians and a few guests around the high table.
 	for x in [-5.2, 5.2]:
-		var m := _villager(crowd, seed_i, BONFIRE + Vector3(x, 0.0, 1.5), atan2(x, 1.5), true)
-		m.mode = HumanoidRig.Mode.MUSIC
+		var m := _villager(crowd, seed_i, BONFIRE + Vector3(x, 0.0, 1.5), atan2(x, 1.5))
+		m.anim = &"music"
 		seed_i += 1
 	for p in [Vector3(-1.6, 0, -10.4), Vector3(2.1, 0, -10.2), Vector3(3.2, 0, -10.8), Vector3(-2.8, 0, -10.0)]:
 		var g := _villager(crowd, seed_i, p, PI + _rng.randf_range(-0.6, 0.6))
-		g.mode = HumanoidRig.Mode.IDLE
+		g.anim = &"idle"
 		_cheerers.append(g)
 		seed_i += 1
 
 
-func _villager(parent: Node3D, seed_value: int, pos: Vector3, yaw: float, musician: bool = false) -> VillagerModel:
-	var v := VillagerModel.new()
-	v.seed = seed_value
-	v.wears_dress = seed_value % 3 == 0
-	v.holds_instrument = musician
+func _villager(parent: Node3D, seed_value: int, pos: Vector3, yaw: float) -> PixelSprite3D:
+	var v := PixelSprite3D.new()
+	v.sheet = VILLAGER_SHEETS[seed_value % VILLAGER_SHEETS.size()]
 	v.position = pos
 	v.rotation.y = yaw
+	v.speed_scale = _rng.randf_range(0.85, 1.15)
 	parent.add_child(v)
-	_crowd.append(v)
+	# Desynchronise the crowd: start each at a random point of the loop.
+	v._time = _rng.randf_range(0.0, 3.0)
 	return v
 
 
 func _spawn_knight() -> void:
-	_knight = KnightModel.new()
+	_knight = PixelSprite3D.new()
+	_knight.sheet = KNIGHT_SHEET
+	_knight.anim = &"idle"
 	_knight.name = "Knight"
 	_knight.position = Vector3(0.6, 0.0, -10.6)
 	_knight.rotation.y = PI
