@@ -14,7 +14,7 @@ import sys
 import bpy
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-from rc_blender import geo, mat, rig, sprite_render  # noqa: E402
+from rc_blender import geo, humanoid, mat, rig, sprite_render  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".."))
 OUT = os.path.join(ROOT, "build", "sprites_raw")
@@ -40,27 +40,14 @@ HIP = (0.1, 0.0, 0.95)
 KNEE = (0.105, -0.01, 0.53)
 ANKLE = (0.105, 0.02, 0.1)
 
-BONES = [
-    ("root", (0, 0, 0), (0, 0, 0.2), None),
-    ("hips", (0, 0, 0.95), (0, 0, 1.08), "root"),
-    ("spine", (0, 0, 1.08), (0, 0, 1.28), "hips"),
-    ("chest", (0, 0, 1.28), (0, 0, 1.5), "spine"),
-    ("neck", (0, 0, 1.5), (0, 0, 1.58), "chest"),
-    ("head", (0, 0, 1.58), (0, 0, 1.84), "neck"),
+BODY = humanoid.Body(SHOULDER, ELBOW, WRIST, HIP, KNEE, ANKLE)
+BONES = BODY.bones([
     ("cloak_1", (0, 0.16, 1.42), (0, 0.2, 0.95), "chest"),
     ("cloak_2", (0, 0.2, 0.95), (0, 0.24, 0.4), "cloak_1"),
     ("tabard_f", (0, -0.15, 1.0), (0, -0.16, 0.55), "hips"),
     ("tabard_b", (0, 0.15, 1.0), (0, 0.16, 0.6), "hips"),
-]
-for _s, _x in (("L", 1.0), ("R", -1.0)):
-    BONES += [
-        ("upper_arm." + _s, (SHOULDER[0] * _x, SHOULDER[1], SHOULDER[2]), (ELBOW[0] * _x, ELBOW[1], ELBOW[2]), "chest"),
-        ("forearm." + _s, (ELBOW[0] * _x, ELBOW[1], ELBOW[2]), (WRIST[0] * _x, WRIST[1], WRIST[2]), "upper_arm." + _s),
-        ("hand." + _s, (WRIST[0] * _x, WRIST[1], WRIST[2]), (WRIST[0] * _x, WRIST[1] - 0.01, 0.82), "forearm." + _s),
-        ("thigh." + _s, (HIP[0] * _x, HIP[1], HIP[2]), (KNEE[0] * _x, KNEE[1], KNEE[2]), "hips"),
-        ("shin." + _s, (KNEE[0] * _x, KNEE[1], KNEE[2]), (ANKLE[0] * _x, ANKLE[1], ANKLE[2]), "thigh." + _s),
-        ("foot." + _s, (ANKLE[0] * _x, ANKLE[1], ANKLE[2]), (ANKLE[0] * _x, -0.14, 0.03), "shin." + _s),
-    ]
+])
+EXTRA = {"cloak1": ("cloak_1", "x"), "cloak2": ("cloak_2", "x"), "tabf": ("tabard_f", "x"), "tabb": ("tabard_b", "x")}
 
 
 class Mats:
@@ -74,42 +61,6 @@ class Mats:
         self.gold = mat.flat("gold", (0.55, 0.4, 0.17), rough=0.35, metallic=1.0)
         self.void = mat.flat("void", (0.0, 0.0, 0.0), rough=1.0)
         self.gold_bright = mat.flat("gold_bright", (0.85, 0.62, 0.25), rough=0.25, metallic=1.0)
-
-
-def _arm_x(z, side):
-    """x of the arm line at height z (upper arm and forearm are slightly splayed)."""
-    if z >= ELBOW[2]:
-        t = (SHOULDER[2] - z) / (SHOULDER[2] - ELBOW[2])
-        return side * (SHOULDER[0] + (ELBOW[0] - SHOULDER[0]) * t)
-    t = (ELBOW[2] - z) / (ELBOW[2] - WRIST[2])
-    return side * (ELBOW[0] + (WRIST[0] - ELBOW[0]) * t)
-
-
-def _tattered(pts_z, rng, depth):
-    return [z - rng.random() * depth * (1.0 if i % 2 else 0.45) for i, z in enumerate(pts_z)]
-
-
-def _partial_ring(rx, ry, a0, a1, n, z, jitter=None, y_off=0.0, folds=0, fold_amp=0.0):
-    """Arc of an ellipse; `folds` ripples the radius like hanging cloth."""
-    pts = []
-    for i in range(n):
-        a = math.radians(a0 + (a1 - a0) * i / (n - 1))
-        k = 1.0 + fold_amp * math.sin(a * folds)
-        pts.append((rx * k * math.cos(a), ry * k * math.sin(a) + y_off, z if jitter is None else jitter[i]))
-    return pts
-
-
-def _sheet(name, rows, material):
-    """Open cloth surface through rows of (x, y, z) points (same count per row)."""
-    import bmesh
-    bm = bmesh.new()
-    grid = [[bm.verts.new(p) for p in row] for row in rows]
-    for r0, r1 in zip(grid, grid[1:]):
-        for i in range(len(r0) - 1):
-            bm.faces.new((r0[i], r0[i + 1], r1[i + 1], r1[i]))
-    obj = geo.mesh_object(name, bm, material)
-    geo.solidify(obj, 0.012)
-    return obj
 
 
 def build(m):
@@ -152,12 +103,12 @@ def build(m):
         for zi, z in enumerate((1.04, 0.92, 0.8, 0.68, bottom)):
             w = 0.12 + 0.02 * zi
             row = []
-            hem = _tattered([z] * cols, rng, 0.06) if zi == 4 else [z] * cols
+            hem = humanoid.tattered([z] * cols, rng, 0.06) if zi == 4 else [z] * cols
             for i in range(cols):
                 x = -w + 2 * w * i / (cols - 1)
                 row.append((x, ysign * (0.152 + 0.012 * zi), hem[i]))
             rows.append(row)
-        t = _sheet(name, rows, m.crimson)
+        t = humanoid.sheet(name, rows, m.crimson)
         rig.skin_by_height(t, arm, [("hips", 1.0), (bone, 0.7)])
         parts.append(t)
 
@@ -166,17 +117,17 @@ def build(m):
     levels = [(1.47, 0.2, 0.15), (1.3, 0.25, 0.2), (1.0, 0.29, 0.23), (0.7, 0.32, 0.26), (0.36, 0.34, 0.28)]
     n = 29
     for li, (z, rx, ry) in enumerate(levels):
-        hem = _tattered([z] * n, rng, 0.16) if li == len(levels) - 1 else None
+        hem = humanoid.tattered([z] * n, rng, 0.16) if li == len(levels) - 1 else None
         amp = 0.02 + 0.03 * li  # folds deepen towards the hem
-        rows.append(_partial_ring(rx, ry, -28, 208, n, z, hem, y_off=0.02, folds=9, fold_amp=amp))
-    cloak = _sheet("cloak", rows, m.black)
+        rows.append(humanoid.partial_ring(rx, ry, -28, 208, n, z, hem, y_off=0.02, folds=9, fold_amp=amp))
+    cloak = humanoid.sheet("cloak", rows, m.black)
     rig.skin_by_height(cloak, arm, [("chest", 1.42), ("cloak_1", 0.95), ("cloak_2", 0.45)])
     parts.append(cloak)
     mrows = []
     for li, (z, rx, ry) in enumerate([(1.57, 0.11, 0.1), (1.52, 0.2, 0.16), (1.44, 0.27, 0.21), (1.36, 0.3, 0.23)]):
-        hem = _tattered([z] * 20, rng, 0.06) if li == 3 else None
-        mrows.append(_partial_ring(rx, ry, -10, 190, 20, z, hem, y_off=0.015))
-    attach(_sheet("mantle", mrows, m.black), "chest")
+        hem = humanoid.tattered([z] * 20, rng, 0.06) if li == 3 else None
+        mrows.append(humanoid.partial_ring(rx, ry, -10, 190, 20, z, hem, y_off=0.015))
+    attach(humanoid.sheet("mantle", mrows, m.black), "chest")
 
     # --- helm ------------------------------------------------------------------------
     helm = geo.loft("helm", [
@@ -191,7 +142,7 @@ def build(m):
     ], m.steel, 32)
     visor = []
     for z in (1.703, 1.722):
-        pts = _partial_ring(0.127, 0.14, 205, 335, 9, z, y_off=-0.007)
+        pts = humanoid.partial_ring(0.127, 0.14, 205, 335, 9, z, y_off=-0.007)
         visor += [geo.box("slit", (0.032, 0.012, 0.009), p, m.void, rotation=(0, 0, math.atan2(p[1], p[0]) + math.pi / 2))
             for p in pts]
     breaths = [geo.sphere("breath", 0.006, (0.04 + 0.02 * (i % 3), -0.14 + 0.012 * (i % 3), 1.63 + 0.02 * (i // 3)), m.void,
@@ -210,13 +161,13 @@ def build(m):
             ], m.steel, 20, cap_bottom=False, cap_top=(i == 0)))
         attach(geo.join(pauldron, "pauldron." + side), "upper_arm." + side)
         attach(geo.lames("rerebrace." + side, 1.33, 1.2, 3, 0.055, 0.055, m.steel, flare=0.008,
-            x=_arm_x(1.27, sx), y=0.01), "upper_arm." + side)
+            x=BODY.arm_x(1.27, sx), y=0.01), "upper_arm." + side)
         couter = geo.sphere("couter", 0.058, (sx * ELBOW[0], ELBOW[1], ELBOW[2]), m.steel, scale=(1, 1, 0.9))
         wing = geo.cylinder("couter_wing", 0.055, 0.03, 0.02, (sx * (ELBOW[0] + 0.045), ELBOW[1], ELBOW[2]), m.steel, 10,
             rotation=(0, math.pi / 2, 0))
         attach(geo.join([couter, wing], "couter." + side), "upper_arm." + side)
         attach(geo.lames("vambrace." + side, 1.13, 0.95, 3, 0.048, 0.046, m.steel, flare=0.006, taper=0.92,
-            x=_arm_x(1.04, sx), y=0.01), "forearm." + side)
+            x=BODY.arm_x(1.04, sx), y=0.01), "forearm." + side)
         # Gauntlet: flared cuff, back-of-hand plates, curled finger lames, thumb.
         cuff = geo.loft("cuff", [dict(z=0.965, rx=0.05, ry=0.05, x=sx * WRIST[0]),
             dict(z=0.92, rx=0.062, ry=0.058, x=sx * WRIST[0])], m.steel, 16, cap_bottom=False, cap_top=False)
@@ -266,49 +217,17 @@ def build(m):
 
 # --- poses ----------------------------------------------------------------------------
 # Pose dicts: semantic keys, degrees. Applied by apply_pose() on top of the rest pose.
-REST = {"armL_out": 6, "armR_out": 6, "elbowL": 8, "elbowR": 8}
-
-
 def apply_pose(arm, p):
-    rig.reset_pose(arm)
-    g = lambda k: p.get(k, REST.get(k, 0.0))  # noqa: E731
-    # Root bone axes: Y = world up, Z = world -Y (forward).
-    arm.pose.bones["root"].location = (0.0, g("root_z"), g("root_fwd"))
-    rig.rot(arm, "root", x=g("root_pitch"))
-    rig.rot(arm, "hips", x=g("hips_x"), y=g("hips_twist"), z=g("hips_roll"))
-    rig.rot(arm, "spine", x=g("spine_x"), y=g("spine_twist"))
-    rig.rot(arm, "chest", x=g("chest_x"), y=g("chest_twist"), z=g("chest_roll"))
-    rig.rot(arm, "neck", x=g("neck_x"))
-    rig.rot(arm, "head", x=g("head_x"), y=g("head_turn"), z=g("head_tilt"))
-    for s in ("L", "R"):
-        rig.arm(arm, s, forward=g("arm%s_fwd" % s), out=g("arm%s_out" % s), twist=g("arm%s_twist" % s),
-            elbow=g("elbow" + s), wrist=g("wrist" + s))
-        rig.leg(arm, s, forward=g("leg%s_fwd" % s), out=g("leg%s_out" % s), knee=g("knee" + s), ankle=g("ankle" + s))
-    rig.rot(arm, "cloak_1", x=g("cloak1"))
-    rig.rot(arm, "cloak_2", x=g("cloak2"))
-    rig.rot(arm, "tabard_f", x=g("tabf"))
-    rig.rot(arm, "tabard_b", x=g("tabb"))
+    humanoid.apply_pose(arm, p, EXTRA)
 
 
 def walk_pose(t):
-    """12-frame walk: contact, down, passing, up per step; opposite arm swing, counter-twist."""
+    """12-frame walk; the cloak trails and the tabard swings against the legs."""
     a = math.tau * t
     s = math.sin(a)
-    c = math.cos(a)
-    lift_l = max(0.0, math.sin(a + math.pi / 2))
-    lift_r = max(0.0, math.sin(a - math.pi / 2))
-    return {
-        "root_z": -0.025 * abs(math.cos(a)) + 0.01,
-        "hips_twist": 6 * s, "chest_twist": -9 * s, "spine_x": 5, "chest_x": 2, "head_x": -4, "head_turn": 3 * s,
-        "hips_roll": 2.5 * c,
-        "legL_fwd": 26 * s, "legR_fwd": -26 * s,
-        "kneeL": 8 + 40 * lift_l, "kneeR": 8 + 40 * lift_r,
-        "ankleL": -14 * s * 0.6, "ankleR": 14 * s * 0.6,
-        "armL_fwd": -22 * s, "armR_fwd": 22 * s, "armL_out": 7, "armR_out": 7,
-        "elbowL": 14 + 10 * max(0.0, -s), "elbowR": 14 + 10 * max(0.0, s),
-        "cloak1": 10 + 4 * abs(s), "cloak2": 8 + 8 * math.sin(a * 2 + 0.6),
-        "tabf": -10 * s, "tabb": 8 * s,
-    }
+    p = humanoid.walk_pose(t)
+    p.update({"cloak1": 10 + 4 * abs(s), "cloak2": 8 + 8 * math.sin(a * 2 + 0.6), "tabf": -10 * s, "tabb": 8 * s})
+    return p
 
 
 def pose_for(anim, t):
