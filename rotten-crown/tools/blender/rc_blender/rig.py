@@ -40,7 +40,8 @@ def build_armature(name, bones, collection=None):
 
 def parent_to_bone(obj, rig, bone):
     """Rigidly attach obj (modelled in rest-pose world space) to a bone."""
-    mw = obj.matrix_world.copy()
+    # matrix_world is stale until the depsgraph updates; an unparented object's basis is its world matrix.
+    mw = obj.matrix_basis.copy()
     obj.parent = rig
     obj.parent_type = "BONE"
     obj.parent_bone = bone

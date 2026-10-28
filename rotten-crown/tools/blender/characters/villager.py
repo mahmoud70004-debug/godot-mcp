@@ -265,7 +265,8 @@ def main():
 
     only = [a for a in args.only.split(",") if a]
     dirs = [int(d) for d in args.dirs.split(",") if d] or None
-    variants = [{k: list(c) for k, c in v.items()} for v in VARIANTS[kind]]
+    # Palette row 0 is the rendered colouring (VARIANTS[kind][0]); the rest become rows 1.. .
+    variants = [{k: list(c) for k, c in v.items()} for v in VARIANTS[kind][1:]]
     sprite_render.render_character("villager_" + kind, arm, pose, anims, args.out, 8, CAMERA_SIZE, HEIGHT_PX, 40,
                                    only or None, dirs, sprite_render.material_table(m.table(kind)), variants)
 
