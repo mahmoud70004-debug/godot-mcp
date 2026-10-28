@@ -12,6 +12,9 @@ uniform float wind_strength = 0.07;
 uniform float wind_speed = 1.4;
 uniform float pixel_size = 22.0;
 uniform float blades = 11.0;
+uniform float lean = 0.0;
+uniform float gust_strength = 1.0;
+uniform float sheen = 0.0;
 
 varying vec3 world_pos;
 
@@ -23,7 +26,7 @@ void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float h = 1.0 - UV.y;
 	float gust = sin(TIME * wind_speed + world_pos.x * 0.35 + world_pos.z * 0.25) * 0.6 + sin(TIME * wind_speed * 2.3 + world_pos.z) * 0.4;
-	VERTEX.x += gust * wind_strength * h * h;
+	VERTEX.x += (gust * gust_strength * wind_strength + lean) * h * h;
 }
 
 void fragment() {
@@ -37,6 +40,8 @@ void fragment() {
 		discard;
 	}
 	vec3 tip = mix(tip_color.rgb, dry_color.rgb, step(0.8, seed));
-	ALBEDO = mix(base_color.rgb, tip, y / height);
+	float t = y / height;
+	ALBEDO = mix(base_color.rgb, tip, t);
+	ALBEDO += vec3(sheen * 0.5) * smoothstep(0.7, 1.0, t);
 	ROUGHNESS = 1.0;
 }

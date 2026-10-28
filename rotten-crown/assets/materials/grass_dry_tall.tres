@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/grass.gdshader" id="1_grass"]
+
+[resource]
+shader = ExtResource("1_grass")
+shader_parameter/base_color = Color(0.1, 0.09, 0.06, 1)
+shader_parameter/tip_color = Color(0.62, 0.57, 0.38, 1)
+shader_parameter/dry_color = Color(0.5, 0.46, 0.3, 1)
+shader_parameter/blades = 14.0
+shader_parameter/pixel_size = 28.0
+shader_parameter/lean = 0.22
+shader_parameter/wind_strength = 0.12
+shader_parameter/gust_strength = 1.6
+shader_parameter/sheen = 0.35
