@@ -50,6 +50,8 @@ func _ready() -> void:
 	Events.wake_up_started.connect(_play_eyelids)
 
 	inventory_menu.closed.connect(close_menu)
+	%QualityOption.item_selected.connect(_on_quality_selected)
+	Events.quality_changed.connect(func(level: int) -> void: %QualityOption.select(level))
 	%ResumeButton.pressed.connect(close_menu)
 	%SaveButton.pressed.connect(_on_save_pressed)
 	%MainMenuButton.pressed.connect(_on_main_menu_pressed)
@@ -84,6 +86,8 @@ func open_menu(menu: Control) -> void:
 	if menu == inventory_menu:
 		inventory_menu.open()
 	else:
+		if menu == pause_menu:
+			%QualityOption.select(Settings.quality)
 		menu.show()
 	_set_gameplay_paused(true)
 
@@ -94,6 +98,12 @@ func close_menu() -> void:
 	lore_reader.hide()
 	_open_menu = null
 	_set_gameplay_paused(false)
+
+
+func _on_quality_selected(index: int) -> void:
+	Settings.quality = index
+	Settings.save_settings()
+	Quality.apply(index)
 
 
 func _toggle_menu(menu: Control) -> void:

@@ -30,6 +30,7 @@ Settings="*res://src/autoload/settings.gd"
 GameState="*res://src/autoload/game_state.gd"
 SaveManager="*res://src/autoload/save_manager.gd"
 AudioManager="*res://src/autoload/audio_manager.gd"
+Quality="*res://src/rendering/quality_manager.gd"
 SceneLoader="*res://src/autoload/scene_loader.gd"
 DebugBridge="*res://src/autoload/debug_bridge.gd"
 

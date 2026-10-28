@@ -27,6 +27,8 @@ signal region_entered(region: RegionData)
 # UI
 signal message_requested(text: String, duration: float)
 signal menu_state_changed(is_open: bool)
+## Graphics quality changed (0 Low, 1 Medium, 2 High).
+signal quality_changed(level: int)
 
 
 func show_message(text: String, duration: float = 2.5) -> void:

@@ -16,6 +16,10 @@ var master_volume := 1.0
 var music_volume := 0.8
 var sfx_volume := 1.0
 var ambience_volume := 0.9
+## Graphics quality: 0 Low, 1 Medium, 2 High.
+var quality := 1
+## The one-time FPS probe has run on this install.
+var quality_auto_checked := false
 
 
 func _ready() -> void:
@@ -44,6 +48,8 @@ func save_settings() -> void:
 	cfg.set_value("audio", "music", music_volume)
 	cfg.set_value("audio", "sfx", sfx_volume)
 	cfg.set_value("audio", "ambience", ambience_volume)
+	cfg.set_value("graphics", "quality", quality)
+	cfg.set_value("graphics", "quality_auto_checked", quality_auto_checked)
 	cfg.save(SETTINGS_PATH)
 
 
@@ -59,6 +65,8 @@ func load_settings() -> void:
 	music_volume = cfg.get_value("audio", "music", music_volume)
 	sfx_volume = cfg.get_value("audio", "sfx", sfx_volume)
 	ambience_volume = cfg.get_value("audio", "ambience", ambience_volume)
+	quality = clampi(int(cfg.get_value("graphics", "quality", quality)), 0, 2)
+	quality_auto_checked = cfg.get_value("graphics", "quality_auto_checked", quality_auto_checked)
 
 
 func _set_bus_volume(bus_name: StringName, linear: float) -> void:
