@@ -88,7 +88,7 @@ static func _filler_trees(wood: Node3D, terrain: TerrainBuilder, rng: RandomNumb
 		var z: Vector3 = zone
 		var placed := 0
 		var tries := 0
-		while placed < 20 and tries < 200:
+		while placed < 12 and tries < 200:
 			tries += 1
 			var ang := rng.randf() * TAU
 			var rad := sqrt(rng.randf()) * z.z

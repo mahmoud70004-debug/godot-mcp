@@ -79,6 +79,8 @@ for f in list(ROOT.rglob("*")):
         continue
     for ref in re.findall(r'res://[A-Za-z0-9_./-]+', f.read_text(encoding="utf-8")):
         ref = ref.rstrip(".")
+        if ref.startswith("res://build/"):
+            continue  # generated, git-ignored output (sprite renders, exports)
         if not res_to_path(ref).exists():
             report(f"{f.relative_to(ROOT)}: missing file {ref}")
 

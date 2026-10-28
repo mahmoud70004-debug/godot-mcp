@@ -21,7 +21,8 @@ static var _character_matte: StandardMaterial3D
 static var _character_metal: StandardMaterial3D
 
 
-static func merge_static(root: Node3D, cell_size: float = 20.0) -> int:
+## range_end > 0 culls merged chunks beyond that distance (fog hides them anyway).
+static func merge_static(root: Node3D, cell_size: float = 20.0, range_end: float = 0.0) -> int:
 	var groups: Dictionary = {}
 	var inverse_root := root.global_transform.affine_inverse() if root.is_inside_tree() else Transform3D.IDENTITY
 	for node in root.find_children("*", "MeshInstance3D", true, false):
@@ -47,6 +48,7 @@ static func merge_static(root: Node3D, cell_size: float = 20.0) -> int:
 		out.material_override = g["material"]
 		var first := (g["nodes"] as Array)[0] as MeshInstance3D
 		out.cast_shadow = first.cast_shadow
+		out.visibility_range_end = range_end
 		root.add_child(out)
 		for n in g["nodes"]:
 			(n as MeshInstance3D).visible = false

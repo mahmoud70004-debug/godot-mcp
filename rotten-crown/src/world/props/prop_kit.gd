@@ -104,7 +104,7 @@ static func gnarled_tree(height: float, lean: Vector3, rng: RandomNumberGenerato
 		var dir := (Vector3.UP * 1.1 + side * sway * 0.55 + l * (0.12 + t * 0.35) + side.cross(Vector3.UP) * cos(phase + t * TAU * twist) * 0.2).normalized()
 		var np := p + dir * (trunk_h / segs)
 		var nr := r0 * lerpf(1.0, 0.55, float(i + 1) / segs)
-		_limb(root, p - dir * 0.12, np, r, nr, bark, 7)
+		_limb(root, p - dir * 0.12, np, r, nr, bark, 6)
 		p = np
 		r = nr
 		pts.append(p)
@@ -139,7 +139,7 @@ static func gnarled_tree(height: float, lean: Vector3, rng: RandomNumberGenerato
 			if k >= steps - 3:
 				for c in 2:
 					var td := (dir + Vector3(rng.randf_range(-0.7, 0.7), rng.randf_range(-0.5, 0.3), rng.randf_range(-0.7, 0.7))).normalized()
-					_limb(root, np, np + td * seg_len * rng.randf_range(0.8, 1.4), nr * 0.5, nr * 0.12, bark, 4)
+					_limb(root, np, np + td * seg_len * rng.randf_range(0.8, 1.4), nr * 0.5, nr * 0.12, bark, 3)
 			q = np
 			lr = nr
 			dir.y -= 0.28
@@ -177,12 +177,12 @@ static func pumpkin(size: float, rng: RandomNumberGenerator, carved := false, fl
 	if carved:
 		dark = RetroMaterials.flat(Color(0.95, 0.5, 0.1), 0.9)  # faint inner glow
 	var cy := size * 0.38
-	var core := PartBuilder.sphere(root, size * 0.42, Vector3(0, cy, 0), mat, false, 10)
+	var core := PartBuilder.sphere(root, size * 0.42, Vector3(0, cy, 0), mat, false, 8)
 	core.scale = Vector3(1, 0.82, 1)
-	var lobes := rng.randi_range(6, 8)
+	var lobes := rng.randi_range(5, 6)
 	for i in lobes:
 		var a := TAU * i / lobes + rng.randf_range(-0.05, 0.05)
-		var lobe := PartBuilder.sphere(root, size * 0.3, Vector3(cos(a) * size * 0.26, cy, sin(a) * size * 0.26), mat, false, 8)
+		var lobe := PartBuilder.sphere(root, size * 0.3, Vector3(cos(a) * size * 0.26, cy, sin(a) * size * 0.26), mat, false, 6)
 		lobe.scale = Vector3(0.9, 1.0, 0.9)
 	# Curly stem.
 	var stem := RetroMaterials.wood()
@@ -591,10 +591,14 @@ static func _wheel(parent: Node3D, r: float, pos: Vector3, spokes: int, wood: Ma
 # Shared helpers
 # --------------------------------------------------------------------------
 ## Cylinder from a to b (radius ra at a, rb at b).
-static func _limb(parent: Node3D, a: Vector3, b: Vector3, ra: float, rb: float, mat: Material, segments: int = 6) -> MeshInstance3D:
+static func _limb(parent: Node3D, a: Vector3, b: Vector3, ra: float, rb: float, mat: Material, segments: int = 5) -> MeshInstance3D:
 	var v := b - a
 	var len := maxf(v.length(), 0.01)
 	var mi := PartBuilder.cylinder(parent, rb, ra, len, (a + b) * 0.5, mat, segments)
+	# Limb caps are always buried in the next segment: drop them (half the triangles).
+	var cyl := mi.mesh as CylinderMesh
+	cyl.cap_top = false
+	cyl.cap_bottom = false
 	mi.transform = Transform3D(Basis(Quaternion(Vector3.UP, v / len)), (a + b) * 0.5)
 	return mi
 

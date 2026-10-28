@@ -82,7 +82,7 @@ func _build() -> void:
 		_build_festival()
 	else:
 		_scatter_rot()
-	MeshMerger.merge_static(self)
+	MeshMerger.merge_static(self, 20.0, 0.0 if festive else 140.0)
 
 
 func _make_materials() -> void:
