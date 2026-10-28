@@ -254,3 +254,4 @@ transparent). Variant rows recolour each material's ramp to the variant colour k
 Runtime: PixelSprite3D keeps its API (+ `variant: int`), uses one cached ShaderMaterial per (sheet, variant):
 index lookup with nearest sampling -> palette colour * vertex COLOR (modulate/flash), discard index 0, FIXED_Y
 billboard in the vertex shader, shaded. Per frame it sets region_rect and offset from `frames`.
+| U14 | UI pass with taste-skill principles: main menu, pause/quality, inventory, HUD, region title cards, and the web launch page that wraps the game (the skill's "page" run) | H | U11 |
