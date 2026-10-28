@@ -23,6 +23,9 @@ signal lore_read_requested(lore: LoreData)
 # World
 signal enemy_killed(enemy_data: EnemyData)
 signal region_entered(region: RegionData)
+## Every time the player walks into / out of a RegionTrigger (fog, rain follow these).
+signal region_zone_entered(region: RegionData)
+signal region_zone_exited(region: RegionData)
 
 # UI
 signal message_requested(text: String, duration: float)

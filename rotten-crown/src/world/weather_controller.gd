@@ -49,6 +49,7 @@ func _ready() -> void:
 	_rain_player.stream = RAIN_STREAM
 	_thunder_player = _make_player()
 	_apply_rain()
+	Events.quality_changed.connect(func(_level: int) -> void: _apply_rain())
 	_next_strike = _roll_interval()
 	var forced := OS.get_environment("RC_FORCE_LIGHTNING")
 	if not forced.is_empty():
@@ -116,7 +117,8 @@ func _make_player() -> AudioStreamPlayer:
 
 func _apply_rain() -> void:
 	if _material != null:
-		_material.set_shader_parameter("rain_amount", rain)
+		# Low quality drops the streak layer (D7); the rain bed still plays.
+		_material.set_shader_parameter("rain_amount", 0.0 if Settings.quality == 0 else rain)
 	if _rain_player == null:
 		return
 	if rain <= 0.01:

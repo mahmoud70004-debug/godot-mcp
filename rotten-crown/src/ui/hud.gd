@@ -103,7 +103,7 @@ func close_menu() -> void:
 func _on_quality_selected(index: int) -> void:
 	Settings.quality = index
 	Settings.save_settings()
-	Quality.apply(index)
+	Events.quality_changed.emit(index)
 
 
 func _toggle_menu(menu: Control) -> void:

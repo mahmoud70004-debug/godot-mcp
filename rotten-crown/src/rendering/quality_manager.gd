@@ -1,7 +1,10 @@
 extends Node
 ## Graphics quality (0 Low, 1 Medium, 2 High). Applies content scale, shadows,
-## grass density and post-process features to the current scene, re-applies on
-## every scene change, and downgrades once on weak devices.
+## grass density and post-process grain to the current scene, re-applies on
+## every scene change and on Events.quality_changed, and downgrades once on weak
+## devices. Rain streaks on Low are WeatherController's job. Scenes in the
+## persistent group "quality_ignore" (offline bake tools) are left alone.
+## Web: ?quality=0|1|2 forces a level for this session (tests).
 
 const LOW := 0
 const MEDIUM := 1
@@ -9,7 +12,6 @@ const HIGH := 2
 const WARMUP_SECONDS := 3.0
 const SAMPLE_SECONDS := 8.0
 const FPS_THRESHOLD := 40.0
-const RAIN_CAP_LOW := 0.3
 
 var _pending := false
 var _probing := false
@@ -18,6 +20,8 @@ var _probing := false
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	get_tree().node_added.connect(_on_node_added)
+	Events.quality_changed.connect(apply)
+	_apply_url_override()
 	_schedule_apply()
 
 
@@ -30,7 +34,7 @@ func apply(level: int) -> void:
 	elif level == HIGH:
 		RenderingServer.directional_shadow_atlas_set_size(2048, true)
 	var scene := get_tree().current_scene
-	if scene == null:
+	if scene == null or scene.is_in_group(&"quality_ignore"):
 		return
 	_apply_shadows(scene, level)
 	_apply_grass(level)
@@ -82,19 +86,11 @@ func _apply_post(scene: Node, level: int) -> void:
 		var mat := screen.material as ShaderMaterial if screen else null
 		if mat == null:
 			continue
-		for param in ["grain_strength", "rain_amount"]:
-			if mat.shader.get_shader_uniform_list().filter(func(u: Dictionary) -> bool: return u["name"] == param).is_empty():
-				continue
-			var key := StringName("q_orig_" + param)
-			if not mat.has_meta(key):
-				mat.set_meta(key, mat.get_shader_parameter(param))
-			var original: float = mat.get_meta(key)
-			if level != LOW:
-				mat.set_shader_parameter(param, original)
-			elif param == "grain_strength":
-				mat.set_shader_parameter(param, 0.0)
-			else:
-				mat.set_shader_parameter(param, minf(original, RAIN_CAP_LOW))
+		if not mat.has_meta(&"q_orig_grain"):
+			mat.set_meta(&"q_orig_grain", mat.get_shader_parameter("grain_strength"))
+		var original: Variant = mat.get_meta(&"q_orig_grain")
+		if original is float:
+			mat.set_shader_parameter("grain_strength", 0.0 if level == LOW else float(original))
 
 
 func _maybe_probe() -> void:
@@ -103,8 +99,7 @@ func _maybe_probe() -> void:
 	if get_tree().get_first_node_in_group(&"player") == null:
 		return
 	_probing = true
-	Settings.quality_auto_checked = true
-	Settings.save_settings()
+	var start_level := Settings.quality
 	await get_tree().create_timer(WARMUP_SECONDS).timeout
 	var total := 0.0
 	var samples := 0
@@ -115,10 +110,21 @@ func _maybe_probe() -> void:
 		total += Engine.get_frames_per_second()
 		samples += 1
 	_probing = false
+	Settings.quality_auto_checked = true
 	var average := total / maxf(samples, 1)
-	if average < FPS_THRESHOLD and Settings.quality > LOW:
-		Settings.quality -= 1
-		Settings.save_settings()
-		apply(Settings.quality)
-		Events.quality_changed.emit(Settings.quality)
+	# A level the player picked meanwhile wins over the measurement.
+	if Settings.quality == start_level and average < FPS_THRESHOLD and Settings.quality > LOW:
+		Settings.quality = LOW
+		Events.quality_changed.emit(LOW)
 		Events.show_message("Graphics set to Low for smoother play (Pause > Quality).")
+	Settings.save_settings()
+
+
+func _apply_url_override() -> void:
+	if not OS.has_feature("web"):
+		return
+	var q: Variant = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('quality') || ''", true)
+	if q == null or not str(q).is_valid_int():
+		return
+	Settings.quality = clampi(str(q).to_int(), LOW, HIGH)
+	Settings.quality_auto_checked = true  # session only: not saved

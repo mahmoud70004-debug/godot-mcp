@@ -67,6 +67,9 @@ func _light(rot: Vector3, color: Color, energy: float) -> void:
 	l.rotation = rot
 	l.light_color = color
 	l.light_energy = energy
+	# Explicit, so sheets do not depend on the local quality setting (the bake root is quality_ignore).
+	l.shadow_enabled = true
+	l.directional_shadow_max_distance = 25.0
 	_viewport.add_child(l)
 
 

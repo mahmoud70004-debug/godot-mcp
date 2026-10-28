@@ -6,6 +6,9 @@ extends Node
 ## Outputs: src/levels/valdron/baked/overworld_world.scn, prologue_world.scn
 
 const OUT_DIR := "res://src/levels/valdron/baked/"
+## Overworld meshes left unmerged (single props, shafts, gore) stop drawing
+## beyond this; the fog hides them long before.
+const OVERWORLD_DEFAULT_RANGE := 110.0
 
 
 func _ready() -> void:
@@ -13,7 +16,7 @@ func _ready() -> void:
 	if what == "" or what == "overworld":
 		var root := _new_root("OverworldWorld")
 		OverworldBuilder.build(root)
-		await _finish(root, OUT_DIR + "overworld_world.scn")
+		await _finish(root, OUT_DIR + "overworld_world.scn", OVERWORLD_DEFAULT_RANGE)
 	if what == "" or what == "prologue":
 		var root := _new_root("PrologueWorld")
 		var ward := OuterWardBlockout.new()
@@ -36,9 +39,9 @@ func _new_root(root_name: String) -> Node3D:
 	return root
 
 
-func _finish(root: Node3D, path: String) -> void:
+func _finish(root: Node3D, path: String, default_range := 0.0) -> void:
 	await get_tree().process_frame
-	var stats := _finalize(root)
+	var stats := _finalize(root, default_range)
 	_own(root, root)
 	var packed := PackedScene.new()
 	var err := packed.pack(root)
@@ -50,8 +53,10 @@ func _finish(root: Node3D, path: String) -> void:
 
 
 ## Strips builder scripts (they would rebuild on load), drops the mesh data of
-## merged originals (keeping their colliders) and gathers budget statistics.
-func _finalize(root: Node3D) -> Dictionary:
+## merged originals (keeping their colliders), gives every visible mesh still
+## without one a visibility range of `default_range` (0 = leave as is) and
+## gathers budget statistics.
+func _finalize(root: Node3D, default_range: float) -> Dictionary:
 	var stats := {"meshes": 0, "verts": 0, "grass": 0, "lights": 0}
 	for node in root.find_children("*", "", true, false):
 		if node.get_script() == OuterWardBlockout or node.get_script() == HorizonBackdrop:
@@ -64,6 +69,8 @@ func _finalize(root: Node3D) -> Dictionary:
 			else:
 				mi.mesh = null
 			continue
+		if default_range > 0.0 and mi.visibility_range_end <= 0.0:
+			mi.visibility_range_end = default_range
 		if mi.mesh:
 			stats["meshes"] = int(stats["meshes"]) + 1
 			stats["verts"] = int(stats["verts"]) + mi.mesh.get_faces().size()

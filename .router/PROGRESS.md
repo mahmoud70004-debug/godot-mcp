@@ -24,3 +24,7 @@
 | T08 | N (router-normal) | done | prologue_cutscene.gd | verified by H Movie Maker sheet; H follow-up: rim light back, lie pose = full billboard + fixed side direction (PixelSprite3D.fixed_direction) |
 | T21a | H | done | terrain.gdshader, grass_dry_tall.tres, thornfield_builder.gd, valdron_overworld.tscn, villager_model.gd, bake_sprites.sh | road muddy brown/pale in forest, brighter overworld env, denser dry grass, muted villager dyes (re-baked), bake_sprites expands variants |
 | T22 | E (router-easy) | done | ROADMAP, GAME_DESIGN, ARCHITECTURE, rotten-crown/CLAUDE.md | phases renumbered (Phase 3 = graphics polish, localisation stays 8); H checked cottage count claim |
+| T20 | N (router-normal) | done | level.gd (?tp=), web_perf.cjs, web_smoke_test.cjs | smoke PASS; spawn 8.25 / Hollowmere 6.25 / prologue 5.5 fps, prologue load 5.3 s (phase 2 build, same tool: 4.75 fps, 6.2 s) |
+| review | router-reviewer | done | - | 3 blocking + 10 minor -> T24 (N) + T25 (H) |
+| T24 | N (router-normal) | done | pixel_sprite_3d.gd, sprite_creature_visual.gd | findings 8,9,10,13; H read diff |
+| T25 | H | done | grass_scatter, quality_manager, weather_controller, level, region_trigger, events, hud, bake_world, wood builder, baker | findings 1-6, 11a; verified headless (grass group 527, Low halves grass + no streaks, region re-entry restores fog/rain). Not done: 7 (32 m chunks: more draw calls, targets met), 11 C3 naming, horizon still runtime (cheap) |

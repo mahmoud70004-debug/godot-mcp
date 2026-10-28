@@ -45,6 +45,6 @@ static func scatter(root: Node3D, terrain: TerrainBuilder, area: Rect2, count: i
 		mmi.multimesh = mm
 		mmi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mmi.visibility_range_end = range_end
-		mmi.add_to_group(&"grass_chunks")
+		mmi.add_to_group(&"grass_chunks", true)  # persistent: survives the world bake
 		group.add_child(mmi)
 	return group

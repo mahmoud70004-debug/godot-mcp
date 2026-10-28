@@ -6,6 +6,7 @@
 // Then prints prologue_load_s, prologue_fps, spawn_fps and hollowmere_fps
 // (Hollowmere via ?tp=20,1.5,300,180 - yaw 180 faces +Z; see Level._apply_dev_shot).
 // Flags: nosky, nograss, nohorizon, nopost, nofog (see src/world/level.gd).
+// RC_PERF_QUERY="&quality=1" pins a quality level (otherwise the auto-downgrade may switch to Low).
 const { chromium } = require('playwright');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const countFps = (p) => p.evaluate(() => new Promise((r) => {
@@ -42,7 +43,7 @@ async function measureAll(b, url) {
   const mk = async (q) => {
     const ctx = await b.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
     const p = await ctx.newPage();
-    await p.goto(`${url}?debug=1${q}`);
+    await p.goto(`${url}?debug=1${process.env.RC_PERF_QUERY || ''}${q}`);
     await waitMenu(p);
     await sleep(2000);
     return { ctx, p };

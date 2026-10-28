@@ -13,6 +13,10 @@ extends Node3D
 ## Announce the region as soon as the level starts (otherwise use RegionTrigger).
 @export var announce_on_start := false
 
+var _base_region: RegionData
+var _zones: Array[RegionData] = []
+var _blend_tween: Tween
+
 
 func _ready() -> void:
 	GameState.current_scene_path = scene_file_path
@@ -25,7 +29,9 @@ func _ready() -> void:
 		player.global_position = GameState.pending_player_position
 		GameState.pending_player_position = null
 	_apply_dev_shot()
-	Events.region_entered.connect(_on_region_entered)
+	_base_region = region
+	Events.region_zone_entered.connect(_on_zone_entered)
+	Events.region_zone_exited.connect(_on_zone_exited)
 	_apply_dev_perf_flags()
 	if player and GameState.get_flag("waking_up"):
 		GameState.flags.erase("waking_up")
@@ -79,15 +85,33 @@ func _apply_dev_shot() -> void:
 		player.head.rotation_degrees.x = v[4]
 
 
-func _on_region_entered(new_region: RegionData) -> void:
+## Zones can overlap; the most recently entered one wins, and leaving all of
+## them falls back to the level's own region.
+func _on_zone_entered(zone: RegionData) -> void:
+	_zones.erase(zone)
+	_zones.append(zone)
+	_blend_to(zone)
+
+
+func _on_zone_exited(zone: RegionData) -> void:
+	_zones.erase(zone)
+	var fallback: RegionData = _zones.back() if not _zones.is_empty() else _base_region
+	if fallback:
+		GameState.current_region_id = fallback.id
+		_blend_to(fallback)
+
+
+func _blend_to(new_region: RegionData) -> void:
 	if environment == null or environment.environment == null or new_region == region:
 		return
 	region = new_region
 	var env := environment.environment
-	var tw := create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE)
-	tw.tween_property(env, "fog_light_color", new_region.fog_color, region_blend_time)
-	tw.tween_property(env, "fog_density", new_region.fog_density, region_blend_time)
-	tw.tween_property(env, "ambient_light_color", new_region.ambient_color, region_blend_time)
+	if _blend_tween != null:
+		_blend_tween.kill()
+	_blend_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE)
+	_blend_tween.tween_property(env, "fog_light_color", new_region.fog_color, region_blend_time)
+	_blend_tween.tween_property(env, "fog_density", new_region.fog_density, region_blend_time)
+	_blend_tween.tween_property(env, "ambient_light_color", new_region.ambient_color, region_blend_time)
 	if weather:
 		weather.set_rain(new_region.rain, region_blend_time)
 

@@ -234,8 +234,9 @@ static func _mist(wood: Node3D, terrain: TerrainBuilder, path: PackedVector2Arra
 		mat.set_shader_parameter("shimmer", 0.05)
 		mat.set_shader_parameter("near_start", 6.0)
 		mat.set_shader_parameter("near_end", 24.0)
-		mat.set_shader_parameter("far_start", 400.0)
-		mat.set_shader_parameter("far_end", 500.0)
+		# Fade out before the visibility range culls the card (overdraw on phones).
+		mat.set_shader_parameter("far_start", 120.0)
+		mat.set_shader_parameter("far_end", 150.0)
 		var quad := QuadMesh.new()
 		quad.size = Vector2(54.0, 24.0)
 		var mi := MeshInstance3D.new()
@@ -243,6 +244,7 @@ static func _mist(wood: Node3D, terrain: TerrainBuilder, path: PackedVector2Arra
 		mi.material_override = mat
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		mi.set_meta(MeshMerger.SKIP_META, true)
+		mi.visibility_range_end = 150.0
 		mi.position = terrain.ground(c.x, c.y) + Vector3(0.0, 4.5, 0.0)
 		group.add_child(mi)
 

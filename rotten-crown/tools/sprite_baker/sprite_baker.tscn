@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" path="res://tools/sprite_baker/sprite_baker.gd" id="1_b"]
 
-[node name="SpriteBaker" type="Node3D"]
+[node name="SpriteBaker" type="Node3D" groups=["quality_ignore"]]
 script = ExtResource("1_b")

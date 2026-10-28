@@ -2,5 +2,5 @@
 
 [ext_resource type="Script" path="res://tools/bake_world.gd" id="1_b"]
 
-[node name="BakeWorld" type="Node"]
+[node name="BakeWorld" type="Node" groups=["quality_ignore"]]
 script = ExtResource("1_b")
