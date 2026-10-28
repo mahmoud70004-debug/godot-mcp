@@ -1,7 +1,8 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://src/enemies/enemy_data.gd" id="1_script"]
 [ext_resource type="Resource" path="res://data/items/consumables/grave_moss.tres" id="2_res"]
+[ext_resource type="Resource" path="res://assets/sprites/hollow/hollow.tres" id="9_sheet"]
 
 [resource]
 script = ExtResource("1_script")
@@ -34,3 +35,4 @@ head_tilt_degrees = 24.0
 body_scale = Vector3(1, 1, 1)
 drop_item = ExtResource("2_res")
 drop_chance = 0.4
+sprite_sheet = ExtResource("9_sheet")

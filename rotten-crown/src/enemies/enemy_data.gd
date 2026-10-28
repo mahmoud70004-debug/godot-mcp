@@ -43,6 +43,9 @@ extends Resource
 @export var head_tilt_degrees := 22.0
 @export var body_scale := Vector3.ONE
 
+@export_group("Visual")
+@export var sprite_sheet: SpriteSheetData
+
 @export_group("Loot")
 @export var drop_item: ItemData
 @export_range(0.0, 1.0) var drop_chance := 0.0

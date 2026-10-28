@@ -1,6 +1,7 @@
-[gd_resource type="Resource" script_class="EnemyData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="EnemyData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://src/enemies/enemy_data.gd" id="1_script"]
+[ext_resource type="Resource" path="res://assets/sprites/mourner/mourner.tres" id="9_sheet"]
 
 [resource]
 script = ExtResource("1_script")
@@ -32,3 +33,4 @@ twitch_intensity = 1.7
 head_tilt_degrees = 78.0
 body_scale = Vector3(0.9, 1.14, 0.9)
 drop_chance = 0.0
+sprite_sheet = ExtResource("9_sheet")

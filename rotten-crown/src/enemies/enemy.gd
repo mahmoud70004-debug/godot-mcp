@@ -1,7 +1,7 @@
 class_name Enemy
 extends CharacterBody3D
 ## Base AI for the transformed citizens of Valdron. Variants are mostly
-## data (EnemyData) plus a CreatureRig; override the virtual hooks for
+## data (EnemyData) plus a SpriteCreatureVisual; override the virtual hooks for
 ## unique behaviour (ranged spit, bosses, swarms) in later phases.
 
 enum State { IDLE, CHASE, WINDUP, ATTACK, RECOVER, STAGGER, DEAD }
@@ -16,7 +16,7 @@ const OOZE_SHADER := preload("res://assets/shaders/ooze.gdshader")
 @onready var health: HealthComponent = $HealthComponent
 @onready var hurtbox: HurtboxComponent = $Hurtbox
 @onready var attack_hitbox: HitboxComponent = $AttackHitbox
-@onready var rig: CreatureRig = $Visual
+@onready var rig: SpriteCreatureVisual = $Visual
 
 var state: State = State.IDLE
 var _state_time := 0.0
