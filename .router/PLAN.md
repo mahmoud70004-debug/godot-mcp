@@ -178,3 +178,47 @@ Tiers: E haiku, N sonnet, H opus (me). `[ ]` open, `[x]` done (see PROGRESS.md).
 | T21 | Integrate, perf-tune, router-reviewer diff review, fix findings | H | all | - | AC1-AC8 |
 | T22 | Docs: ROADMAP (Phase 3 = graphics polish, renumber), GAME_DESIGN (map, art pipeline), ARCHITECTURE | E | T21 | docs/*.md, README.md, CLAUDE.md | docs mention every new system |
 | T23 | Publish web build, verify Pages | H | T21,T22 | ../docs | Pages build.txt matches |
+
+---
+
+# PLAN — Phase 3b: quality upgrade (after the user's Phase 3 test report)
+
+## Feedback (user, phone test)
+- Pixel art and characters weak: the knight looks smeared, its animation unclear and low quality -> denser pixels, more frames, finer detail.
+- Exploration, villages and the Whispering Wood path not good enough in graphics quality, detail and creativity.
+- User suggested drawing skills (Taste skill, Figma) and offered to connect drawing tools.
+
+## Diagnosis (H)
+1. Sprite density: the knight sheet is 76 px tall but fills ~180 of the 360 internal rows in close shots -> upscaled ~2.4x. The pixelizer area-averages (blur) before quantising -> "smeared".
+2. Source models are boxes and cylinders, so even a perfect pixelizer has no detail to keep. Animation is procedural (sin waves) with few frames.
+3. The world is procedural primitives with tiny noise textures: no material detail, no silhouettes, repetitive.
+4. Skills: Taste skill = web-page art direction (useful later for menus and HUD only); Figma = UI vector design (needs authorisation, not a game-art tool). Relevant: pixel-art knowledge skills, pxl (pixel art as code), PixelLab (AI pixel characters; paid API key), Blender (installed in the session, headless works), Poly Haven / ambientCG / Quaternius CC0 assets (reachable).
+
+## Decisions
+- D1' Characters are modelled, rigged and animated in Blender (rigid plate/limb pieces parented to bones, no skinning needed),
+  rendered there in 8 directions, then pixelized v2. Keyframed animations with anticipation/overshoot and more frames.
+- D2' Sprite heights: knight 150 px, villagers 120, hollow 140, mourner 150 (pixel_size halves, so in-world size stays).
+- D3' Pixelizer v2: nearest/majority downscale (no blur), per-character hue-shifted palette ramps, selective (coloured) outline,
+  highlight preservation; follows the pixel-art skill rules.
+- D4' World = CC0 scanned assets (Poly Haven, ambientCG, Quaternius) processed offline in Blender: decimated to a budget,
+  textures baked/downscaled to 128-256 px, palette-quantised, nearest filtering (PS1/"Dusk" look under the retro post), GLB with LODs.
+- D5' Regions rebuilt as composed sets following references 1-3 (hero views first, then filler), instancing for repeats.
+- D6' Performance gate: no regression vs Phase 3 (software Chromium, Medium: spawn >= 8, Hollowmere >= 6.25, prologue >= 5.25 fps).
+- D7' Optional PixelLab route for characters only if the user provides an API key (env secret, never committed).
+
+## Tasks
+| id | title | tier | depends |
+|---|---|---|---|
+| U1 | Art direction sheet (palette ramps per region, texel density, sprite scale, silhouettes) docs/ART_DIRECTION.md | H | - |
+| U2 | Blender pipeline: tools/blender/{fetch_assets.py, process_asset.py, render_sprites.py}, CC0 licence log | H | - |
+| U3 | Pixelizer v2 (D3') + comparison sheet old/new on the current knight renders | N | - |
+| U4 | Knight remake in Blender: gothic plate (fluted, bevelled), mail, tabard, plume; anims idle 8, walk 12, toast 8, cheer 10, stretch 12, lie | H | U2,U3 |
+| U5 | Villagers (shared rig, 8 variants, cloth/props) and creatures (hollow, mourner: body-horror anatomy) remade + anims | N | U4 |
+| U6 | World asset kit: ~25 CC0 props/trees/rocks + ~12 ground/wall/roof/bark textures at retro resolution | N | U2 |
+| U7 | Thornfield rebuilt to reference 1 (field to the lone farmhouse, wheat, scarecrows, fences, fog) | H | U6 |
+| U8 | Hollowmere rebuilt to reference 2 (path through pumpkin fields, gothic houses, chapel, body horror, ruin, blood) | H | U6 |
+| U9 | Whispering Wood rebuilt to reference 3 (dense real trunks, canopy, ferns, roots, logs, moon shafts, fireflies) | H | U6 |
+| U10 | Pixel decals and signage with pxl (blood, curse sigils, signposts) | N | skill install |
+| U11 | Perf pass (instancing, LOD, atlases, visibility) against D6' | H | U4-U10 |
+| U12 | Docs | E | U11 |
+| U13 | Publish web build + tests + report | H | U12 |
