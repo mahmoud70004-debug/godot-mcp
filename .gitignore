@@ -29,3 +29,7 @@ coverage/
 
 # Godot editor cache
 .godot/
+
+# Python bytecode
+__pycache__/
+*.pyc
