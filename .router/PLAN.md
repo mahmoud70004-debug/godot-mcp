@@ -222,3 +222,35 @@ Tiers: E haiku, N sonnet, H opus (me). `[ ]` open, `[x]` done (see PROGRESS.md).
 | U11 | Perf pass (instancing, LOD, atlases, visibility) against D6' | H | U4-U10 |
 | U12 | Docs | E | U11 |
 | U13 | Publish web build + tests + report | H | U12 |
+
+## Contract C10 — sprite sheets v2 (indexed, trimmed, material ramps)   [replaces C1 for Phase 3b]
+Why: 150 px characters with 8 dirs x ~50 frames would need ~7680 px tall RGBA sheets (~40 MB VRAM, over the
+4096 px texture limit of many phones). v2 = 1 byte/px index atlas of trimmed frames + a tiny palette texture.
+
+Raw renders (Blender, rc_blender/sprite_render.py): next to every `<anim>_<k>_<f>.png` an `<anim>_<k>_<f>_id.png`
+(8-bit grey, value = material_pass_index * 16, 0 = background; decode round(v / 16)). meta.json gains
+`"materials": {"<pass_index>": {"name": str, "shades": int}}` and optional `"variants": [{"<material name>": [r, g, b]}]`
+(palette-swap recolours; variant 0 = as rendered).
+
+Pixelizer output (tools/pixelize_sprites.py): `<char>.png` = L8 index atlas (0 transparent), trimmed frames shelf-packed,
+width <= 2048, height <= 4096; `<char>_palette.png` = RGBA 256 x variants (row v = variant v); a `.png.import`
+for both forcing lossless, no mipmaps, no VRAM compression; and `<char>.tres`:
+```gdscript
+class_name SpriteSheetData extends Resource
+@export var texture: Texture2D            # index atlas
+@export var palette: Texture2D            # 256 x variants RGBA
+@export var variants := 1
+@export var frame_size := Vector2i()      # untrimmed box shared by all frames
+@export var frames := PackedInt32Array()  # 6 ints per frame: atlas x, y, w, h, x/y of the rect's top-left inside the box
+@export var directions := 8
+@export var anims: Dictionary = {}        # name -> {"start", "frames", "fps", "loop"}; index = start + dir * frames + f
+@export var pixel_size := 0.014
+@export var foot_offset_px := 2           # box rows below the feet
+static func direction_index(local_to_camera: Vector3, dirs: int) -> int   # unchanged convention
+```
+Palette: per material, the opaque pixels of that material are clustered into `shades` luminance-ordered colours
+(OKLab, mild hue shift: darks cooler, lights warmer); index = running offset of the material + shade (+1, 0 is
+transparent). Variant rows recolour each material's ramp to the variant colour keeping the ramp's lightness profile.
+Runtime: PixelSprite3D keeps its API (+ `variant: int`), uses one cached ShaderMaterial per (sheet, variant):
+index lookup with nearest sampling -> palette colour * vertex COLOR (modulate/flash), discard index 0, FIXED_Y
+billboard in the vertex shader, shaded. Per frame it sets region_rect and offset from `frames`.
