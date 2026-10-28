@@ -8,6 +8,7 @@ extends RefCounted
 ## HeightMapShape3D collider. Construct, then query height_at() to place props.
 
 const SHADER := preload("res://assets/shaders/terrain.gdshader")
+const GROUND_TEX := "res://assets/textures/world/%s.png"
 
 var spec: TerrainSpec
 var cols := 0
@@ -64,10 +65,10 @@ func build(root: Node3D) -> void:
 	root.add_child(container)
 	var mat := ShaderMaterial.new()
 	mat.shader = SHADER
-	mat.set_shader_parameter("grass_tex", RetroMaterials.dead_grass().albedo_texture)
-	mat.set_shader_parameter("dry_tex", _dry_texture())
-	mat.set_shader_parameter("road_tex", RetroMaterials.red_earth().albedo_texture)
-	mat.set_shader_parameter("forest_tex", RetroMaterials.mossy_stone().albedo_texture)
+	mat.set_shader_parameter("grass_tex", load(GROUND_TEX % "aerial_grass_rock"))
+	mat.set_shader_parameter("dry_tex", load(GROUND_TEX % "dry_mud_field_001"))
+	mat.set_shader_parameter("road_tex", load(GROUND_TEX % "brown_mud_leaves_01"))
+	mat.set_shader_parameter("forest_tex", load(GROUND_TEX % "forest_leaves_02"))
 	var cells_per_chunk := int(spec.chunk_size / spec.cell)
 	for cz in range(0, rows - 1, cells_per_chunk):
 		for cx in range(0, cols - 1, cells_per_chunk):
@@ -78,25 +79,6 @@ func build(root: Node3D) -> void:
 			mi.visibility_range_end = 170.0
 			container.add_child(mi)
 	_build_collider(container)
-
-
-## Pale, wind-bleached field texture (reference: the stormy farm field).
-static func _dry_texture() -> NoiseTexture2D:
-	var noise := FastNoiseLite.new()
-	noise.noise_type = FastNoiseLite.TYPE_VALUE
-	noise.frequency = 0.35
-	noise.seed = 404
-	var g := Gradient.new()
-	g.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
-	g.offsets = PackedFloat32Array([0.0, 0.3, 0.6, 0.85])
-	g.colors = PackedColorArray([Color(0.09, 0.085, 0.06), Color(0.15, 0.14, 0.09), Color(0.21, 0.19, 0.12), Color(0.12, 0.11, 0.075)])
-	var tex := NoiseTexture2D.new()
-	tex.width = 32
-	tex.height = 32
-	tex.seamless = true
-	tex.noise = noise
-	tex.color_ramp = g
-	return tex
 
 
 func _generate() -> void:

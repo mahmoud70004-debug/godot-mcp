@@ -1,10 +1,10 @@
 @tool
 class_name RetroMaterials
 extends RefCounted
-## Procedural pixel-art materials: tiny NoiseTexture2D textures with a
-## banded (constant-interpolation) palette, nearest filtering and world
-## triplanar mapping, so any box gets ~16 texels per metre with no UVs.
-## Swap these for hand-painted textures in the art phase.
+## World materials with nearest filtering and world triplanar mapping, so any
+## box gets a fixed texel density with no UVs. Most surfaces use small CC0
+## scanned textures (assets/textures/world, see assets/models/CREDITS.md);
+## the rest are tiny NoiseTexture2D textures with a banded palette.
 
 const TEXTURE_SIZE := 32
 
@@ -12,15 +12,15 @@ static var _cache: Dictionary = {}
 
 
 static func stone() -> StandardMaterial3D:
-	return _cached("stone", [Color(0.11, 0.11, 0.12), Color(0.17, 0.17, 0.17), Color(0.22, 0.21, 0.2), Color(0.27, 0.26, 0.24)], FastNoiseLite.TYPE_CELLULAR, 0.16, 0.5)
+	return _textured("stone", "castle_brick_02_white", 3.0, Color(0.42, 0.42, 0.44))
 
 
 static func mossy_stone() -> StandardMaterial3D:
-	return _cached("mossy_stone", [Color(0.08, 0.1, 0.07), Color(0.14, 0.16, 0.12), Color(0.2, 0.2, 0.18), Color(0.13, 0.19, 0.09)], FastNoiseLite.TYPE_CELLULAR, 0.14, 0.5)
+	return _textured("mossy_stone", "castle_brick_02_white", 3.0, Color(0.3, 0.36, 0.28))
 
 
 static func cobble() -> StandardMaterial3D:
-	return _cached("cobble", [Color(0.07, 0.07, 0.08), Color(0.15, 0.14, 0.14), Color(0.2, 0.19, 0.18), Color(0.12, 0.12, 0.12)], FastNoiseLite.TYPE_CELLULAR, 0.28, 0.6)
+	return _textured("cobble", "cobblestone_floor_04", 3.5, Color(0.55, 0.53, 0.5))
 
 
 static func dead_grass() -> StandardMaterial3D:
@@ -29,23 +29,23 @@ static func dead_grass() -> StandardMaterial3D:
 
 ## Reddish cracked earth for roads (the red path of the gloom paintings).
 static func red_earth() -> StandardMaterial3D:
-	return _cached("red_earth", [Color(0.07, 0.04, 0.03), Color(0.12, 0.06, 0.04), Color(0.2, 0.08, 0.04), Color(0.09, 0.05, 0.035)], FastNoiseLite.TYPE_CELLULAR, 0.3, 0.5)
+	return _textured("red_earth", "brown_mud_leaves_01", 4.0, Color(0.55, 0.42, 0.36))
 
 
 static func mud() -> StandardMaterial3D:
-	return _cached("mud", [Color(0.06, 0.05, 0.04), Color(0.09, 0.07, 0.05), Color(0.12, 0.1, 0.07)], FastNoiseLite.TYPE_SIMPLEX, 0.18, 0.4)
+	return _textured("mud", "brown_mud_leaves_01", 4.0, Color(0.6, 0.55, 0.5))
 
 
 static func wood() -> StandardMaterial3D:
-	return _cached("wood", [Color(0.12, 0.08, 0.05), Color(0.18, 0.12, 0.08), Color(0.23, 0.16, 0.1)], FastNoiseLite.TYPE_VALUE, 0.3, 0.7)
+	return _textured("wood", "brown_planks_05", 2.0, Color(0.55, 0.48, 0.42))
 
 
 static func roof() -> StandardMaterial3D:
-	return _cached("roof", [Color(0.07, 0.07, 0.09), Color(0.11, 0.1, 0.12), Color(0.15, 0.13, 0.14)], FastNoiseLite.TYPE_CELLULAR, 0.3, 0.6)
+	return _textured("roof", "clay_roof_tiles", 3.0, Color(0.32, 0.3, 0.32))
 
 
 static func bark() -> StandardMaterial3D:
-	return _cached("bark", [Color(0.03, 0.03, 0.03), Color(0.06, 0.055, 0.05), Color(0.09, 0.08, 0.07)], FastNoiseLite.TYPE_VALUE, 0.35, 0.8)
+	return _textured("bark", "bark_brown_02", 1.6, Color(0.42, 0.38, 0.36))
 
 
 static func iron() -> StandardMaterial3D:
@@ -69,11 +69,11 @@ static func linen() -> StandardMaterial3D:
 
 ## --- Props palettes (PropKit) ---
 static func clapboard() -> StandardMaterial3D:
-	return _cached("clapboard", [Color(0.46, 0.44, 0.37), Color(0.54, 0.51, 0.43), Color(0.4, 0.38, 0.32), Color(0.58, 0.56, 0.47)], FastNoiseLite.TYPE_VALUE, 0.4, 0.5)
+	return _textured("clapboard", "damaged_plaster", 2.0, Color(0.78, 0.76, 0.7))
 
 
 static func rust_roof() -> StandardMaterial3D:
-	return _cached("rust_roof", [Color(0.22, 0.08, 0.05), Color(0.3, 0.11, 0.06), Color(0.37, 0.15, 0.07), Color(0.18, 0.07, 0.05)], FastNoiseLite.TYPE_CELLULAR, 0.3, 0.6)
+	return _textured("rust_roof", "clay_roof_tiles", 3.0, Color(0.6, 0.38, 0.3))
 
 
 static func pumpkin() -> StandardMaterial3D:
@@ -97,7 +97,7 @@ static func sack() -> StandardMaterial3D:
 
 
 static func brick() -> StandardMaterial3D:
-	return _cached("brick", [Color(0.2, 0.08, 0.06), Color(0.28, 0.12, 0.08), Color(0.33, 0.14, 0.09), Color(0.25, 0.15, 0.12)], FastNoiseLite.TYPE_CELLULAR, 0.4, 0.8)
+	return _textured("brick", "castle_brick_02_white", 2.5, Color(0.6, 0.36, 0.3))
 
 
 static func rag() -> StandardMaterial3D:
@@ -115,6 +115,24 @@ static func flat(color: Color, emission_energy: float = 0.0) -> StandardMaterial
 		mat.emission_enabled = true
 		mat.emission = color
 		mat.emission_energy_multiplier = emission_energy
+	_cache[key] = mat
+	return mat
+
+
+## Scanned texture `assets/textures/world/<tex>.png`, one repeat every `tile_metres`,
+## multiplied by `tint` (the scans are bright daylight albedo; the night needs them darker).
+static func _textured(key: String, tex: String, tile_metres: float, tint: Color) -> StandardMaterial3D:
+	if _cache.has(key):
+		return _cache[key]
+	var mat := StandardMaterial3D.new()
+	mat.albedo_texture = load("res://assets/textures/world/%s.png" % tex) as Texture2D
+	mat.albedo_color = tint
+	mat.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST_WITH_MIPMAPS
+	mat.uv1_triplanar = true
+	mat.uv1_world_triplanar = true
+	mat.uv1_scale = Vector3.ONE / tile_metres
+	mat.roughness = 0.95
+	mat.set_meta("swatch", tint)
 	_cache[key] = mat
 	return mat
 
