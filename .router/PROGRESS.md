@@ -23,3 +23,4 @@
 | T07 | N (router-normal) | done | sprite_creature_visual.gd, enemy.gd, enemy_data.gd, hollow.tscn, enemy data | verified by H (montage); baker now uses tools/sprite_baker/creature_rig.tscn (old rig scene) since hollow.tscn is sprite-based |
 | T08 | N (router-normal) | done | prologue_cutscene.gd | verified by H Movie Maker sheet; H follow-up: rim light back, lie pose = full billboard + fixed side direction (PixelSprite3D.fixed_direction) |
 | T21a | H | done | terrain.gdshader, grass_dry_tall.tres, thornfield_builder.gd, valdron_overworld.tscn, villager_model.gd, bake_sprites.sh | road muddy brown/pale in forest, brighter overworld env, denser dry grass, muted villager dyes (re-baked), bake_sprites expands variants |
+| T22 | E (router-easy) | done | ROADMAP, GAME_DESIGN, ARCHITECTURE, rotten-crown/CLAUDE.md | phases renumbered (Phase 3 = graphics polish, localisation stays 8); H checked cottage count claim |
