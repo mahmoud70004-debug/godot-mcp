@@ -63,3 +63,27 @@ no attribution is required, it is given here out of courtesy.
 | `brown_planks_05.png` | brown_planks_05 | Brown Planks 05 | Rob Tuytel | https://polyhaven.com/a/brown_planks_05 | CC0 |
 | `damaged_plaster.png` | damaged_plaster | Damaged Plaster | Amal Kumar | https://polyhaven.com/a/damaged_plaster | CC0 |
 | `bark_brown_02.png` | bark_brown_02 | Bark Brown 02 | Rob Tuytel | https://polyhaven.com/a/bark_brown_02 | CC0 |
+
+## OpenGameArt houses and village props (`assets/models/oga_*.glb`)
+
+CC0 (public domain) packs from [OpenGameArt](https://opengameart.org), converted offline with
+`tools/assets/fetch_opengameart.py` + `process_blend.py` (re-textured to <= 256 px palette PNGs, decimated, re-scaled).
+
+| file | pack | author | source | licence |
+|---|---|---|---|---|
+| `oga_house_1.glb` | Medieval House Pack | Daniel Andersson (submitted by hreikin) | https://opengameart.org/content/medieval-house-pack | CC0 |
+| `oga_house_2.glb` | Medieval House Pack | Daniel Andersson (submitted by hreikin) | https://opengameart.org/content/medieval-house-pack | CC0 |
+| `oga_house_3.glb` | Medieval House Pack | Daniel Andersson (submitted by hreikin) | https://opengameart.org/content/medieval-house-pack | CC0 |
+| `oga_house_4.glb` | Medieval House Pack | Daniel Andersson (submitted by hreikin) | https://opengameart.org/content/medieval-house-pack | CC0 |
+| `oga_house_5.glb` | Modular Medieval House Pack 01 | hreikin | https://opengameart.org/content/modular-medieval-house-pack-01 | CC0 |
+| `oga_house_6.glb` | Modular Medieval House Pack 01 | hreikin | https://opengameart.org/content/modular-medieval-house-pack-01 | CC0 |
+| `oga_cottage.glb` | Medieval Buildings Pack | System G6 | https://opengameart.org/content/medieval-buildings-pack | CC0 |
+| `oga_longhouse.glb` | Medieval Buildings Pack | System G6 | https://opengameart.org/content/medieval-buildings-pack | CC0 |
+| `oga_well.glb` | Medieval Buildings Pack | System G6 | https://opengameart.org/content/medieval-buildings-pack | CC0 |
+| `oga_stall.glb` | Medieval Buildings Pack | System G6 | https://opengameart.org/content/medieval-buildings-pack | CC0 |
+| `oga_tent.glb` | Medieval Buildings Pack | System G6 | https://opengameart.org/content/medieval-buildings-pack | CC0 |
+| `oga_outhouse.glb` | Medieval Buildings Pack | System G6 | https://opengameart.org/content/medieval-buildings-pack | CC0 |
+| `oga_watchtower.glb` | Medieval Buildings Pack | System G6 | https://opengameart.org/content/medieval-buildings-pack | CC0 |
+| `oga_fence.glb` | Medieval Buildings Pack | System G6 | https://opengameart.org/content/medieval-buildings-pack | CC0 |
+| `oga_gate.glb` | Medieval Buildings Pack | System G6 | https://opengameart.org/content/medieval-buildings-pack | CC0 |
+| `oga_palisade.glb` | Medieval Buildings Pack | System G6 | https://opengameart.org/content/medieval-buildings-pack | CC0 |

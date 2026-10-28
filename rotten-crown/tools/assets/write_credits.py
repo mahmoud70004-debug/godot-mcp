@@ -8,11 +8,18 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 sys.path.insert(0, HERE)
 import build_kit  # noqa: E402
+import build_oga  # noqa: E402
 import textures  # noqa: E402
 
 
 def row(aid, out):
     p = os.path.join(ROOT, "build", "asset_cache", aid, "info.json")
+    if not os.path.exists(p):  # asset cache not fetched in this checkout: keep the row already in CREDITS.md
+        old = os.path.join(ROOT, "assets", "models", "CREDITS.md")
+        for ln in open(old).read().splitlines():
+            if ln.startswith(f"| `{out}` |"):
+                return ln
+        raise SystemExit(f"{aid}: no cache and no existing row")
     i = json.load(open(p))
     return f"| `{out}` | {aid} | {i['name']} | {', '.join(i['authors'])} | https://polyhaven.com/a/{aid} | CC0 |"
 
@@ -30,6 +37,14 @@ def main():
               "| file | id | name | authors | source | licence |", "|---|---|---|---|---|---|"]
     for tid in textures.DEFAULT:
         lines.append(row(tid, tid + ".png"))
+    lines += ["", "## OpenGameArt houses and village props (`assets/models/oga_*.glb`)", "",
+              "CC0 (public domain) packs from [OpenGameArt](https://opengameart.org), converted offline with",
+              "`tools/assets/fetch_opengameart.py` + `process_blend.py` (re-textured to <= 256 px palette PNGs, decimated, re-scaled).", "",
+              "| file | pack | author | source | licence |", "|---|---|---|---|---|"]
+    for name, slug, *_ in build_oga.OGA:
+        i = json.load(open(os.path.join(ROOT, "build", "asset_cache", "oga", slug, "info.json")))
+        who = i["author"] + (f" (submitted by {i['submitter']})" if i.get("submitter") else "")
+        lines.append(f"| `{name}.glb` | {i['title']} | {who} | {i['source']} | {i['license']} |")
     open(os.path.join(ROOT, "assets", "models", "CREDITS.md"), "w").write("\n".join(lines) + "\n")
     print("wrote CREDITS.md")
 
