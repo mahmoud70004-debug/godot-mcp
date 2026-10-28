@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="LoreData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/lore_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "hunters_warning"
+display_name = "Hunter's Warning"
+description = "Carved into a signpost, with a warning added in charcoal."
+category = 3
+tint = Color(0.36, 0.44, 0.34, 1)
+author = "Royal huntsman"
+region_id = "whispering_wood"
+lore_text = "CARVED INTO THE SIGNPOST. CHARCOAL BELOW.
+
+I have hunted these woods for twenty years. The trees were never this close together. You cannot see the sky from the old road any more, only branches, and lanterns hung in them that no hand has lit.
+
+Do not go past the third bend.
+
+If the trees whisper your name, do not answer. I answered once. It knew my mother's name too.
+
+Follow the pale path if you must. Keep your eyes on the stones at your feet. The path will seem to bend toward the palace. It does not.
+
+Above all, never look back at the lanterns in the branches. They will be lower than they were. They will be closer."

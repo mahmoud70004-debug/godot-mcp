@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="LoreData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/lore_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "farmers_ledger"
+display_name = "Farmer's Ledger"
+description = "Harvest accounts, written for the feast and kept after it."
+category = 3
+tint = Color(0.55, 0.5, 0.36, 1)
+author = "Aldous Thorn, farmer"
+region_id = "thornfield"
+lore_text = "Harvest accounts, Thornfield, the year the wheat came in clean.
+
+Twelve sheaves to the Crown tithe. Four calves, all sound.
+
+Feast night: the castle sent wine and roast mutton for every hearth. We ate in the south field under the lanterns. Everyone sang.
+
+Morning after: the grass has grown pale overnight. Not dried, pale, like linen left too long in the moon. The scythe will not bite it.
+
+Marta keeps standing in the field facing the castle. Hours at a time. She said only, the window is lit.
+
+The cattle stopped making sound at dusk. Not stopped lowing. Stopped. Their mouths still move.
+
+Tithe is due at the gate on the first day of the new moon. I will take the cart myself. If I do not come back, the ledger is -"

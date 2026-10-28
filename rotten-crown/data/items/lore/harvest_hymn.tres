@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="LoreData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/lore_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "harvest_hymn"
+display_name = "Harvest Hymn"
+description = "A cheerful song sheet, with later verses added in another hand."
+category = 3
+tint = Color(0.78, 0.6, 0.32, 1)
+author = "Hollowmere chapel choir"
+region_id = "hollowmere"
+lore_text = "Sing the sheaves and sing the grain,
+Golden fields and autumn rain.
+Bring the basket, bring the bread,
+Every hand to the harvest spread.
+
+Oh, sing us home, the sun is low,
+The barns are full, the rivers flow.
+Sing us home, sing all as one,
+The harvest's in, the feast has come.
+
+(Verse three, struck through, the ink pressed so hard it tore the paper.)
+
+The pumpkins grow fat on what we gave them,
+Round and red in the pale grass rows.
+They are not ours to harvest now.
+
+(Below, in a shaking hand, the same line again and again.)
+
+Sing for him. Sing for him.
+Sing for him, all as one."

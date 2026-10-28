@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="LoreData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/items/lore_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "chapel_confession"
+display_name = "Unsent Confession"
+description = "A priest's letter to his Abbot, never sent."
+category = 3
+tint = Color(0.45, 0.42, 0.5, 1)
+author = "Brother Edmund"
+region_id = "hollowmere"
+lore_text = "To the Abbot. Unsent.
+
+I blessed the barrels myself. Three of them, Lorisian red, sealed in black wax, sent up from the castle. I felt nothing. I was pleased with myself.
+
+On the second night I heard it in the wine. Not in the cellar, in the wine itself. A voice beneath the surface, humming a tune I half knew from our own chapel.
+
+I locked myself in the belfry and I have not come down. The ringing of the bell drowns it out.
+
+I think the curse travels through song. Every hymn sung on that feast night carried it to another throat.
+
+Aleister was never in the fire. I saw the ashes. They were too light, and they were still warm the next morning. A man does not leave ash like that.
+
+I mean to ring until the rope gives way. Forgive me the blessing -"
