@@ -15,6 +15,10 @@ uniform float contrast : hint_range(0.5, 2.0) = 1.12;
 uniform vec3 lift : source_color = vec3(0.0, 0.0, 0.0);
 // 0..1, driven by gameplay (curse / low health) in later phases.
 uniform float corruption : hint_range(0.0, 1.0) = 0.0;
+// 0..1, driven by WeatherController: slanted screen-space rain streaks + cool haze.
+uniform float rain_amount : hint_range(0.0, 1.0) = 0.0;
+// 0..1, lightning pulse: brightens and cools the whole frame.
+uniform float flash : hint_range(0.0, 1.0) = 0.0;
 
 const float BAYER[16] = float[16](
 	0.0, 8.0, 2.0, 10.0,
@@ -25,6 +29,27 @@ const float BAYER[16] = float[16](
 
 float rand(vec2 p) {
 	return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float luma_of(vec3 c) {
+	return dot(c, vec3(0.299, 0.587, 0.114));
+}
+
+// One layer of 1 px slanted streaks on the FRAGCOORD grid (~13 degrees).
+// Returns streak coverage 0..1. No texture reads.
+float rain_layer(vec2 p, float cell_w, float speed, float length_px, float density, float seed) {
+	float xs = p.x + p.y * 0.23;
+	float column = floor(xs / cell_w);
+	float h = rand(vec2(column, seed));
+	if (h > density || mod(floor(xs), cell_w) > 0.5) {
+		return 0.0;
+	}
+	float h2 = rand(vec2(column * 1.7, seed + 3.1));
+	float period = 70.0 + h2 * 90.0;
+	float y = p.y + TIME * speed * (0.85 + h2 * 0.3) + h2 * 500.0;
+	float t = mod(y, period);
+	// Bright head, fading tail.
+	return t < length_px ? (1.0 - t / length_px) * (0.5 + 0.5 * h2) : 0.0;
 }
 
 void fragment() {
@@ -39,6 +64,22 @@ void fragment() {
 	col *= tint.rgb;
 	col = lift + col * (1.0 - lift);
 	col = mix(col, col * vec3(0.75, 1.1, 0.7), corruption * 0.6);
+
+	if (rain_amount > 0.0) {
+		float rl = luma_of(col);
+		col = mix(col, vec3(rl) * vec3(0.9, 1.0, 1.05), rain_amount * 0.25);
+		col = mix(col, vec3(0.2, 0.26, 0.28), rain_amount * 0.07);
+		vec2 fp = floor(FRAGCOORD.xy);
+		float streak = rain_layer(fp, 2.0, 520.0, 16.0, 0.5 * rain_amount, 1.0)
+			+ rain_layer(fp, 3.0, 420.0, 12.0, 0.45 * rain_amount, 7.0) * 0.8
+			+ rain_layer(fp, 5.0, 330.0, 8.0, 0.4 * rain_amount, 13.0) * 0.6
+			+ rain_layer(fp, 3.0, 640.0, 22.0, 0.3 * rain_amount, 29.0) * 0.9;
+		col += vec3(0.46, 0.55, 0.58) * clamp(streak, 0.0, 1.0) * (0.25 + 0.35 * rain_amount);
+	}
+	if (flash > 0.0) {
+		col *= 1.0 + flash * 0.9;
+		col = mix(col, vec3(0.78, 0.88, 1.0), flash * 0.45);
+	}
 
 	ivec2 cell = ivec2(mod(FRAGCOORD.xy, 4.0));
 	float threshold = BAYER[cell.y * 4 + cell.x] / 16.0 - 0.5;

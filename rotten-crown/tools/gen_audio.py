@@ -153,6 +153,51 @@ def wind(seconds=24.0):
     return out[:-fade] if False else out
 
 
+def rain(seconds=24.0):
+    n = int(seconds * SR)
+    white = rng.normal(0, 1, n)
+    hiss = white - lowpass(white, 0.15)  # high-passed noise
+    hiss = lowpass(hiss, 0.7) * 0.22
+    t = np.arange(n) / SR
+    swell = 0.85 + 0.15 * np.sin(2 * np.pi * t / seconds * 4 + 0.7)
+    ticks = np.zeros(n)
+    for _ in range(int(seconds * 90)):
+        i = rng.integers(0, n - 300)
+        k = rng.integers(30, 300)
+        f = rng.uniform(1500, 5000)
+        tt = np.arange(k) / SR
+        ticks[i:i + k] += np.sin(2 * np.pi * f * tt) * np.exp(-tt * rng.uniform(300, 900)) * rng.uniform(0.1, 0.6)
+    roof = lowpass(rng.normal(0, 1, n), 0.04) * 0.9
+    drum = np.zeros(n)
+    for _ in range(int(seconds * 25)):
+        i = rng.integers(0, n - 2000)
+        k = rng.integers(600, 2000)
+        tt = np.arange(k) / SR
+        drum[i:i + k] += np.sin(2 * np.pi * rng.uniform(70, 140) * tt) * np.exp(-tt * 40) * rng.uniform(0.2, 0.8)
+    out = (hiss + roof * 0.08 + ticks * 0.25 + drum * 0.15) * swell
+    fade = int(1.0 * SR)
+    out[:fade] = out[:fade] * np.linspace(0, 1, fade) + out[-fade:] * np.linspace(1, 0, fade)
+    return out
+
+
+def thunder(seconds=6.0, crack=False):
+    n = int(seconds * SR)
+    t = np.arange(n) / SR
+    noise = rng.normal(0, 1, n)
+    rumble = lowpass(lowpass(noise, 0.02), 0.05)
+    roll = 0.6 + 0.4 * np.sin(2 * np.pi * (0.9 * t + 0.3 * np.sin(2 * np.pi * 0.37 * t)))
+    body = rumble * roll * np.minimum(t / 0.4, 1) * np.exp(-t / 2.2)
+    body = body / (np.max(np.abs(body)) or 1.0)
+    out = body * 0.9
+    if crack:
+        k = int(0.5 * SR)
+        tc = np.arange(k) / SR
+        snap = (noise[:k] - lowpass(noise[:k], 0.1)) * np.exp(-tc * 14)
+        out[:k] += snap * 0.9 / (np.max(np.abs(snap)) or 1.0)
+        out[:int(0.01 * SR)] *= np.linspace(0, 1, int(0.01 * SR))
+    return out
+
+
 def fire(seconds=6.0):
     n = int(seconds * SR)
     rumble = lowpass(rng.normal(0, 1, n), 0.01) * 0.6
@@ -183,3 +228,6 @@ if __name__ == "__main__":
     save(ROOT / "ambience" / "night_wind.wav", wind(), loop=True)
     save(ROOT / "ambience" / "bonfire.wav", fire(), loop=True)
     save(ROOT / "sfx" / "firework.wav", firework())
+    save(ROOT / "ambience" / "rain.wav", rain(), loop=True)
+    save(ROOT / "sfx" / "thunder_roll.wav", thunder(7.0))
+    save(ROOT / "sfx" / "thunder_crack.wav", thunder(5.0, crack=True))

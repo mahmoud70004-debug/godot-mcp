@@ -19,6 +19,7 @@
 [ext_resource type="Resource" path="res://data/items/consumables/feast_wine.tres" id="18_i_wine"]
 [ext_resource type="Resource" path="res://data/items/weapons/woodsman_axe.tres" id="19_i_axe"]
 [ext_resource type="Resource" path="res://data/items/relics/saint_orsa_eye.tres" id="20_i_eye"]
+[ext_resource type="Script" path="res://src/world/weather_controller.gd" id="22_weather"]
 [ext_resource type="NoiseTexture2D" path="res://assets/textures/cloud_noise.tres" id="21_cloud_noise"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
@@ -164,6 +165,12 @@ data = ExtResource("13_mourner")
 position = Vector3(1.2, 0.05, 29.0)
 
 [node name="PostProcess" parent="." instance=ExtResource("4_post")]
+
+[node name="WeatherController" type="Node" parent="." node_paths=PackedStringArray("environment", "post")]
+script = ExtResource("22_weather")
+rain = 0.6
+environment = NodePath("../WorldEnvironment")
+post = NodePath("../PostProcess")
 
 [node name="AmbientDrone" type="AudioStreamPlayer" parent="."]
 script = ExtResource("7_drone")
