@@ -25,6 +25,7 @@ uniform vec3 cloud_lit_color : source_color = vec3(0.5, 0.53, 0.44);
 uniform float cloud_coverage = 0.55;
 uniform float cloud_speed = 0.006;
 uniform float cloud_scale = 1.6;
+uniform sampler2D cloud_noise : repeat_enable, filter_linear_mipmap;
 
 // Optional radiant star (festive sky). flare_strength 0 disables it.
 uniform vec3 flare_direction = vec3(0.0, 0.75, -0.66);
@@ -48,17 +49,6 @@ float noise2(vec2 p) {
 	vec2 u = f * f * (3.0 - 2.0 * f);
 	return mix(mix(hash2(i), hash2(i + vec2(1.0, 0.0)), u.x),
 		mix(hash2(i + vec2(0.0, 1.0)), hash2(i + vec2(1.0, 1.0)), u.x), u.y);
-}
-
-float fbm(vec2 p) {
-	float v = 0.0;
-	float a = 0.5;
-	for (int i = 0; i < 5; i++) {
-		v += a * noise2(p);
-		p = p * 2.03 + vec2(1.7, 9.2);
-		a *= 0.5;
-	}
-	return v;
 }
 
 void sky() {
@@ -108,7 +98,7 @@ void sky() {
 	if (up > -0.02) {
 		vec2 cuv = dir.xz / (up + 0.18) * cloud_scale;
 		cuv += vec2(TIME * cloud_speed, TIME * cloud_speed * 0.4);
-		float n = fbm(cuv);
+		float n = texture(cloud_noise, cuv * 0.12).r * 0.7 + texture(cloud_noise, cuv * 0.31 + vec2(0.37, 0.11)).r * 0.3;
 		cloud = smoothstep(1.0 - cloud_coverage, 1.0 - cloud_coverage + 0.25, n);
 		cloud *= smoothstep(-0.02, 0.12, up);
 		// Silver lining: clouds near the moon catch its light at their edges.

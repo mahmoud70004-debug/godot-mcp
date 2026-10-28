@@ -19,6 +19,7 @@
 [ext_resource type="Resource" path="res://data/items/consumables/feast_wine.tres" id="18_i_wine"]
 [ext_resource type="Resource" path="res://data/items/weapons/woodsman_axe.tres" id="19_i_axe"]
 [ext_resource type="Resource" path="res://data/items/relics/saint_orsa_eye.tres" id="20_i_eye"]
+[ext_resource type="NoiseTexture2D" path="res://assets/textures/cloud_noise.tres" id="21_cloud_noise"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("10_moon_shader")
@@ -39,6 +40,7 @@ shader_parameter/cloud_lit_color = Color(0.66, 0.66, 0.52, 1)
 shader_parameter/cloud_coverage = 0.7
 shader_parameter/cloud_speed = 0.005
 shader_parameter/cloud_scale = 1.1
+shader_parameter/cloud_noise = ExtResource("21_cloud_noise")
 shader_parameter/flare_strength = 0.0
 
 [sub_resource type="Sky" id="Sky_gloom"]
