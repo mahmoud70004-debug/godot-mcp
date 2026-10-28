@@ -4,7 +4,10 @@
 Usage: python3 tools/pixelize_sprites.py [--raw DIR] [--out DIR] [--height PX] [--no-hueshift]
                                          [--contrast F] [--no-cleanup] [chars...]
 Raw layout: <raw>/<char>/<anim>_<dir>_<frame>.png + meta.json (see tools/sprite_baker).
-Output:     <out>/<char>/<char>.png and <char>.tres   (contract C1)
+Output:     <out>/<char>/<char>.png and <char>.tres   (contract C1, RGBA grid sheet).
+v2 (contract C10): when the raw dir also has <anim>_<dir>_<frame>_id.png material-id renders and
+meta.json "materials", it writes an L8 trimmed index atlas + <char>_palette.png (material ramps, one row
+per variant: row 0 as rendered, row v = meta "variants"[v-1]) + .png.import files + .tres.
 
 Pipeline per character:
   1. palette: k-means in OKLab over the opaque pixels of all frames (meta["palette"] colours, max 64),
@@ -169,31 +172,49 @@ def quant_lut(pal_lab, bits=6):
 
 def representative_downscale(crop, size, lut, lum, bits=6):
     """crop: HxWx4 uint8 -> (dh, dw) int16 palette indices, -1 where transparent."""
-    h, w = crop.shape[:2]
     dw, dh = size
-    k = int(np.clip(np.ceil(max(w / dw, h / dh)), 1, 8))
-    sub = (np.arange(k) + 0.5) / k
-    ys = np.clip(np.floor((np.arange(dh)[:, None] + sub[None]) * h / dh).astype(int), 0, h - 1)
-    xs = np.clip(np.floor((np.arange(dw)[:, None] + sub[None]) * w / dw).astype(int), 0, w - 1)
-    blk = crop[ys[:, :, None, None], xs[None, None, :, :]]          # dh,k,dw,k,4
-    blk = blk.transpose(0, 2, 1, 3, 4).reshape(dh * dw, k * k, 4)
+    (blk,), k = block_samples([crop], size)
     opaque = blk[..., 3] > 127
     sh = 8 - bits
     q = lut[blk[..., 0] >> sh, blk[..., 1] >> sh, blk[..., 2] >> sh].astype(np.int64)
+    q = np.where(opaque, q, -1)
+    pick, n_op = pick_representative(q, lum)
+    idx = np.where(n_op * 2 >= k * k, pick, -1)
+    return idx.reshape(dh, dw).astype(np.int16)
+
+
+def pick_representative(q, lum):
+    """q: N x K palette indices (-1 = none). Block mode, unless a clearly brighter/darker colour covering
+    >= KEEP_FRACTION of the block exists. Returns (index per block, valid sample count per block)."""
+    n, kk = q.shape
     p = len(lum)
-    n = dh * dw
-    flat = (np.arange(n)[:, None] * (p + 1) + np.where(opaque, q + 1, 0)).ravel()
+    flat = (np.arange(n)[:, None] * (p + 1) + (q + 1)).ravel()
     counts = np.bincount(flat, minlength=n * (p + 1)).reshape(n, p + 1)
-    n_op = counts[:, 1:].sum(1)
     col = counts[:, 1:]
+    n_op = col.sum(1)
     mode = col.argmax(1)
     dl = lum[None, :] - lum[mode][:, None]
     cand = (col > 0) & (col * 1.0 >= KEEP_FRACTION * n_op[:, None]) & (np.abs(dl) >= KEEP_DELTA_L)
     score = np.where(cand, np.abs(dl) * (1.0 + 0.3 * (dl > 0)), -1.0)
     best = score.argmax(1)
-    pick = np.where(score[np.arange(n), best] > 0, best, mode)
-    idx = np.where(n_op * 2 >= k * k, pick, -1)
-    return idx.reshape(dh, dw).astype(np.int16)
+    return np.where(score[np.arange(n), best] > 0, best, mode), n_op
+
+
+def block_samples(arrs, size):
+    """Sample each output pixel's source block on a k x k rounded grid. arrs: list of HxW(xC) arrays.
+    Returns (list of N x K x C... arrays, k)."""
+    h, w = arrs[0].shape[:2]
+    dw, dh = size
+    k = int(np.clip(np.ceil(max(w / dw, h / dh)), 1, 8))
+    sub = (np.arange(k) + 0.5) / k
+    ys = np.clip(np.floor((np.arange(dh)[:, None] + sub[None]) * h / dh).astype(int), 0, h - 1)
+    xs = np.clip(np.floor((np.arange(dw)[:, None] + sub[None]) * w / dw).astype(int), 0, w - 1)
+    out = []
+    for a in arrs:
+        b = a[ys[:, :, None, None], xs[None, None, :, :]]
+        b = b.transpose((0, 2, 1, 3) + tuple(range(4, b.ndim)))
+        out.append(b.reshape((dh * dw, k * k) + a.shape[2:]))
+    return out, k
 
 
 # ---------------------------------------------------------------- cleanup
@@ -222,7 +243,9 @@ def neighbour_mode(idx, pal_size):
     return counts.argmax(0).astype(np.int16), counts.max(0)
 
 
-def cleanup(idx, lum):
+def cleanup(idx, lum, owner=None):
+    """owner: optional material id per palette entry; orphans of another material than their
+    surroundings (eyes, buckles) are real detail and kept."""
     idx = idx.copy()
     m = idx >= 0
     n8 = sum(shifted(m, dy, dx, False).astype(np.int8) for dy, dx in _OFFS8)
@@ -244,6 +267,8 @@ def cleanup(idx, lum):
     agree = cnt >= n_nb - 1
     glint = (lum[np.maximum(idx, 0)] - lum[mode]) > GLINT_DELTA_L
     orphan = (idx >= 0) & (n_nb >= 5) & differs & agree & ~glint
+    if owner is not None:
+        orphan &= owner[np.maximum(idx, 0)] == owner[mode]
     idx[orphan] = mode[orphan]
     return idx
 
@@ -287,10 +312,14 @@ def derive_colours(pal_lab):
 
 # ---------------------------------------------------------------- driver
 
-def process(char, raw_root, out_root, height=None, hue_shift=True, contrast=1.1, do_cleanup=True):
+def process(char, raw_root, out_root, height=None, hue_shift=True, contrast=1.1, do_cleanup=True,
+            allow_missing=False):
     raw_dir = os.path.join(raw_root, char)
     with open(os.path.join(raw_dir, "meta.json")) as fh:
         meta = json.load(fh)
+    if is_v2(raw_dir, meta):
+        return process_v2(char, raw_root, out_root, meta, height, hue_shift, contrast, do_cleanup,
+                          allow_missing)
     target_h = int(height) if height else int(meta["height_px"])
     dirs = int(meta["dirs"])
     frames = load_frames(raw_dir, meta)
@@ -358,6 +387,327 @@ def process(char, raw_root, out_root, height=None, hue_shift=True, contrast=1.1,
              len({tuple(colours[i]) for i in used}), pn))
 
 
+# ---------------------------------------------------------------- v2: material ramps, atlas (C10)
+
+def v2_frame_paths(raw_dir, anim, d, f):
+    base = os.path.join(raw_dir, "%s_%d_%d" % (anim, d, f))
+    return base + ".png", base + "_id.png"
+
+
+def load_v2_frame(raw_dir, anim, d, f, known_ids):
+    """-> (rgb uint8 HxWx3, ids uint8 HxW, 0 = transparent) or None when missing."""
+    p, pid = v2_frame_paths(raw_dir, anim, d, f)
+    if not (os.path.isfile(p) and os.path.isfile(pid)):
+        return None
+    rgba = np.asarray(Image.open(p).convert("RGBA"))
+    ids = (np.asarray(Image.open(pid).convert("L")).astype(np.int32) + 8) // 16
+    ids = np.where(np.isin(ids, known_ids) & (rgba[..., 3] > 127), ids, 0).astype(np.uint8)
+    return rgba[..., :3], ids
+
+
+def v2_keys(meta):
+    for anim, info in meta["anims"].items():
+        for d in range(int(meta["dirs"])):
+            for f in range(int(info["frames"])):
+                yield anim, d, f
+
+
+def is_v2(raw_dir, meta):
+    if not meta.get("materials"):
+        return False
+    return any(os.path.isfile(v2_frame_paths(raw_dir, *k)[1]) for k in v2_keys(meta))
+
+
+def ramp_shift(lab):
+    """Mild hue shift along one ramp (dark -> light): darks cooler, lights warmer."""
+    n = len(lab)
+    if n < 2:
+        return lab
+    t = np.linspace(0.0, 1.0, n)
+    chromatic = np.hypot(lab[:, 1], lab[:, 2]) > 0.02
+    out = hue_toward(lab, COOL_HUE, np.clip((0.4 - t) / 0.4, 0, 1) * 0.30 * chromatic)
+    return hue_toward(out, WARM_HUE, np.clip((t - 0.65) / 0.35, 0, 1) * 0.22 * chromatic)
+
+
+def recolour_ramp(lab, rgb):
+    """Variant ramp: hue/chroma from `rgb`, lightness profile scaled so the mid step equals its lightness."""
+    target = srgb_to_oklab(np.array(rgb, np.float64))
+    mid = len(lab) // 2
+    scale = target[0] / max(lab[mid, 0], 1e-4)
+    chroma = np.hypot(lab[:, 1], lab[:, 2])
+    rel = chroma / chroma[mid] if chroma[mid] > 0.01 else np.ones(len(lab))
+    tc = np.hypot(target[1], target[2])
+    th = np.arctan2(target[2], target[1])
+    out = np.empty_like(lab)
+    out[:, 0] = np.clip(lab[:, 0] * scale, 0.0, 1.0)
+    out[:, 1] = tc * np.clip(rel, 0.3, 1.6) * np.cos(th)
+    out[:, 2] = tc * np.clip(rel, 0.3, 1.6) * np.sin(th)
+    return out
+
+
+def sample_materials(raw_dir, meta, known_ids, per_frame=500, cap=60000):
+    """Pass 1: union bbox of the opaque pixels, reference height and per-material colour samples."""
+    rng = np.random.default_rng(5)
+    samples = {m: [] for m in known_ids}
+    x0 = y0 = 10**9
+    x1 = y1 = -1
+    ref_h = None
+    ref_bottom = None
+    found = 0
+    for key in v2_keys(meta):
+        fr = load_v2_frame(raw_dir, *key, known_ids)
+        if fr is None:
+            continue
+        found += 1
+        rgb, ids = fr
+        ys, xs = np.nonzero(ids)
+        if len(ys) == 0:
+            continue
+        x0, y0, x1, y1 = min(x0, xs.min()), min(y0, ys.min()), max(x1, xs.max() + 1), max(y1, ys.max() + 1)
+        if ref_h is None or key == ("idle", 0, 0):
+            ref_h, ref_bottom = ys.max() + 1 - ys.min(), ys.max() + 1
+        for m in known_ids:
+            sel = rgb[ids == m]
+            if len(sel):
+                samples[m].append(sel[rng.choice(len(sel), min(len(sel), per_frame), replace=False)])
+    if not found:
+        raise SystemExit("no frames with id maps found in %s" % raw_dir)
+    cols = {}
+    for m in known_ids:
+        if samples[m]:
+            a = np.concatenate(samples[m])
+            cols[m] = a[rng.choice(len(a), min(len(a), cap), replace=False)] / 255.0
+    return (int(x0), int(y0), int(x1), int(y1)), int(ref_h), int(ref_bottom), cols
+
+
+def build_ramps(meta, cols, contrast):
+    """-> ids (sorted), {id: OKLab ramp dark->light, base look}. Materials without pixels get a grey ramp."""
+    ramps = {}
+    for mid in sorted(int(k) for k in meta["materials"]):
+        n = int(meta["materials"][str(mid)]["shades"])
+        if mid in cols and len(cols[mid]):
+            lab = srgb_to_oklab(cols[mid])
+            cent = kmeans_oklab(lab, n) if n > 1 else lab.mean(0, keepdims=True)
+            ramps[mid] = cent[np.argsort(cent[:, 0])]
+        else:
+            ramps[mid] = np.stack([np.linspace(0.3, 0.8, n), np.zeros(n), np.zeros(n)], 1)
+    if contrast != 1.0:
+        mean_l = np.mean(np.concatenate([r[:, 0] for r in ramps.values()]))
+        for r in ramps.values():
+            r[:, 0] = np.clip((r[:, 0] - mean_l) * contrast + mean_l, 0.0, 1.0)
+    return ramps
+
+
+def ramp_colours(ramps, hue_shift, layout):
+    """256 x 3 uint8 colour table for one variant. layout: {id: (outline_index, first_shade_index)}."""
+    table = np.zeros((256, 3), np.uint8)
+    for mid, lab in ramps.items():
+        lab = ramp_shift(lab) if hue_shift else lab
+        dark = lab[0:1].copy()
+        dark[:, 0] *= OUTLINE_L
+        dark[:, 1:] *= 0.9
+        dark = hue_toward(dark, COOL_HUE, 0.25)
+        o, s = layout[mid]
+        table[o] = to_u8(dark)[0]
+        table[s:s + len(lab)] = to_u8(lab)
+    return table
+
+
+def downscale_v2(rgb, ids, size, shade_lab, owner, lum):
+    """Crisp representative downscale with ids: block id = majority id (never averaged); colour = nearest
+    shade of that material for samples of the block id, mode / contrast pick among those."""
+    dw, dh = size
+    (brgb, bid), k = block_samples([rgb, ids], size)
+    n = dh * dw
+    cnt = np.bincount((np.arange(n)[:, None] * 16 + bid).ravel(), minlength=n * 16).reshape(n, 16)
+    cnt[:, 0] = 0
+    block_id = cnt.argmax(1)
+    total = cnt.sum(1)
+    valid = (bid == block_id[:, None]) & (block_id[:, None] > 0)
+    lab = srgb_to_oklab(brgb.reshape(-1, 3) / 255.0) * np.array([1.6, 1.0, 1.0])
+    pl = shade_lab * np.array([1.6, 1.0, 1.0])
+    d = ((lab[:, None, :] - pl[None]) ** 2).sum(-1)
+    d = np.where(owner[None, :] == bid.reshape(-1)[:, None], d, np.inf)
+    q = np.where(valid.reshape(-1), d.argmin(1), -1).reshape(n, k * k)
+    pick, _ = pick_representative(q, lum)
+    idx = np.where((total * 2 >= k * k) & (block_id > 0), pick, -1)
+    return idx.reshape(dh, dw).astype(np.int16)
+
+
+def shelf_pack(sizes, max_h=4096):
+    """sizes: list of (w, h). Tries widths 256..2048; returns (width, height, positions) for the smallest
+    width whose height fits max_h. Tallest frames first; 1 px gap."""
+    order = sorted(range(len(sizes)), key=lambda i: (-sizes[i][1], -sizes[i][0]))
+    widest = max((w for w, _ in sizes), default=1)
+    for width in (256, 384, 512, 768, 1024, 1536, 2048):
+        if width < widest + 1:
+            continue
+        pos = [None] * len(sizes)
+        x = y = shelf = 0
+        for i in order:
+            w, h = sizes[i]
+            if w == 0:
+                pos[i] = (0, 0)
+                continue
+            if x + w > width:
+                x, y, shelf = 0, y + shelf, 0
+            pos[i] = (x, y)
+            x += w + 1
+            shelf = max(shelf, h + 1)
+        if y + shelf <= max_h:
+            return width, max(1, y + shelf), pos
+    raise SystemExit("atlas does not fit 2048 x %d" % max_h)
+
+
+IMPORT_TPL = (
+    '[remap]\n\nimporter="texture"\ntype="CompressedTexture2D"\n'
+    'path="res://.godot/imported/%(n)s.png-%(h)s.ctex"\nmetadata={\n"vram_texture": false\n}\n\n[deps]\n\n'
+    'source_file="%(res)s"\ndest_files=["res://.godot/imported/%(n)s.png-%(h)s.ctex"]\n\n[params]\n\n'
+    "compress/mode=0\ncompress/high_quality=false\ncompress/lossy_quality=0.7\ncompress/hdr_compression=1\n"
+    "compress/normal_map=0\ncompress/channel_pack=0\nmipmaps/generate=false\nmipmaps/limit=-1\n"
+    'roughness/mode=0\nroughness/src_normal=""\nprocess/fix_alpha_border=false\nprocess/premult_alpha=false\n'
+    "process/normal_map_invert_y=false\nprocess/hdr_as_srgb=false\nprocess/hdr_clamp_exposure=false\n"
+    "process/size_limit=0\ndetect_3d/compress_to=0\n"
+)
+
+
+def write_import(out_dir, name):
+    """Lossless, no mipmaps, no VRAM compression. Only for files inside the project; an existing file
+    (with the uid Godot wrote) is kept."""
+    res = res_path(out_dir, name)
+    if not res.startswith("res://"):
+        return
+    path = os.path.join(out_dir, name + ".import")
+    if os.path.exists(path):
+        return
+    import hashlib
+    with open(path, "w") as fh:
+        fh.write(IMPORT_TPL % {"n": name[:-4], "h": hashlib.md5(res.encode()).hexdigest(), "res": res})
+
+
+def process_v2(char, raw_root, out_root, meta, height, hue_shift, contrast, do_cleanup, allow_missing):
+    raw_dir = os.path.join(raw_root, char)
+    dirs = int(meta["dirs"])
+    known = sorted(int(k) for k in meta["materials"])
+    (x0, y0, x1, y1), ref_h, ref_bottom, cols = sample_materials(raw_dir, meta, known)
+    scale = float(height or int(meta["height_px"])) / ref_h
+    dw, dh = max(1, round((x1 - x0) * scale)), max(1, round((y1 - y0) * scale))
+    fw, fh = dw + 2 * PAD, dh + 2 * PAD
+
+    ramps = build_ramps(meta, cols, contrast)
+    layout, pos = {}, 1                    # index 0 = transparent; per material: outline step, then shades
+    for mid in known:
+        layout[mid] = (pos, pos + 1)
+        pos += 1 + len(ramps[mid])
+    if pos > 256:
+        raise SystemExit("palette needs %d entries (max 256)" % pos)
+    variants = [{}] + list(meta.get("variants", []))
+    names = {int(k): v["name"] for k, v in meta["materials"].items()}
+    tables = []
+    for var in variants:
+        vr = {}
+        for mid in known:
+            vr[mid] = recolour_ramp(ramps[mid], var[names[mid]]) if names[mid] in var else ramps[mid]
+        tables.append(ramp_colours(vr, hue_shift, layout))
+    # matching space: base ramps (shade space = concatenated shades), shade -> final index, owner material
+    shade_lab = np.concatenate([ramps[m] for m in known])
+    owner = np.concatenate([[m] * len(ramps[m]) for m in known]).astype(np.int64)
+    lum = shade_lab[:, 0]
+    fin = np.concatenate([np.arange(layout[m][1], layout[m][1] + len(ramps[m])) for m in known])
+    s_n = len(shade_lab)
+    out_fin = np.array([layout[m][0] for m in known])       # outline index per known material position
+    mat_pos = {m: i for i, m in enumerate(known)}
+    owner_pos = np.array([mat_pos[o] for o in owner])
+    # inner edge step: nearest shade of the same material near 85% lightness
+    tgt = shade_lab.copy()
+    tgt[:, 0] *= INNER_L
+    dd = (((tgt[:, None, :] - shade_lab[None]) ** 2) * np.array([4.0, 1.0, 1.0])).sum(-1)
+    dd = np.where(owner[:, None] == owner[None, :], dd, np.inf)
+    edge_idx = dd.argmin(1).astype(np.int16)
+
+    mapping = np.concatenate([fin, out_fin]).astype(np.uint8)   # [shade idx | s_n + material pos] -> final
+    trimmed = {}
+    missing = 0
+    for key in v2_keys(meta):
+        fr = load_v2_frame(raw_dir, *key, known)
+        if fr is None:
+            if not allow_missing:
+                raise SystemExit("missing frame %s_%d_%d in %s (use --allow-missing)" % (key + (raw_dir,)))
+            missing += 1
+            trimmed[key] = None
+            continue
+        rgb, ids = fr
+        idx = downscale_v2(rgb[y0:y1, x0:x1], ids[y0:y1, x0:x1], (dw, dh), shade_lab, owner, lum)
+        if do_cleanup:
+            idx = cleanup(idx, lum, owner)
+        idx = np.pad(idx, PAD, constant_values=-1)
+        m = idx >= 0
+        out = outline(idx, s_n, edge_idx, lum)
+        ring = out >= s_n
+        out[ring] = s_n + owner_pos[out[ring] - s_n]
+        fin_img = np.where(out >= 0, mapping[np.maximum(out, 0)], 0).astype(np.uint8)
+        bb = Image.fromarray(fin_img, "L").getbbox()
+        trimmed[key] = None if bb is None else (fin_img[bb[1]:bb[3], bb[0]:bb[2]], bb[0], bb[1])
+
+    keys = list(v2_keys(meta))
+    sizes = [(0, 0) if trimmed[k] is None else trimmed[k][0].shape[::-1] for k in keys]
+    width, height_px, positions = shelf_pack(sizes)
+    atlas = np.zeros((height_px, width), np.uint8)
+    ints = []
+    for k, (px, py) in zip(keys, positions):
+        t = trimmed[k]
+        if t is None:
+            ints += [0, 0, 0, 0, 0, 0]
+            continue
+        h, w = t[0].shape
+        atlas[py:py + h, px:px + w] = t[0]
+        ints += [px, py, w, h, t[1], t[2]]
+    anims_out, start = {}, 0
+    for anim, info in meta["anims"].items():
+        anims_out[anim] = {"start": start, "frames": int(info["frames"]), "fps": float(info["fps"]),
+                           "loop": bool(info["loop"])}
+        start += dirs * int(info["frames"])
+
+    out_dir = os.path.join(out_root, char)
+    os.makedirs(out_dir, exist_ok=True)
+    png = os.path.join(out_dir, char + ".png")
+    Image.fromarray(atlas, "L").save(png, optimize=True)
+    pal = np.zeros((len(tables), 256, 4), np.uint8)
+    for v, t in enumerate(tables):
+        pal[v, :, :3] = t
+        pal[v, 1:pos, 3] = 255
+    ppng = os.path.join(out_dir, char + "_palette.png")
+    Image.fromarray(pal, "RGBA").save(ppng)
+    write_import(out_dir, char + ".png")
+    write_import(out_dir, char + "_palette.png")
+    metres_per_raw_px = float(meta["camera_size"]) / float(meta["render_px"])
+    pixel_size = metres_per_raw_px / scale
+    foot_offset = int(round((y1 - ref_bottom) * scale)) + PAD
+    write_tres_v2(out_dir, char, (fw, fh), dirs, anims_out, pixel_size, foot_offset, ints, len(tables))
+    print("%s [v2]: atlas %dx%d (%d bytes png, %d raw), palette %d entries x %d variants, frame box %dx%d, "
+          "%d frames (%d missing), pixel_size %.5f, height %d"
+          % (char, width, height_px, os.path.getsize(png), atlas.size, pos, len(tables), fw, fh, len(keys),
+             missing, pixel_size, int(round(dh))))
+
+
+def write_tres_v2(out_dir, char, frame_size, dirs, anims, pixel_size, foot_offset, ints, variants):
+    anims_text = ", ".join(
+        '"%s": {"start": %d, "frames": %d, "fps": %.1f, "loop": %s}'
+        % (k, v["start"], v["frames"], v["fps"], "true" if v["loop"] else "false") for k, v in anims.items())
+    text = (
+        '[gd_resource type="Resource" script_class="SpriteSheetData" load_steps=4 format=3]\n\n'
+        '[ext_resource type="Script" path="res://src/rendering/sprite_sheet_data.gd" id="1_script"]\n'
+        '[ext_resource type="Texture2D" path="%s" id="2_tex"]\n'
+        '[ext_resource type="Texture2D" path="%s" id="3_pal"]\n\n'
+        '[resource]\nscript = ExtResource("1_script")\ntexture = ExtResource("2_tex")\npalette = ExtResource("3_pal")\n'
+        'variants = %d\nframe_size = Vector2i(%d, %d)\nframes = PackedInt32Array(%s)\ndirections = %d\n'
+        'anims = {%s}\npixel_size = %.6f\nfoot_offset_px = %d\n'
+    ) % (res_path(out_dir, char + ".png"), res_path(out_dir, char + "_palette.png"), variants,
+         frame_size[0], frame_size[1], ", ".join(map(str, ints)), dirs, anims_text, pixel_size, foot_offset)
+    with open(os.path.join(out_dir, char + ".tres"), "w") as fh:
+        fh.write(text)
+
+
 def res_path(out_dir, name):
     rel = os.path.relpath(os.path.join(out_dir, name), os.getcwd()).replace(os.sep, "/")
     if rel.startswith(".."):
@@ -397,6 +747,7 @@ def main():
     ap.add_argument("--no-hueshift", action="store_true", help="keep ramp end hues as clustered")
     ap.add_argument("--contrast", type=float, default=1.1, help="palette lightness contrast (1 = off)")
     ap.add_argument("--no-cleanup", action="store_true")
+    ap.add_argument("--allow-missing", action="store_true", help="v2: missing frames become empty")
     ap.add_argument("chars", nargs="*")
     args = ap.parse_args()
     chars = args.chars or sorted(d for d in os.listdir(args.raw)
@@ -406,7 +757,7 @@ def main():
         return 1
     for c in chars:
         process(c, args.raw, args.out, args.height or None, not args.no_hueshift, args.contrast,
-                not args.no_cleanup)
+                not args.no_cleanup, args.allow_missing)
     return 0
 
 

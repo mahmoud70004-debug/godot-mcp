@@ -2,6 +2,8 @@ extends Node3D
 ## Side by side: v2 test sheet (variant 0 and 1) and the legacy v1 hollow sheet, fixed camera.
 ## Every STEP_FRAMES frames the sprites' yaw advances one direction; the anim flips after a full turn.
 ## Env: RC_SHOT_DIR (saves a PNG at the end of every direction step), RC_ANIM (idle|walk, stops cycling).
+## RC_SHEET (a res:// path to a sheet .tres) shows only that sheet, every palette variant side by side, with RC_ANIM and
+## RC_DIR (fixed direction, default 0); RC_ZOOM narrows the camera fov.
 
 const STEP_FRAMES := 4
 const TEST_SHEET := "res://tools/galleries/test_sheet_v2/test_sheet.tres"
@@ -11,6 +13,7 @@ var _sprites: Array[PixelSprite3D] = []
 var _frame := 0
 var _step := 0
 var _fixed_anim := ""
+var _custom := false
 
 
 func _ready() -> void:
@@ -50,14 +53,25 @@ func _ready() -> void:
 	line.position.y = 0.003
 	add_child(line)
 
-	var test_sheet := load(TEST_SHEET) as SpriteSheetData
-	var v1_sheet := load(V1_SHEET) as SpriteSheetData
-	_add_sprite(test_sheet, 0, Vector3(-3.5, 0.0, 0.0))
-	_add_sprite(test_sheet, 1, Vector3(-1.0, 0.0, 0.0))
-	_add_sprite(v1_sheet, 0, Vector3(2.5, 0.0, 0.0))
+	var custom_path := OS.get_environment("RC_SHEET")
+	_custom = custom_path != ""
+	var fov := 35.0
+	if _custom:
+		var sheet := load(custom_path) as SpriteSheetData
+		var n := sheet.variants
+		for v in n:
+			var s := _add_sprite(sheet, v, Vector3((float(v) - (n - 1) * 0.5) * 1.3, 0.0, 0.0))
+			s.fixed_direction = int(OS.get_environment("RC_DIR")) if OS.get_environment("RC_DIR") != "" else 0
+		fov = float(OS.get_environment("RC_ZOOM")) if OS.get_environment("RC_ZOOM") != "" else 20.0
+	else:
+		var test_sheet := load(TEST_SHEET) as SpriteSheetData
+		var v1_sheet := load(V1_SHEET) as SpriteSheetData
+		_add_sprite(test_sheet, 0, Vector3(-3.5, 0.0, 0.0))
+		_add_sprite(test_sheet, 1, Vector3(-1.0, 0.0, 0.0))
+		_add_sprite(v1_sheet, 0, Vector3(2.5, 0.0, 0.0))
 
 	var cam := Camera3D.new()
-	cam.fov = 35.0
+	cam.fov = fov
 	cam.position = Vector3(0.0, 1.3, 9.0)
 	add_child(cam)
 	cam.look_at(Vector3(0.0, 1.0, 0.0))
@@ -77,21 +91,25 @@ func _process(_delta: float) -> void:
 	_apply_step()
 
 
-func _add_sprite(sheet: SpriteSheetData, variant: int, pos: Vector3) -> void:
+func _add_sprite(sheet: SpriteSheetData, variant: int, pos: Vector3) -> PixelSprite3D:
 	var s := PixelSprite3D.new()
 	s.sheet = sheet
 	s.variant = variant
 	s.position = pos
 	add_child(s)
 	_sprites.append(s)
+	return s
 
 
 func _apply_step() -> void:
 	var dir := _step % 8
+	if _custom:
+		dir = 0
 	var anim_name := _fixed_anim
 	if anim_name == "":
 		anim_name = "idle" if (_step / 8) % 2 == 0 else "walk"
 	for s in _sprites:
 		# Yaw 0 shows direction 4 (back); each +45 deg of node yaw advances the shown direction by one.
-		s.rotation_degrees.y = float(dir) * 45.0
+		if not _custom:
+			s.rotation_degrees.y = float(dir) * 45.0
 		s.play(StringName(anim_name))
