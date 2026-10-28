@@ -89,51 +89,61 @@ static func gnarled_tree(height: float, lean: Vector3, rng: RandomNumberGenerato
 	var l := Vector3(lean.x, 0, lean.z)
 	l = l.normalized() if l.length() > 0.01 else Vector3.RIGHT
 	var side := Vector3.UP.cross(l)
-	var r0 := clampf(height * 0.07, 0.35, 1.2)
-	var trunk_h := height * 0.55
-	var segs := 6
+	var r0 := clampf(height * 0.075, 0.35, 1.2)
+	var trunk_h := height * 0.62
+	var segs := 8
 	var p := Vector3.ZERO
 	var pts: Array[Vector3] = [p]
-	var r := r0
+	var r := r0 * 1.2
+	# Serpentine trunk: a chain of bent, tapering segments that twist.
+	var phase := rng.randf() * TAU
+	var twist := rng.randf_range(1.0, 1.8)
 	for i in segs:
-		var dir := (Vector3.UP + side * rng.randf_range(-0.4, 0.4) + l * rng.randf_range(-0.1, 0.3)).normalized()
+		var t := float(i) / segs
+		var sway := sin(phase + t * TAU * twist)
+		var dir := (Vector3.UP * 1.1 + side * sway * 0.55 + l * (0.12 + t * 0.35) + side.cross(Vector3.UP) * cos(phase + t * TAU * twist) * 0.2).normalized()
 		var np := p + dir * (trunk_h / segs)
-		var nr := r0 * lerpf(1.0, 0.6, float(i + 1) / segs)
-		_limb(root, p - dir * 0.08, np, r, nr, bark, 7)
+		var nr := r0 * lerpf(1.0, 0.55, float(i + 1) / segs)
+		_limb(root, p - dir * 0.12, np, r, nr, bark, 7)
 		p = np
 		r = nr
 		pts.append(p)
 	# Roots flaring at the base.
-	var roots := 5
+	var roots := 7
 	for i in roots:
-		var a := TAU * i / roots + rng.randf_range(-0.3, 0.3)
+		var a := TAU * i / roots + rng.randf_range(-0.25, 0.25)
 		var out := Vector3(cos(a), 0, sin(a))
-		var s := Vector3(out.x * r0 * 0.3, r0 * 1.8, out.z * r0 * 0.3)
-		var m := Vector3(out.x * r0 * 1.5, r0 * 0.6, out.z * r0 * 1.5)
-		var e := Vector3(out.x * r0 * rng.randf_range(2.4, 3.2), 0.0, out.z * r0 * rng.randf_range(2.4, 3.2))
-		_limb(root, s, m, r0 * 0.5, r0 * 0.32, bark, 6)
-		_limb(root, m, e, r0 * 0.32, r0 * 0.1, bark, 5)
-	# Huge limbs arching toward `lean`.
+		var s := Vector3(out.x * r0 * 0.3, r0 * 2.4, out.z * r0 * 0.3)
+		var m := Vector3(out.x * r0 * 1.5, r0 * 0.9, out.z * r0 * 1.5)
+		var e := Vector3(out.x * r0 * rng.randf_range(2.6, 3.8), -0.1, out.z * r0 * rng.randf_range(2.6, 3.8))
+		_limb(root, s, m, r0 * 0.62, r0 * 0.4, bark, 6)
+		_limb(root, m, e, r0 * 0.4, r0 * 0.1, bark, 5)
+	# Thick limbs curving up, then arching over toward `lean`, ending in twigs.
 	var limbs := rng.randi_range(2, 4)
-	var seg_len := height * 0.1
+	var seg_len := height * 0.095
+	var moss_left := 7
 	for i in limbs:
-		var q: Vector3 = pts[rng.randi_range(3, segs)]
-		var dir := (l * 0.8 + Vector3.UP * 0.8 + side * rng.randf_range(-0.6, 0.6)).normalized()
-		var lr := r0 * rng.randf_range(0.45, 0.6)
-		for k in 6:
+		var q: Vector3 = pts[rng.randi_range(maxi(segs - 4, 3), segs)]
+		var dir := (l * 0.45 + Vector3.UP * 1.0 + side * rng.randf_range(-0.7, 0.7)).normalized()
+		var lr := r0 * rng.randf_range(0.5, 0.65)
+		var steps := 7
+		for k in steps:
 			var np := q + dir * seg_len
-			var nr := lr * 0.8
-			_limb(root, q - dir * 0.05, np, lr, nr, bark, 6)
-			if k >= 1:
-				for c in rng.randi_range(1, 2):
-					var rad := height * rng.randf_range(0.04, 0.075)
-					var off := Vector3(rng.randf_range(-1, 1), rng.randf_range(-0.2, 0.8), rng.randf_range(-1, 1)) * rad * 0.6
-					var blob := PartBuilder.sphere(root, rad, np + off, moss, false, 6)
-					blob.scale = Vector3(1.0, 0.7, 1.0)
+			var nr := lr * 0.82
+			_limb(root, q - dir * 0.08, np, lr, nr, bark, 6)
+			if moss_left > 0 and k >= 2 and rng.randf() < 0.45:
+				moss_left -= 1
+				var rad := height * rng.randf_range(0.03, 0.055)
+				var blob := PartBuilder.sphere(root, rad, np + Vector3(rng.randf_range(-0.3, 0.3), rad * 0.3, rng.randf_range(-0.3, 0.3)), moss, false, 5)
+				blob.scale = Vector3(1.4, 0.38, 1.2)
+			if k >= steps - 3:
+				for c in 2:
+					var td := (dir + Vector3(rng.randf_range(-0.7, 0.7), rng.randf_range(-0.5, 0.3), rng.randf_range(-0.7, 0.7))).normalized()
+					_limb(root, np, np + td * seg_len * rng.randf_range(0.8, 1.4), nr * 0.5, nr * 0.12, bark, 4)
 			q = np
 			lr = nr
-			dir.y -= 0.32
-			dir += l * 0.18 + side * rng.randf_range(-0.12, 0.12)
+			dir.y -= 0.28
+			dir += l * 0.3 + side * rng.randf_range(-0.2, 0.2)
 			dir = dir.normalized()
 	var body := _new_body(root)
 	_shape_cyl(body, r0 * 0.85, trunk_h, Vector3(0, trunk_h * 0.5, 0))
