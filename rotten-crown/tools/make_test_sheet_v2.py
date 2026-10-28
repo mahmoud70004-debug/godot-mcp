@@ -4,6 +4,8 @@
 Output: tools/galleries/test_sheet_v2/test_sheet.png (L8 index atlas), test_sheet_palette.png (RGBA 256 x 2),
 the two .png.import files and test_sheet.tres. Each frame shows the direction digit (big), the frame digit
 (small), an arrow turning with the direction and a red bar on the feet row, inside rects of varying size.
+Palette note: the palette texture is sampled with the shader hint source_color, so its .png.import keeps the
+default sRGB handling (no special flags); the index atlas is read linearly.
 Usage: python3 tools/make_test_sheet_v2.py
 """
 import math

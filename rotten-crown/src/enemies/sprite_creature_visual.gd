@@ -24,7 +24,6 @@ var _twitch_left := 0.0
 var _walk_ref_speed := 2.0
 var _hold_anim: StringName = &"idle"
 var _move_scale := 1.0
-var _base_offset := Vector2.ZERO
 var _missing_sheet := false
 
 
@@ -42,7 +41,6 @@ func setup(data: EnemyData) -> void:
 	if _missing_sheet:
 		push_error("SpriteCreatureVisual: no sprite_sheet in %s" % data.resource_path)
 	sprite.sheet = data.sprite_sheet
-	_base_offset = sprite.offset
 	_twitch_intensity = data.twitch_intensity
 	_walk_ref_speed = maxf(data.chase_speed, 0.5)
 	sprite.play(&"idle", true)
@@ -116,11 +114,11 @@ func _process(delta: float) -> void:
 func _apply_twitch(strength: float) -> void:
 	# Screen-space jitter (sprite pixels): rotation/position are invisible under BILLBOARD_FIXED_Y.
 	var k := strength * _twitch_intensity
-	sprite.offset = _base_offset + Vector2(_rng.randf_range(-3.0, 3.0), _rng.randf_range(-2.0, 1.0)) * k
+	sprite.extra_offset = Vector2(_rng.randf_range(-3.0, 3.0), _rng.randf_range(-2.0, 1.0)) * k
 
 
 func _reset_twitch() -> void:
-	sprite.offset = _base_offset
+	sprite.extra_offset = Vector2.ZERO
 	_twitch_left = 0.0
 
 

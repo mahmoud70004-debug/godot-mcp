@@ -29,6 +29,12 @@ static var _material_cache := {}
 		variant = value
 		_refresh_material()
 
+## Extra screen-space offset in sprite pixels (e.g. twitches), added to the sheet's own offset.
+@export var extra_offset := Vector2.ZERO:
+	set(value):
+		extra_offset = value
+		offset = _base_offset + extra_offset
+
 var _time := 0.0
 var _finished := false
 var _flash_tween: Tween
@@ -41,6 +47,7 @@ var _row := 0
 var _start := 0
 var _last_region_key := -1
 var _material_billboard := -1
+var _base_offset := Vector2.ZERO
 
 
 func _ready() -> void:
@@ -112,7 +119,8 @@ func _apply_sheet() -> void:
 		material_override = null
 		_material_billboard = -1
 		# Centre horizontally; lift so the feet (foot_offset_px above the frame bottom) sit at the origin.
-		offset = Vector2(0.0, sheet.frame_size.y * 0.5 - sheet.foot_offset_px)
+		_base_offset = Vector2(0.0, sheet.frame_size.y * 0.5 - sheet.foot_offset_px)
+		offset = _base_offset + extra_offset
 	_refresh_anim_info()
 
 
@@ -166,7 +174,8 @@ func _update_region() -> void:
 			return
 		_last_region_key = idx
 		region_rect = Rect2(sheet.frame_rect(idx))
-		offset = sheet.frame_sprite_offset(idx)
+		_base_offset = sheet.frame_sprite_offset(idx)
+		offset = _base_offset + extra_offset
 		return
 	var row := _row + dir
 	var key := row * 4096 + frame
