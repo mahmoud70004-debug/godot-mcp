@@ -38,12 +38,33 @@ static func sphere(parent: Node3D, radius: float, pos: Vector3, mat: Material, h
 	return _instance(parent, m, pos, mat)
 
 
-static func steel(color: Color = Color(0.55, 0.56, 0.6)) -> StandardMaterial3D:
+static func steel(color: Color = Color(0.55, 0.56, 0.6), metallic: float = 0.75, roughness: float = 0.35) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = color
-	mat.metallic = 0.75
-	mat.roughness = 0.35
+	mat.metallic = metallic
+	mat.roughness = roughness
 	return mat
+
+
+## Four-sided tapered slab (wider at the bottom when bottom_w > top_w): cloak
+## panels, tassets, plume feathers. Hangs along -Y from its centre.
+static func frustum(parent: Node3D, top_w: float, bottom_w: float, height: float, thick: float, pos: Vector3, mat: Material, rot: Vector3 = Vector3.ZERO) -> MeshInstance3D:
+	var hy := height * 0.5
+	var t := top_w * 0.5
+	var b := bottom_w * 0.5
+	var d := thick * 0.5
+	var v := [
+		Vector3(-t, hy, -d), Vector3(t, hy, -d), Vector3(t, hy, d), Vector3(-t, hy, d),
+		Vector3(-b, -hy, -d), Vector3(b, -hy, -d), Vector3(b, -hy, d), Vector3(-b, -hy, d),
+	]
+	var quads := [[0, 1, 2, 3], [7, 6, 5, 4], [0, 4, 5, 1], [1, 5, 6, 2], [2, 6, 7, 3], [3, 7, 4, 0]]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for q in quads:
+		for i in [0, 1, 2, 0, 2, 3]:
+			st.add_vertex(v[q[i]])
+	st.generate_normals()
+	return _instance(parent, st.commit(), pos, mat, rot)
 
 
 static func _instance(parent: Node3D, mesh: Mesh, pos: Vector3, mat: Material, rot: Vector3 = Vector3.ZERO) -> MeshInstance3D:
