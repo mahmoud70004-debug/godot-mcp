@@ -27,6 +27,11 @@ const CURSED_LIGHT := Color(0.55, 1.0, 0.3)
 ## The night of the feast (cutscene): no rot, intact gate and banners, warm
 ## lights. Off = the cursed kingdom the player wakes up in.
 @export var festive := false
+## Off when the courtyard sits on the kingdom terrain (the overworld supplies
+## ground, far fields and the horizon backdrop itself).
+@export var build_ground := true
+@export var build_horizon := true
+@export var build_grass := true
 @export_group("Horizon")
 ## Distant silhouette layers, nearest first: base colour, top colour.
 @export var horizon_colors: Array[Color] = [
@@ -68,8 +73,10 @@ func _build() -> void:
 	_build_lanterns()
 	_build_banners()
 	_build_meadow()
-	_build_horizon()
-	_build_grass()
+	if build_horizon:
+		_build_horizon()
+	if build_grass:
+		_build_grass()
 	_build_keep_silhouette()
 	if festive:
 		_build_festival()
@@ -94,6 +101,11 @@ func _make_materials() -> void:
 
 func _build_ground() -> void:
 	var ground := _group("Ground")
+	# Cobbled plaza for the feast and the road through the gate (kept on terrain too).
+	_box(ground, Vector3(16.0, 0.04, 30.0), Vector3(0.0, 0.0, -6.0), RetroMaterials.cobble(), Vector3.ZERO, false)
+	_box(ground, Vector3(4.5, 0.04, 50.0), Vector3(0.0, 0.0, 35.0), RetroMaterials.red_earth(), Vector3.ZERO, false)
+	if not build_ground:
+		return
 	# Visual tiles: small meshes keep every mesh under the Mobile renderer's
 	# per-mesh light limit (8 omni lights).
 	for ix in range(-3, 3):
@@ -112,9 +124,6 @@ func _build_ground() -> void:
 	shape.position = Vector3(0.0, -0.5, 0.0)
 	body.add_child(shape)
 	ground.add_child(body)
-	# Cobbled plaza for the feast and the road through the gate.
-	_box(ground, Vector3(16.0, 0.04, 30.0), Vector3(0.0, 0.0, -6.0), RetroMaterials.cobble(), Vector3.ZERO, false)
-	_box(ground, Vector3(4.5, 0.04, 50.0), Vector3(0.0, 0.0, 35.0), RetroMaterials.red_earth(), Vector3.ZERO, false)
 	# Far fields out to the horizon silhouettes (below the detailed tiles).
 	var far_mat := RetroMaterials.dead_grass().duplicate() as StandardMaterial3D
 	far_mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
