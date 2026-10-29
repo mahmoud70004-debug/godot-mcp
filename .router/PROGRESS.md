@@ -52,3 +52,9 @@
 | tint | H | done | pixel_sprite_3d.gd, enemy_data.gd, sprite_creature_visual.gd | creature sprite tint |
 | perf check | H | measured | - | Medium, real grass: spawn 7.75, Hollowmere 6.75, prologue 5.75 fps, load 4.9 s (Phase 3: 8 / 6.25 / 5.25 / 5.2) |
 | U9 / U14 | H (router-hard) | running | wood / UI | resumed after rate limit |
+| U9 | H (router-hard) | done | whispering_wood_builder.gd, wood_props.gd, wood_mist/motes shaders (+ small level.gd/region_trigger.gd fix for overlapping triggers) | tree tunnel, verified vs ref 3 |
+| U14 | H (router-hard) | done | UI theme+fonts (OFL), main menu, HUD, pause, inventory, web/shell.html launch page | taste-skill applied; smoke PASS |
+| touch fix | H | done | touch_controls.gd | re-anchor on UI rescale (Low auto switch flung the camera 16 deg) |
+| U10 | H (router-hard) | done | castle_props.gd, meadow_builder.gd, meadow_props.gd, meadow shaders | spawn view: Gothic gate, feast spill, plains landmarks |
+| U13 publish | H | done | docs/ | smoke PASS, touch PASS; Medium: spawn 7.5-8.75, Hollowmere 7.5-7.75, prologue 4.5 fps (regressed: castle front dressing also built in the festive set -> follow-up), load 6.4-7 s; pck 25 MB |
+| review 3b | router-reviewer | interrupted by rate limit | - | resume next session |
