@@ -228,16 +228,16 @@ func _build_overlay() -> void:
 	_subtitle.anchor_bottom = 1.0
 	_subtitle.offset_top = -33.0
 	_subtitle.offset_bottom = -3.0
-	_subtitle.add_theme_color_override("font_color", Color(0.92, 0.86, 0.7))
+	_subtitle.theme_type_variation = &"HudLabel"
 	_subtitle.modulate.a = 0.0
 	layer.add_child(_subtitle)
 	_title = Label.new()
-	_title.text = "ROTTEN CROWN"
+	_title.text = "Rotten Crown"
 	_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_title.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_title.add_theme_font_size_override("font_size", 36)
-	_title.add_theme_color_override("font_color", Color(0.6, 0.08, 0.06))
+	_title.theme_type_variation = &"DisplayLargeLabel"
+	_title.add_theme_color_override("font_color", Color(0.62, 0.141, 0.098))
 	_title.modulate.a = 0.0
 	_fade = ColorRect.new()
 	_fade.color = Color(0, 0, 0, 1)
@@ -246,13 +246,14 @@ func _build_overlay() -> void:
 	layer.add_child(_fade)
 	layer.add_child(_title)
 	var skip := Button.new()
-	skip.text = "SKIP >>"
+	skip.text = "Skip"
+	skip.theme_type_variation = &"HudButton"
 	skip.anchor_left = 1.0
 	skip.anchor_right = 1.0
 	skip.offset_left = -70.0
 	skip.offset_right = -8.0
-	skip.offset_top = 6.0
-	skip.offset_bottom = 26.0
+	skip.offset_top = 4.0
+	skip.offset_bottom = 40.0
 	skip.focus_mode = Control.FOCUS_NONE
 	skip.pressed.connect(_skip)
 	layer.add_child(skip)

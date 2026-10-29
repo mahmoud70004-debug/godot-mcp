@@ -3,7 +3,9 @@ extends Node
 ## grass density and post-process grain to the current scene, re-applies on
 ## every scene change and on Events.quality_changed, and downgrades once on weak
 ## devices. Rain streaks on Low are WeatherController's job. Scenes in the
-## persistent group "quality_ignore" (offline bake tools) are left alone.
+## persistent group "quality_ignore" (offline bake tools) are left alone. Scenes in the
+## group "full_resolution_ui" (the 2D title screen, which costs nothing to draw) always keep
+## the full 640x360 content scale, so its composition never has to fit 480x270.
 ## Web: ?quality=0|1|2 forces a level for this session (tests).
 
 const LOW := 0
@@ -28,7 +30,8 @@ func _ready() -> void:
 ## Applies the given level to the viewport and the current scene.
 func apply(level: int) -> void:
 	level = clampi(level, LOW, HIGH)
-	get_tree().root.content_scale_size = Vector2i(480, 270) if level == LOW else Vector2i(640, 360)
+	var full_res := get_tree().current_scene != null and get_tree().current_scene.is_in_group(&"full_resolution_ui")
+	get_tree().root.content_scale_size = Vector2i(480, 270) if level == LOW and not full_res else Vector2i(640, 360)
 	if level == MEDIUM:
 		RenderingServer.directional_shadow_atlas_set_size(1024, true)
 	elif level == HIGH:

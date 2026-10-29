@@ -12,7 +12,8 @@ func setup(p_item: ItemData, p_quantity: int, p_equipped: bool) -> void:
 	item = p_item
 	quantity = p_quantity
 	equipped = p_equipped
-	custom_minimum_size = Vector2(34, 34)
+	custom_minimum_size = Vector2(36, 36)
+	theme_type_variation = &"InventorySlot"
 	focus_mode = Control.FOCUS_ALL
 	disabled = item == null
 	tooltip_text = item.display_name if item else ""
@@ -54,6 +55,11 @@ func _draw_overlays() -> void:
 		return
 	var font := get_theme_default_font()
 	if quantity > 1 and font:
-		draw_string(font, Vector2(size.x - 10, size.y - 3), str(quantity), HORIZONTAL_ALIGNMENT_LEFT, -1, 8, Color(0.95, 0.9, 0.75))
+		# 19 px = the text face at one font pixel per screen pixel.
+		var count := str(quantity)
+		var w := font.get_string_size(count, HORIZONTAL_ALIGNMENT_LEFT, -1, 19).x
+		draw_string(font, Vector2(size.x - w - 2, size.y - 2), count, HORIZONTAL_ALIGNMENT_LEFT, -1, 19, Color(0.863, 0.835, 0.749))
 	if equipped:
-		draw_rect(Rect2(Vector2(2, 2), Vector2(4, 4)), Color(0.4, 0.75, 0.15))
+		# A bone notch in the top-left corner marks the weapon in hand.
+		draw_rect(Rect2(Vector2(3, 3), Vector2(6, 2)), Color(0.863, 0.835, 0.749))
+		draw_rect(Rect2(Vector2(3, 5), Vector2(2, 4)), Color(0.863, 0.835, 0.749))

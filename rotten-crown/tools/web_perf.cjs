@@ -9,6 +9,14 @@
 // RC_PERF_QUERY="&quality=1" pins a quality level (otherwise the auto-downgrade may switch to Low).
 const { chromium } = require('playwright');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// The launch page (web/shell.html) covers the canvas until its "Wake up" button is tapped.
+const tapBegin = async (page) => {
+  await page.waitForSelector('#rc-wake:not([disabled])', { timeout: 120000 });
+  await page.tap('#rc-wake');
+  await page.waitForFunction(() => getComputedStyle(document.getElementById('status')).display === 'none', null, { timeout: 10000, polling: 250 });
+};
+// Title menu: "Wake Up" is the first text item at the left (src/ui/main_menu.tscn).
+const WAKE_UP = { x: 60, y: 230 };
 const countFps = (p) => p.evaluate(() => new Promise((r) => {
   let n = 0; const t0 = performance.now();
   const f = () => { n++; if (performance.now() - t0 < 4000) requestAnimationFrame(f); else r(n / 4); };
@@ -44,13 +52,14 @@ async function measureAll(b, url) {
     const ctx = await b.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
     const p = await ctx.newPage();
     await p.goto(`${url}?debug=1${process.env.RC_PERF_QUERY || ''}${q}`);
+    await tapBegin(p);
     await waitMenu(p);
     await sleep(2000);
     return { ctx, p };
   };
   const wake = async (p) => {
     const { box, sc, uiW } = await geom(p);
-    await p.touchscreen.tap(box.x + (uiW / 2) * sc, box.y + 222 * sc);
+    await p.touchscreen.tap(box.x + WAKE_UP.x * sc, box.y + WAKE_UP.y * sc);
   };
   const skip = async (p) => {
     const { box, sc, uiW } = await geom(p);
@@ -91,10 +100,11 @@ async function measureAll(b, url) {
     const ctx = await b.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
     const p = await ctx.newPage();
     await p.goto(`${url}?perf=${flags}`);
-    await p.waitForTimeout(7000);
+    await tapBegin(p);
+    await p.waitForTimeout(3000);
     const box = await p.locator('canvas').boundingBox();
     const sc = box.height / 360, uiW = box.width / sc;
-    await p.touchscreen.tap(box.x + (uiW / 2) * sc, box.y + 222 * sc); // Wake Up
+    await p.touchscreen.tap(box.x + WAKE_UP.x * sc, box.y + WAKE_UP.y * sc); // Wake Up
     await p.waitForTimeout(10000);
     await p.touchscreen.tap(box.x + (uiW - 39) * sc, box.y + 16 * sc); // SKIP
     await p.waitForTimeout(22000);

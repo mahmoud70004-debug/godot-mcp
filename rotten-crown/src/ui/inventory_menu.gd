@@ -5,6 +5,9 @@ extends Control
 
 signal closed
 
+## Widest the panel gets on wide phones; narrower screens (Low quality: 480x270) use all but 8 px.
+const PANEL_MAX_WIDTH := 640.0
+
 @onready var grid: GridContainer = %SlotGrid
 @onready var name_label: Label = %ItemName
 @onready var category_label: Label = %ItemCategory
@@ -15,15 +18,33 @@ signal closed
 @onready var equip_button: Button = %EquipButton
 @onready var read_button: Button = %ReadButton
 @onready var close_button: Button = %CloseButton
+@onready var panel: Control = $Panel
 
 var _selected: ItemData
 
 
 func _ready() -> void:
+	resized.connect(_fit_panel)
+	_fit_panel()
 	close_button.pressed.connect(func() -> void: closed.emit())
 	use_button.pressed.connect(_on_use_pressed)
 	equip_button.pressed.connect(_on_equip_pressed)
 	read_button.pressed.connect(_on_read_pressed)
+
+
+func _fit_panel() -> void:
+	var side := maxf(8.0, floorf((size.x - PANEL_MAX_WIDTH) * 0.5))
+	# 480x270 (Low quality on a 16:9 screen): tighter gutters, and the summary line gives way.
+	var narrow := size.x < 560.0
+	if narrow:
+		side = 4.0
+	panel.offset_left = side
+	panel.offset_right = -side
+	var margin := $Panel/Margin as MarginContainer
+	margin.add_theme_constant_override("margin_left", 10 if narrow else 16)
+	margin.add_theme_constant_override("margin_right", 10 if narrow else 16)
+	($Panel/Margin/VBox/Body as HBoxContainer).add_theme_constant_override("separation", 12 if narrow else 20)
+	status_label.visible = not (narrow and size.y < 300.0)
 
 
 func open() -> void:
@@ -68,7 +89,8 @@ func _select(item: ItemData) -> void:
 		var level := GameState.get_weapon_level(item as WeaponData)
 		if level > 0:
 			lines.append("Honed +%d" % level)
-	stats_label.text = "\n".join(lines)
+	# One wrapped line, so the panel still fits the 270 px tall Low-quality screen.
+	stats_label.text = "   ".join(lines)
 	use_button.visible = item is ConsumableData
 	equip_button.visible = item is WeaponData
 	equip_button.disabled = item != null and item == GameState.equipped_weapon
@@ -78,7 +100,7 @@ func _select(item: ItemData) -> void:
 
 func _update_status() -> void:
 	var weapon_name := GameState.equipped_weapon.display_name if GameState.equipped_weapon else "Bare hands"
-	status_label.text = "Wielding: %s   |   Damage %d   |   Vigour %d" % [
+	status_label.text = "In hand: %s      Damage %d      Vigour %d" % [
 		weapon_name, roundi(GameState.get_attack_damage()), roundi(GameState.get_max_health())]
 
 

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e110f">
+<meta name="description" content="Rotten Crown: a first-person pixel horror game about a knight who wakes outside the walls of a silent kingdom. Plays in the browser, held sideways.">
+<title>$GODOT_PROJECT_NAME</title>
+<style>
+@font-face { font-family: "Jacquard 24"; src: url({{font:Jacquard24}}) format("woff2"); font-display: swap; }
+@font-face { font-family: "Jersey 10"; src: url({{font:Jersey10}}) format("woff2"); font-display: swap; }
+
+:root {
+	color-scheme: dark;
+	--ground: #0e110f;
+	--surface: #181c19;
+	--ink: #dcd5bf;
+	--muted: #a6a995;
+	--accent: #a9c04e;
+	--accent-ink: #0e110f;
+	--font-display: "Jacquard 24", "UnifrakturMaguntia", Georgia, serif;
+	--font-text: "Jersey 10", "Trebuchet MS", Arial, sans-serif;
+	--margin: clamp(16px, 2.4vw, 40px);
+	--step-body: clamp(19px, 1.55vw, 26px);
+	--step-title: clamp(56px, 9vw, 172px);
+	--ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+	--ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+	--ease-soft: cubic-bezier(0.33, 1, 0.68, 1);
+	--t-press: 140ms;
+	--t-hover: 180ms;
+	--t-open: 1200ms;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+body {
+	background: var(--ground);
+	color: var(--ink);
+	font-family: var(--font-text);
+	font-size: var(--step-body);
+	line-height: 1.35;
+	overflow: hidden;
+	touch-action: none;
+	-webkit-font-smoothing: antialiased;
+}
+#canvas { display: block; position: fixed; inset: 0; margin: 0; border: 0; }
+#canvas:focus { outline: none; }
+::selection { background: var(--accent); color: var(--accent-ink); }
+
+/* The launch screen sits over the canvas while the engine loads and starts. */
+.launch {
+	position: fixed;
+	inset: 0;
+	z-index: 2;
+	background: var(--ground);
+	display: grid;
+	grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.7fr);
+	grid-template-rows: 1fr;
+	align-items: center;
+	column-gap: clamp(20px, 3vw, 56px);
+	padding: max(var(--margin), env(safe-area-inset-top)) max(var(--margin), env(safe-area-inset-right))
+		max(var(--margin), env(safe-area-inset-bottom)) max(var(--margin), env(safe-area-inset-left));
+	transition: opacity 420ms var(--ease-out);
+}
+.launch.is-gone { opacity: 0; pointer-events: none; }
+
+.words { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; }
+h1 {
+	font-family: var(--font-display);
+	font-weight: 400;
+	font-size: var(--step-title);
+	line-height: 0.86;
+	letter-spacing: 0;
+	margin: 0 0 0 -0.04em;
+	color: var(--ink);
+}
+h1 span { display: block; }
+.hook { margin: clamp(16px, 3.2vh, 32px) 0 0; max-width: 32ch; }
+.hook + .hook { margin-top: 0.6em; color: var(--muted); }
+
+.wake {
+	margin-top: clamp(16px, 4vh, 40px);
+	min-height: 48px;
+	min-width: 13ch;
+	padding: 10px 22px 12px;
+	border: 0;
+	border-radius: 0;
+	background: var(--accent);
+	color: var(--accent-ink);
+	font: inherit;
+	font-size: var(--step-body);
+	cursor: pointer;
+	transition: background-color var(--t-hover) ease, transform var(--t-press) var(--ease-out);
+}
+.wake:hover:not(:disabled) { background: #b9cf5f; }
+.wake:active:not(:disabled) { transform: scale(0.97); }
+.wake:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.wake:disabled { background: var(--surface); color: var(--muted); cursor: progress; }
+.turn { display: none; margin: clamp(12px, 2vh, 20px) 0 0; color: var(--ink); }
+
+#status-notice {
+	display: none;
+	margin: 16px 0 0;
+	padding: 12px 14px;
+	max-width: 36ch;
+	background: #3a1512;
+	color: var(--ink);
+}
+
+/* The eye: the stills of the night are seen through a lid that opens as the game loads. */
+.eye { margin: 0; min-width: 0; }
+.lens {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 640 / 292;
+	max-height: calc(100svh - 2 * var(--margin) - 48px);
+	background: #050605;
+	overflow: hidden;
+	clip-path: polygon(0% 50%, 4% 37%, 10% 25%, 18% 15%, 28% 7%, 39% 2%, 50% 0%, 61% 2%, 72% 7%, 82% 15%, 90% 25%, 96% 37%, 100% 50%,
+		96% 63%, 90% 75%, 82% 85%, 72% 93%, 61% 98%, 50% 100%, 39% 98%, 28% 93%, 18% 85%, 10% 75%, 4% 63%);
+	transition: clip-path 700ms var(--ease-expo);
+}
+.lens img {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	image-rendering: pixelated;
+	opacity: 0;
+	transition: opacity 900ms ease;
+}
+.lens img.is-shown { opacity: 1; }
+.eye figcaption { margin-top: 14px; min-height: 1.45em; color: var(--muted); text-align: center; }
+
+/* Short landscape phones: everything one notch tighter. */
+@media (max-height: 440px) and (orientation: landscape) {
+	:root { --step-title: clamp(48px, 7.6vw, 86px); --margin: 16px; --step-body: 19px; }
+	.hook { max-width: 30ch; line-height: 1.3; }
+	.wake { margin-top: 14px; }
+	.eye figcaption { margin-top: 8px; }
+}
+
+/* Portrait: stacked, and the game asks to be turned sideways. */
+@media (orientation: portrait) {
+	:root { --step-title: clamp(56px, 19vw, 129px); --step-body: clamp(19px, 2.6vw, 26px); }
+	.launch {
+		grid-template-columns: 1fr;
+		grid-template-rows: none;
+		align-content: center;
+		row-gap: 0;
+	}
+	.words { display: contents; }
+	h1 { order: 1; }
+	.hook { order: 2; }
+	.eye { order: 3; margin-top: clamp(24px, 4vh, 40px); }
+	.turn { order: 4; display: block; margin-top: 8px; }
+	.wake { order: 5; justify-self: start; margin-top: 16px; }
+	#status-notice { order: 6; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.rise { animation: rise 800ms var(--ease-expo) both; }
+	.rise-2 { animation-delay: 90ms; }
+	.rise-3 { animation-delay: 180ms; }
+	.rise-4 { animation-delay: 270ms; }
+	@keyframes rise { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: none; } }
+	.lens img.is-shown { animation: drift 14s var(--ease-soft) infinite alternate; }
+	@keyframes drift { from { transform: scale(1); } to { transform: scale(1.06) translateX(-1%); } }
+}
+@media (prefers-reduced-motion: reduce) {
+	.lens, .lens img, .launch { transition-duration: 1ms; }
+}
+</style>
+$GODOT_HEAD_INCLUDE
+</head>
+<body>
+<canvas id="canvas">Your browser does not support the canvas tag.</canvas>
+<noscript><p style="padding:24px">Rotten Crown needs JavaScript to run in the browser.</p></noscript>
+
+<main id="status" class="launch">
+	<div class="words">
+		<h1 class="rise"><span>Rotten</span><span>Crown</span></h1>
+		<p class="hook rise rise-2">A first-person pixel horror game you play in the browser, phone held sideways.</p>
+		<p class="hook rise rise-2">The feast of Valdron never ended.</p>
+		<p class="turn" id="turn">Turn your phone sideways to play.</p>
+		<button class="wake rise rise-3" id="rc-wake" type="button" disabled aria-describedby="caption">Waking 0%</button>
+		<p id="status-notice" role="alert"></p>
+	</div>
+	<figure class="eye rise rise-4">
+		<div class="lens" id="lens">
+			<img class="is-shown" src="{{img:feast}}" width="640" height="292" alt="The victory feast in Valdron's outer ward at night, long tables under lanterns">
+			<img src="{{img:sleep}}" width="640" height="292" alt="The knight walks out alone into the moonlit meadow beyond the walls">
+			<img src="{{img:wake}}" width="640" height="292" alt="The castle gate in rain and fog, seen from the meadow where the knight wakes">
+			<img src="{{img:harvest}}" width="640" height="292" alt="Hollowmere at night: pumpkin fields, a scarecrow and the church spire">
+		</div>
+		<figcaption id="caption" aria-live="polite">Valdron sang, and drank, and sang again.</figcaption>
+	</figure>
+</main>
+
+<script src="$GODOT_URL"></script>
+<script>
+const GODOT_CONFIG = $GODOT_CONFIG;
+const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
+const engine = new Engine(GODOT_CONFIG);
+
+(function () {
+	const overlay = document.getElementById('status');
+	const lens = document.getElementById('lens');
+	const caption = document.getElementById('caption');
+	const button = document.getElementById('rc-wake');
+	const notice = document.getElementById('status-notice');
+	const stills = Array.from(lens.querySelectorAll('img'));
+	const captions = [
+		'Valdron sang, and drank, and sang again.',
+		'A young knight slipped away to sleep in the grass.',
+		'He woke to silence. The walls were dark.',
+		'Beyond them, the harvest kept growing.',
+	];
+	let shown = 0;
+	let ready = false;
+	let failed = false;
+
+	// The lid: an almond whose height is a share of the full eye (0.06 = a slit, 1 = open).
+	function lidPath(open) {
+		const pts = [];
+		const n = 12;
+		for (let i = 0; i <= n; i++) {
+			const u = i / n;
+			const h = Math.pow(Math.max(0, 1 - Math.pow(2 * u - 1, 2)), 0.75) * 50 * open;
+			pts.push(`${(u * 100).toFixed(1)}% ${(50 - h).toFixed(1)}%`);
+		}
+		for (let i = n - 1; i >= 1; i--) {
+			const u = i / n;
+			const h = Math.pow(Math.max(0, 1 - Math.pow(2 * u - 1, 2)), 0.75) * 50 * open;
+			pts.push(`${(u * 100).toFixed(1)}% ${(50 + h).toFixed(1)}%`);
+		}
+		return `polygon(${pts.join(', ')})`;
+	}
+
+	function show(index) {
+		if (index === shown) {
+			return;
+		}
+		stills[shown].classList.remove('is-shown');
+		stills[index].classList.add('is-shown');
+		caption.textContent = captions[index];
+		shown = index;
+	}
+
+	function setProgress(p) {
+		const share = Math.max(0, Math.min(1, p));
+		lens.style.clipPath = lidPath(0.08 + 0.92 * share);
+		show(Math.min(stills.length - 1, Math.floor(share * stills.length)));
+		if (!ready) {
+			button.textContent = `Waking ${Math.round(share * 100)}%`;
+		}
+	}
+	setProgress(0);
+
+	function setReady() {
+		ready = true;
+		setProgress(1);
+		button.disabled = false;
+		button.textContent = 'Wake up';
+		// Keyboard and mouse players can press Enter; on a phone a focus ring would only be noise.
+		if (!(window.matchMedia && window.matchMedia('(pointer: coarse)').matches)) {
+			button.focus({ preventScroll: true });
+		}
+	}
+
+	function begin() {
+		if (!ready) {
+			return;
+		}
+		overlay.classList.add('is-gone');
+		setTimeout(() => { overlay.style.display = 'none'; }, 450);
+		const canvas = document.getElementById('canvas');
+		if (canvas) {
+			canvas.focus();
+		}
+		// On a phone, take the whole screen and hold it sideways where the browser allows it.
+		const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+		const root = document.documentElement;
+		if (coarse && root.requestFullscreen && !document.fullscreenElement) {
+			root.requestFullscreen({ navigationUI: 'hide' }).then(() => {
+				if (screen.orientation && screen.orientation.lock) {
+					return screen.orientation.lock('landscape');
+				}
+				return null;
+			}).catch(() => {});
+		}
+	}
+	button.addEventListener('click', begin);
+
+	function displayFailureNotice(err) {
+		console.error(err);
+		let text = 'An unknown error occurred.';
+		if (err instanceof Error) {
+			text = err.message;
+		} else if (typeof err === 'string') {
+			text = err;
+		}
+		notice.textContent = text;
+		notice.style.display = 'block';
+		button.textContent = 'Could not wake';
+		failed = true;
+	}
+
+	const missing = Engine.getMissingFeatures({
+		threads: GODOT_THREADS_ENABLED,
+	});
+
+	if (missing.length !== 0) {
+		if (GODOT_CONFIG['serviceWorker'] && GODOT_CONFIG['ensureCrossOriginIsolationHeaders'] && 'serviceWorker' in navigator) {
+			let serviceWorkerRegistrationPromise;
+			try {
+				serviceWorkerRegistrationPromise = navigator.serviceWorker.getRegistration();
+			} catch (err) {
+				serviceWorkerRegistrationPromise = Promise.reject(new Error('Service worker registration failed.'));
+			}
+			// There's a chance that installing the service worker would fix the issue
+			Promise.race([
+				serviceWorkerRegistrationPromise.then((registration) => {
+					if (registration != null) {
+						return Promise.reject(new Error('Service worker already exists.'));
+					}
+					return registration;
+				}).then(() => engine.installServiceWorker()),
+				// For some reason, `getRegistration()` can stall
+				new Promise((resolve) => {
+					setTimeout(() => resolve(), 2000);
+				}),
+			]).then(() => {
+				// Reload if there was no error.
+				window.location.reload();
+			}).catch((err) => {
+				console.error('Error while registering service worker:', err);
+			});
+		} else {
+			displayFailureNotice('The following features required to run Godot projects on the Web are missing:\n' + missing.join('\n'));
+		}
+	} else {
+		engine.startGame({
+			'onProgress': function (current, total) {
+				if (current > 0 && total > 0 && !failed) {
+					// Downloading is most of the wait; the last tenth is the engine starting.
+					setProgress(0.9 * current / total);
+				}
+			},
+		}).then(setReady, displayFailureNotice);
+	}
+}());
+</script>
+</body>
+</html>

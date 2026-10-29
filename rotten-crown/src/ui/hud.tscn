@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://src/ui/virtual_joystick.gd" id="4_stick"]
 [ext_resource type="Script" path="res://src/ui/touch_action_button.gd" id="5_btn"]
 [ext_resource type="PackedScene" path="res://src/ui/inventory_menu.tscn" id="6_inv"]
+[ext_resource type="Script" path="res://src/ui/menu_item_button.gd" id="7_item"]
 
 [node name="HUD" type="CanvasLayer"]
 layer = 10
@@ -52,10 +53,10 @@ anchor_left = 0
 anchor_top = 0
 anchor_right = 0
 anchor_bottom = 0
-offset_left = 12.0
-offset_top = 10.0
-offset_right = 132.0
-offset_bottom = 17.0
+offset_left = 16.0
+offset_top = 14.0
+offset_right = 136.0
+offset_bottom = 20.0
 mouse_filter = 2
 script = ExtResource("2_bar")
 
@@ -66,14 +67,13 @@ anchor_left = 0
 anchor_top = 0
 anchor_right = 0
 anchor_bottom = 0
-offset_left = 12.0
-offset_top = 20.0
-offset_right = 102.0
-offset_bottom = 24.0
+offset_left = 16.0
+offset_top = 23.0
+offset_right = 106.0
+offset_bottom = 26.0
 mouse_filter = 2
 script = ExtResource("2_bar")
-fill_color = Color(0.5, 0.58, 0.22, 1)
-ghost_color = Color(0.8, 0.8, 0.6, 1)
+fill_color = Color(0.702, 0.627, 0.345, 1)
 
 [node name="PromptLabel" type="Label" parent="Root"]
 unique_name_in_owner = true
@@ -83,23 +83,24 @@ anchor_top = 1
 anchor_right = 0.5
 anchor_bottom = 1
 offset_left = -160.0
-offset_top = -74.0
+offset_top = -82.0
 offset_right = 160.0
 offset_bottom = -60.0
+theme_type_variation = &"HudLabel"
 horizontal_alignment = 1
-theme_override_colors/font_color = Color(0.9, 0.84, 0.66, 1)
 
 [node name="MessageLabel" type="Label" parent="Root"]
 unique_name_in_owner = true
 layout_mode = 1
 anchor_left = 0.5
-anchor_top = 0
+anchor_top = 1
 anchor_right = 0.5
-anchor_bottom = 0
-offset_left = -220.0
-offset_top = 34.0
-offset_right = 220.0
-offset_bottom = 48.0
+anchor_bottom = 1
+offset_left = -200.0
+offset_top = -106.0
+offset_right = 200.0
+offset_bottom = -84.0
+theme_type_variation = &"HudLabel"
 horizontal_alignment = 1
 
 [node name="RegionTitle" type="Label" parent="Root"]
@@ -109,13 +110,15 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -280.0
-offset_top = -70.0
-offset_right = 280.0
-offset_bottom = -44.0
+offset_left = -300.0
+offset_top = -96.0
+offset_right = 300.0
+offset_bottom = -53.0
+theme_type_variation = &"DisplayLabel"
+theme_override_colors/font_shadow_color = Color(0.02, 0.025, 0.02, 0.9)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 2
 horizontal_alignment = 1
-theme_override_colors/font_color = Color(0.78, 0.68, 0.42, 1)
-theme_override_font_sizes/font_size = 22
 
 [node name="RegionSubtitle" type="Label" parent="Root"]
 unique_name_in_owner = true
@@ -124,12 +127,13 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -280.0
-offset_top = -40.0
-offset_right = 280.0
-offset_bottom = -26.0
+offset_left = -300.0
+offset_top = -50.0
+offset_right = 300.0
+offset_bottom = -28.0
+theme_type_variation = &"HudLabel"
+theme_override_colors/font_color = Color(0.729, 0.733, 0.659, 1)
 horizontal_alignment = 1
-theme_override_colors/font_color = Color(0.55, 0.62, 0.45, 1)
 
 [node name="TouchControls" type="Control" parent="Root"]
 unique_name_in_owner = true
@@ -168,9 +172,9 @@ offset_bottom = -42.0
 mouse_filter = 2
 script = ExtResource("5_btn")
 action = &"attack"
-label = "ATK"
+label = "Strike"
 radius = 27.0
-color = Color(0.55, 0.1, 0.07, 0.45)
+color = Color(0.62, 0.141, 0.098, 0.5)
 
 [node name="BlockButton" type="Control" parent="Root/TouchControls"]
 layout_mode = 1
@@ -185,9 +189,9 @@ offset_bottom = -20.0
 mouse_filter = 2
 script = ExtResource("5_btn")
 action = &"block"
-label = "GRD"
+label = "Guard"
 radius = 22.0
-color = Color(0.32, 0.3, 0.22, 0.45)
+color = Color(0.36, 0.37, 0.33, 0.5)
 
 [node name="InteractButton" type="Control" parent="Root/TouchControls"]
 unique_name_in_owner = true
@@ -203,9 +207,9 @@ offset_bottom = -114.0
 mouse_filter = 2
 script = ExtResource("5_btn")
 action = &"interact"
-label = "USE"
+label = "Use"
 radius = 20.0
-color = Color(0.25, 0.42, 0.12, 0.5)
+color = Color(0.42, 0.5, 0.16, 0.6)
 
 [node name="InventoryTouchButton" type="Button" parent="Root"]
 unique_name_in_owner = true
@@ -214,11 +218,13 @@ anchor_left = 1
 anchor_top = 0
 anchor_right = 1
 anchor_bottom = 0
-offset_left = -96.0
-offset_top = 8.0
-offset_right = -52.0
-offset_bottom = 28.0
-text = "BAG"
+offset_left = -92.0
+offset_top = 6.0
+offset_right = -48.0
+offset_bottom = 42.0
+focus_mode = 0
+theme_type_variation = &"HudButton"
+text = "Bag"
 
 [node name="PauseTouchButton" type="Button" parent="Root"]
 unique_name_in_owner = true
@@ -227,10 +233,12 @@ anchor_left = 1
 anchor_top = 0
 anchor_right = 1
 anchor_bottom = 0
-offset_left = -46.0
-offset_top = 8.0
-offset_right = -10.0
-offset_bottom = 28.0
+offset_left = -44.0
+offset_top = 6.0
+offset_right = -8.0
+offset_bottom = 42.0
+focus_mode = 0
+theme_type_variation = &"HudButton"
 text = "II"
 
 [node name="InventoryMenu" parent="." instance=ExtResource("6_inv")]
@@ -252,35 +260,50 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.6)
+color = Color(0.043, 0.055, 0.047, 0.78)
 
-[node name="Panel" type="PanelContainer" parent="PauseMenu"]
+[node name="Column" type="VBoxContainer" parent="PauseMenu"]
 layout_mode = 1
-anchor_left = 0.5
 anchor_top = 0.5
-anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -100.0
-offset_top = -80.0
-offset_right = 100.0
-offset_bottom = 80.0
-
-[node name="VBox" type="VBoxContainer" parent="PauseMenu/Panel"]
-layout_mode = 2
-theme_override_constants/separation = 6
+offset_left = 26.0
+offset_top = -128.0
+offset_right = 306.0
+offset_bottom = 128.0
+grow_vertical = 2
+theme_override_constants/separation = 0
 alignment = 1
 
-[node name="Title" type="Label" parent="PauseMenu/Panel/VBox"]
+[node name="Title" type="Label" parent="PauseMenu/Column"]
 layout_mode = 2
-horizontal_alignment = 1
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.72, 0.6, 0.32, 1)
-text = "THE NIGHT WAITS"
+theme_type_variation = &"DisplayLabel"
+theme_override_constants/line_spacing = 0
+text = "The night waits"
 
-[node name="QualityOption" type="OptionButton" parent="PauseMenu/Panel/VBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 24)
+[node name="Gap" type="Control" parent="PauseMenu/Column"]
+custom_minimum_size = Vector2(0, 14)
 layout_mode = 2
+
+[node name="ResumeButton" type="Button" parent="PauseMenu/Column"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Resume"
+script = ExtResource("7_item")
+
+[node name="SaveButton" type="Button" parent="PauseMenu/Column"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Write Memories"
+script = ExtResource("7_item")
+hint = "save"
+
+[node name="QualityOption" type="OptionButton" parent="PauseMenu/Column"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+size_flags_horizontal = 0
 item_count = 3
 selected = 1
 popup/item_0/text = "Quality: Low"
@@ -290,23 +313,25 @@ popup/item_1/id = 1
 popup/item_2/text = "Quality: High"
 popup/item_2/id = 2
 
-[node name="ResumeButton" type="Button" parent="PauseMenu/Panel/VBox"]
+[node name="MainMenuButton" type="Button" parent="PauseMenu/Column"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 24)
+custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
-text = "Resume"
+text = "Abandon"
+script = ExtResource("7_item")
+hint = "to the main menu"
 
-[node name="SaveButton" type="Button" parent="PauseMenu/Panel/VBox"]
+[node name="PauseRegion" type="Label" parent="PauseMenu"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 24)
-layout_mode = 2
-text = "Write Memories (Save)"
-
-[node name="MainMenuButton" type="Button" parent="PauseMenu/Panel/VBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 24)
-layout_mode = 2
-text = "Abandon (Main Menu)"
+layout_mode = 1
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 26.0
+offset_top = -32.0
+offset_right = 326.0
+offset_bottom = -10.0
+grow_vertical = 0
+theme_type_variation = &"MutedLabel"
 
 [node name="LoreReader" type="Control" parent="."]
 unique_name_in_owner = true
@@ -324,34 +349,31 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.7)
+color = Color(0.043, 0.055, 0.047, 0.8)
 
 [node name="Panel" type="PanelContainer" parent="LoreReader"]
 layout_mode = 1
 anchor_left = 0.5
-anchor_top = 0.5
 anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -220.0
-offset_top = -150.0
-offset_right = 220.0
-offset_bottom = 150.0
+anchor_bottom = 1.0
+offset_left = -230.0
+offset_top = 8.0
+offset_right = 230.0
+offset_bottom = -8.0
 
 [node name="VBox" type="VBoxContainer" parent="LoreReader/Panel"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
 [node name="LoreTitle" type="Label" parent="LoreReader/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 14
-theme_override_colors/font_color = Color(0.86, 0.78, 0.55, 1)
+theme_type_variation = &"DisplayLabel"
 
 [node name="LoreAuthor" type="Label" parent="LoreReader/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 8
-theme_override_colors/font_color = Color(0.5, 0.58, 0.4, 1)
+theme_type_variation = &"MutedLabel"
 
 [node name="Scroll" type="ScrollContainer" parent="LoreReader/Panel/VBox"]
 layout_mode = 2
@@ -363,11 +385,10 @@ unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 autowrap_mode = 3
-theme_override_colors/font_color = Color(0.8, 0.76, 0.66, 1)
 
 [node name="CloseLoreButton" type="Button" parent="LoreReader/Panel/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(80, 22)
+custom_minimum_size = Vector2(96, 36)
 layout_mode = 2
 size_flags_horizontal = 8
 text = "Close"
@@ -380,7 +401,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.03, 0, 0, 0.9)
+color = Color(0.09, 0.024, 0.02, 0.94)
 
 [node name="VBox" type="VBoxContainer" parent="DeathScreen"]
 layout_mode = 1
@@ -398,19 +419,18 @@ alignment = 1
 [node name="Title" type="Label" parent="DeathScreen/VBox"]
 layout_mode = 2
 horizontal_alignment = 1
-theme_override_font_sizes/font_size = 24
-theme_override_colors/font_color = Color(0.55, 0.05, 0.04, 1)
-text = "THE ROT TAKES YOU"
+theme_type_variation = &"DisplayLabel"
+text = "The rot takes you"
 
 [node name="Subtitle" type="Label" parent="DeathScreen/VBox"]
 layout_mode = 2
 horizontal_alignment = 1
-theme_override_colors/font_color = Color(0.5, 0.56, 0.4, 1)
+theme_type_variation = &"MutedLabel"
 text = "Valdron keeps what it kills."
 
 [node name="RetryButton" type="Button" parent="DeathScreen/VBox"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(120, 26)
+custom_minimum_size = Vector2(140, 36)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Rise Again"

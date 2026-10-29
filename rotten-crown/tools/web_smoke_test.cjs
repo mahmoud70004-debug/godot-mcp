@@ -9,6 +9,14 @@ const fs = require('fs');
 const url = process.argv[2] || 'http://localhost:8765/index.html';
 const out = process.argv[3] || 'build/smoke';
 const UI_H = 360; // project viewport height
+// The launch page (web/shell.html) covers the canvas until its "Wake up" button is tapped.
+const tapBegin = async (page) => {
+  await page.waitForSelector('#rc-wake:not([disabled])', { timeout: 120000 });
+  await page.tap('#rc-wake');
+  await page.waitForFunction(() => getComputedStyle(document.getElementById('status')).display === 'none', null, { timeout: 10000, polling: 250 });
+};
+// Title menu: "Wake Up" is the first text item at the left (src/ui/main_menu.tscn).
+const WAKE_UP = { x: 60, y: 230 };
 
 (async () => {
   fs.mkdirSync(out, { recursive: true });
@@ -26,7 +34,9 @@ const UI_H = 360; // project viewport height
   const cdp = await ctx.newCDPSession(page);
 
   await page.goto(url + (url.includes('?') ? '&' : '?') + 'debug=1');
-  await page.waitForFunction(() => document.querySelector('#status') && getComputedStyle(document.querySelector('#status')).display === 'none' || performance.now() > 60000, null, { timeout: 90000 }).catch(() => {});
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: `${out}/00_launch.png` });
+  await tapBegin(page);
   await page.waitForTimeout(4000);
   const box = await page.locator('canvas').boundingBox();
   const scale = box.height / UI_H;
@@ -36,7 +46,7 @@ const UI_H = 360; // project viewport height
   const shot = (name) => page.screenshot({ path: `${out}/${name}.png` });
 
   await shot('01_menu');
-  await page.touchscreen.tap(P(uiW / 2, UI_H - 138).x, P(uiW / 2, UI_H - 138).y); // "Wake Up"
+  await page.touchscreen.tap(P(WAKE_UP.x, WAKE_UP.y).x, P(WAKE_UP.x, WAKE_UP.y).y); // "Wake Up"
   await page.waitForTimeout(9000);
   await shot('02a_prologue');
   const skip = P(uiW - 39, 16);
@@ -76,7 +86,7 @@ const UI_H = 360; // project viewport height
   await page.waitForTimeout(400);
   await shot('06_attack');
   await page.waitForTimeout(800);
-  const bag = P(uiW - 74, 18);
+  const bag = P(uiW - 70, 24);
   await page.touchscreen.tap(bag.x, bag.y);
   await page.waitForTimeout(1200);
   await shot('07_bag');

@@ -6,9 +6,10 @@ extends Control
 @export var radius := 42.0
 @export var knob_radius := 17.0
 @export_range(0.0, 0.9) var dead_zone := 0.12
-@export var base_color := Color(0.62, 0.55, 0.38, 0.16)
-@export var ring_color := Color(0.62, 0.55, 0.38, 0.55)
-@export var knob_color := Color(0.75, 0.68, 0.48, 0.5)
+@export var base_color := Color(0.863, 0.835, 0.749, 0.12)
+## Kept for compatibility; the stick is drawn as flat discs without outlines.
+@export var ring_color := Color(0.863, 0.835, 0.749, 0.0)
+@export var knob_color := Color(0.863, 0.835, 0.749, 0.42)
 
 var output := Vector2.ZERO
 var _knob := Vector2.ZERO
@@ -67,7 +68,8 @@ func _set_axis(negative: StringName, positive: StringName, value: float) -> void
 
 func _draw() -> void:
 	var c := size * 0.5
-	draw_circle(c, radius, base_color)
-	draw_arc(c, radius, 0.0, TAU, 32, ring_color, 1.0)
-	draw_circle(c + _knob, knob_radius, knob_color.lightened(0.2) if _active else knob_color)
-	draw_arc(c + _knob, knob_radius, 0.0, TAU, 20, ring_color, 1.0)
+	draw_circle(c, radius, base_color, true, -1.0, false)
+	var knob := Color(knob_color, minf(knob_color.a + 0.2, 1.0)) if _active else knob_color
+	draw_circle((c + _knob).round(), knob_radius, knob, true, -1.0, false)
+	if ring_color.a > 0.0:
+		draw_arc(c, radius, 0.0, TAU, 32, ring_color, 1.0)

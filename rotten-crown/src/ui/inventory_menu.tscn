@@ -18,19 +18,17 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0, 0, 0, 0.65)
+color = Color(0.043, 0.055, 0.047, 0.8)
 
 [node name="Panel" type="Panel" parent="."]
 layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -290.0
-offset_top = -160.0
-offset_right = 290.0
-offset_bottom = 160.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 4.0
+offset_right = -8.0
+offset_bottom = -4.0
 grow_horizontal = 2
 grow_vertical = 2
 
@@ -41,14 +39,14 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 10
-theme_override_constants/margin_top = 8
-theme_override_constants/margin_right = 10
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 8
 
 [node name="VBox" type="VBoxContainer" parent="Panel/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 
 [node name="Header" type="HBoxContainer" parent="Panel/Margin/VBox"]
 layout_mode = 2
@@ -56,85 +54,83 @@ layout_mode = 2
 [node name="Title" type="Label" parent="Panel/Margin/VBox/Header"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_colors/font_color = Color(0.72, 0.6, 0.32, 1)
-theme_override_font_sizes/font_size = 14
-text = "BELONGINGS"
+theme_type_variation = &"DisplayLabel"
+text = "Belongings"
 
 [node name="CloseButton" type="Button" parent="Panel/Margin/VBox/Header"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(40, 20)
+custom_minimum_size = Vector2(80, 36)
 layout_mode = 2
+size_flags_vertical = 4
 text = "Close"
 
 [node name="Body" type="HBoxContainer" parent="Panel/Margin/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 20
 
 [node name="SlotGrid" type="GridContainer" parent="Panel/Margin/VBox/Body"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 0
-theme_override_constants/h_separation = 3
-theme_override_constants/v_separation = 3
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4
 columns = 6
 
 [node name="Details" type="VBoxContainer" parent="Panel/Margin/VBox/Body"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_constants/separation = 4
+theme_override_constants/separation = 2
 
-[node name="ItemName" type="Label" parent="Panel/Margin/VBox/Body/Details"]
+[node name="NameRow" type="HBoxContainer" parent="Panel/Margin/VBox/Body/Details"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="ItemName" type="Label" parent="Panel/Margin/VBox/Body/Details/NameRow"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.86, 0.78, 0.55, 1)
-theme_override_font_sizes/font_size = 13
 text = "-"
-autowrap_mode = 3
 
-[node name="ItemCategory" type="Label" parent="Panel/Margin/VBox/Body/Details"]
+[node name="ItemCategory" type="Label" parent="Panel/Margin/VBox/Body/Details/NameRow"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.45, 0.6, 0.3, 1)
-theme_override_font_sizes/font_size = 8
+theme_type_variation = &"MutedLabel"
 
 [node name="ItemDescription" type="Label" parent="Panel/Margin/VBox/Body/Details"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 70)
+custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
-size_flags_vertical = 3
 autowrap_mode = 3
 
 [node name="ItemStats" type="Label" parent="Panel/Margin/VBox/Body/Details"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.62, 0.56, 0.44, 1)
-theme_override_font_sizes/font_size = 9
+theme_type_variation = &"MutedLabel"
+autowrap_mode = 3
 
 [node name="Actions" type="HBoxContainer" parent="Panel/Margin/VBox/Body/Details"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 8
 
 [node name="UseButton" type="Button" parent="Panel/Margin/VBox/Body/Details/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(60, 22)
+custom_minimum_size = Vector2(76, 36)
 layout_mode = 2
 text = "Use"
 
 [node name="EquipButton" type="Button" parent="Panel/Margin/VBox/Body/Details/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(60, 22)
+custom_minimum_size = Vector2(76, 36)
 layout_mode = 2
 text = "Equip"
 
 [node name="ReadButton" type="Button" parent="Panel/Margin/VBox/Body/Details/Actions"]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(60, 22)
+custom_minimum_size = Vector2(76, 36)
 layout_mode = 2
 text = "Read"
 
 [node name="StatusLabel" type="Label" parent="Panel/Margin/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.5, 0.46, 0.38, 1)
-theme_override_font_sizes/font_size = 8
+theme_type_variation = &"MutedLabel"

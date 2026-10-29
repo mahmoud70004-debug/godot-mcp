@@ -8,8 +8,9 @@ extends Control
 @export var label := "ATK"
 @export var radius := 24.0
 @export var color := Color(0.55, 0.12, 0.08, 0.45)
-@export var label_color := Color(0.92, 0.85, 0.7, 0.9)
-@export var font_size := 8
+@export var label_color := Color(0.863, 0.835, 0.749, 0.95)
+## 19 px is the text face's native pixel size (one font pixel per screen pixel).
+@export var font_size := 19
 
 var pressed := false
 
@@ -44,10 +45,11 @@ func _send(is_pressed: bool) -> void:
 
 func _draw() -> void:
 	var c := size * 0.5
-	var fill := color.lightened(0.3) if pressed else color
-	draw_circle(c, radius, fill)
-	draw_arc(c, radius, 0.0, TAU, 28, Color(color.r, color.g, color.b, 0.9).lightened(0.4), 1.0)
+	# Flat disc, one tone step lighter while held; no outline.
+	var fill := Color(color.lightened(0.25), minf(color.a + 0.25, 1.0)) if pressed else color
+	draw_circle(c, radius, fill, true, -1.0, false)
 	var font := get_theme_default_font()
 	if font and label != "":
-		var text_size := font.get_string_size(label, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
-		draw_string(font, c + Vector2(-text_size.x * 0.5, text_size.y * 0.3), label, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size, label_color)
+		var text_w := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		var baseline := floorf(c.y - font.get_height(font_size) * 0.5 + font.get_ascent(font_size))
+		draw_string(font, Vector2(floorf(c.x - text_w * 0.5), baseline), label, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, label_color)

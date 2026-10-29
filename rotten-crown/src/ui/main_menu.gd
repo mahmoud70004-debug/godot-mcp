@@ -1,16 +1,13 @@
 extends Control
-## Title screen.
+## Title screen: the sleeping knight in the Moonlit Meadows (TitleBackdrop), the title,
+## and the three text-style menu items. "Wake Up" always comes first.
 
 const PROLOGUE := "res://src/cutscenes/prologue.tscn"
 
-@onready var title: Label = %Title
-@onready var new_game_button: Button = %NewGameButton
-@onready var continue_button: Button = %ContinueButton
-@onready var quit_button: Button = %QuitButton
-@onready var touch_toggle: CheckButton = %TouchToggle
-
-var _t := 0.0
-var _title_x := 0.0
+@onready var new_game_button: MenuItemButton = %NewGameButton
+@onready var continue_button: MenuItemButton = %ContinueButton
+@onready var quit_button: MenuItemButton = %QuitButton
+@onready var touch_toggle: MenuItemButton = %TouchToggle
 
 
 func _ready() -> void:
@@ -20,21 +17,14 @@ func _ready() -> void:
 	continue_button.pressed.connect(_on_continue)
 	quit_button.pressed.connect(func() -> void: get_tree().quit())
 	continue_button.disabled = not SaveManager.has_save()
+	continue_button.focus_mode = Control.FOCUS_NONE if continue_button.disabled else Control.FOCUS_ALL
 	quit_button.visible = not OS.has_feature("web")
 	# Desktop testing aid: preview the mobile layout with a mouse.
 	touch_toggle.visible = not OS.has_feature("mobile")
-	touch_toggle.button_pressed = Settings.force_touch_controls
+	touch_toggle.set_pressed_no_signal(Settings.force_touch_controls)
+	touch_toggle.hint = "on" if Settings.force_touch_controls else "off"
 	touch_toggle.toggled.connect(_on_touch_toggled)
 	new_game_button.grab_focus()
-	_title_x = title.position.x
-
-
-func _process(delta: float) -> void:
-	_t += delta
-	# The title breathes, and every few seconds it flinches.
-	var flinch := 1.0 if fmod(_t, 7.3) < 0.08 else 0.0
-	title.modulate = Color(1, 1, 1, 0.82 + sin(_t * 1.3) * 0.12 - flinch * 0.5)
-	title.position.x = _title_x + (randf_range(-2.0, 2.0) if flinch > 0.0 else 0.0)
 
 
 func _on_new_game() -> void:
@@ -47,5 +37,6 @@ func _on_continue() -> void:
 
 
 func _on_touch_toggled(pressed: bool) -> void:
+	touch_toggle.hint = "on" if pressed else "off"
 	Settings.force_touch_controls = pressed
 	Settings.save_settings()

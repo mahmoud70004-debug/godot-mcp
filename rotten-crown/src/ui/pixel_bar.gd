@@ -4,10 +4,11 @@ extends Control
 ## Crisp pixel stat bar with a lagging "ghost" segment that shows
 ## recent damage, souls-style.
 
-@export var fill_color := Color(0.55, 0.06, 0.05)
-@export var ghost_color := Color(0.85, 0.75, 0.55)
-@export var back_color := Color(0.03, 0.025, 0.02, 0.85)
-@export var border_color := Color(0.32, 0.26, 0.15)
+@export var fill_color := Color(0.62, 0.141, 0.098)
+@export var ghost_color := Color(0.863, 0.835, 0.749)
+@export var back_color := Color(0.043, 0.055, 0.047, 0.85)
+## Optional 1px frame; transparent by default (the plate alone separates the bar from the world).
+@export var border_color := Color(0, 0, 0, 0)
 @export var ghost_delay := 0.5
 @export var ghost_speed := 0.6
 
@@ -44,4 +45,5 @@ func _draw() -> void:
 	draw_rect(Rect2(inner.position, Vector2(floorf(inner.size.x * _ghost), inner.size.y)), ghost_color)
 	draw_rect(Rect2(inner.position, Vector2(floorf(inner.size.x * ratio), inner.size.y)), fill_color)
 	draw_rect(Rect2(inner.position, Vector2(floorf(inner.size.x * ratio), 1.0)), fill_color.lightened(0.25))
-	draw_rect(r, border_color, false, 1.0)
+	if border_color.a > 0.0:
+		draw_rect(r, border_color, false, 1.0)

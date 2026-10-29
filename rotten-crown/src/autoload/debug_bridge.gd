@@ -25,8 +25,8 @@ func _ready() -> void:
 	layer.layer = 99
 	add_child(layer)
 	_label = Label.new()
-	_label.position = Vector2(4, 30)
-	_label.add_theme_font_size_override("font_size", 8)
+	_label.position = Vector2(16, 32)
+	_label.add_theme_font_size_override("font_size", 19)
 	_label.add_theme_color_override("font_color", Color(0.6, 1.0, 0.5))
 	_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(_label)

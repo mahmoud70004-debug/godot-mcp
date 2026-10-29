@@ -24,6 +24,7 @@ extends CanvasLayer
 var _open_menu: Control
 var _message_tween: Tween
 var _region_tween: Tween
+var _region_name := ""
 
 
 func _ready() -> void:
@@ -83,12 +84,17 @@ func open_menu(menu: Control) -> void:
 	if _open_menu:
 		_open_menu.hide()
 	_open_menu = menu
+	_hide_region_card()
 	if menu == inventory_menu:
 		inventory_menu.open()
 	else:
 		if menu == pause_menu:
 			%QualityOption.select(Settings.quality)
+			%PauseRegion.text = _region_name
+			%SaveButton.hint = "save"
 		menu.show()
+		if menu == pause_menu:
+			%ResumeButton.grab_focus()
 	_set_gameplay_paused(true)
 
 
@@ -98,6 +104,14 @@ func close_menu() -> void:
 	lore_reader.hide()
 	_open_menu = null
 	_set_gameplay_paused(false)
+
+
+## A region title card must not show through an open menu.
+func _hide_region_card() -> void:
+	if _region_tween and _region_tween.is_valid():
+		_region_tween.kill()
+	region_title.modulate.a = 0.0
+	region_subtitle.modulate.a = 0.0
 
 
 func _on_quality_selected(index: int) -> void:
@@ -161,7 +175,9 @@ func _on_item_picked_up(item: ItemData, quantity: int) -> void:
 
 
 func _show_region(region: RegionData) -> void:
-	region_title.text = region.display_name.to_upper()
+	# Title case: blackletter capitals in a row cannot be read.
+	region_title.text = region.display_name
+	_region_name = region.display_name
 	region_subtitle.text = region.subtitle
 	if _region_tween and _region_tween.is_valid():
 		_region_tween.kill()
@@ -215,6 +231,7 @@ func _on_player_died() -> void:
 		_open_menu.hide()
 		_open_menu = null
 	touch_controls.set_enabled(false)
+	_hide_region_card()
 	crosshair.hide()
 	prompt_label.text = ""
 	death_screen.modulate.a = 0.0
@@ -227,6 +244,8 @@ func _on_player_died() -> void:
 func _on_save_pressed() -> void:
 	var player := get_parent() as Node3D
 	if player and SaveManager.save_game(player.global_position):
+		# The quiet stamp sits on the item itself; the menu dims the message line.
+		%SaveButton.hint = "written in blood"
 		_show_message("Your memories are written in blood.", 2.0)
 
 

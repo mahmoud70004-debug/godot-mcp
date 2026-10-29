@@ -9,6 +9,8 @@ GODOT="${GODOT:-godot}"
 MODE="${1:-release}"
 mkdir -p build/web
 rm -f build/web/*
+# The launch page (custom HTML shell) inlines its fonts and stills; rebuild it first.
+python3 tools/build_web_shell.py
 "$GODOT" --headless --path . --import >/dev/null 2>&1 || true
 "$GODOT" --headless --path . "--export-${MODE}" "Web" build/web/index.html
 # Cache-busting stamp so phones never run a stale build.

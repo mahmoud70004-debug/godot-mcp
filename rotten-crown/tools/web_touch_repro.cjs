@@ -6,12 +6,21 @@
 //   node tools/web_touch_repro.cjs http://localhost:8766/index.html
 const { chromium } = require('playwright');
 const base = process.argv[2] || 'http://localhost:8766/index.html';
+// The launch page (web/shell.html) covers the canvas until its "Wake up" button is tapped.
+const tapBegin = async (page) => {
+  await page.waitForSelector('#rc-wake:not([disabled])', { timeout: 120000 });
+  await page.tap('#rc-wake');
+  await page.waitForFunction(() => getComputedStyle(document.getElementById('status')).display === 'none', null, { timeout: 10000, polling: 250 });
+};
+// Title menu: "Wake Up" is the first text item at the left (src/ui/main_menu.tscn).
+const WAKE_UP = { x: 60, y: 230 };
 (async () => {
   const browser = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
   const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
   const cdp = await ctx.newCDPSession(page);
   await page.goto(base + (base.includes('?') ? '&' : '?') + 'debug=1');
+  await tapBegin(page);
   await page.waitForFunction(() => window.rcState, null, { timeout: 90000 });
   await page.waitForTimeout(5000); // let the menu settle before tapping
   const box = await page.locator('canvas').boundingBox();
@@ -27,7 +36,7 @@ const base = process.argv[2] || 'http://localhost:8766/index.html';
     }
     throw new Error('timed out waiting for game state');
   };
-  const wake = P(uiW / 2, 222);
+  const wake = P(WAKE_UP.x, WAKE_UP.y);
   await page.touchscreen.tap(wake.x, wake.y);          // Wake Up -> prologue
   await until((st) => st.scene === 'Prologue');
   await page.waitForTimeout(1500);
