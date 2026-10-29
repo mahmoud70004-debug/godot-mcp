@@ -43,3 +43,12 @@
 | U5 | H | rendering | tools/blender/characters/{villager,creature}.py | 3 villager types + variants; hollow, mourner |
 | R1 | H | done | retro_materials.gd, terrain shader/builder, asset_kit.gd | scanned textures on all procedural world surfaces |
 | U7/U8/U9 | H (router-hard x3) | running | regions | parallel worktrees |
+| U4/U5 | H | done | assets/sprites/{knight,villager_man,villager_woman,villager_musician,hollow,mourner} | all Blender renders pixelized to v2 sheets; old villager_0..7 removed; prologue on new sheets |
+| U6b | N (router-normal) | done | tools/assets/{fetch_opengameart,process_blend,build_oga}.py, 16 oga_* models | CC0 OpenGameArt houses + village props (no account needed) |
+| U7 | H (router-hard) | done | thornfield_builder.gd, thornfield_props.gd, thornfield_field_props.gd, thornfield_wheat.gdshader | verified side-by-side with ref 1; +87k tris |
+| U8 | H (router-hard) | done | hollowmere_builder.gd, hollowmere_{props,batch,village}.gd, hollowmere_flesh.gdshader | verified renders; tris ~flat, draw calls -27..51% |
+| bake fix | H | done | tools/bake_world.sh | headless bakes saved grass MultiMesh with zero transforms -> bake under xvfb/opengl3 |
+| size | H | done | export_presets.cfg | assets/models excluded from export (bake-only): pck 26.5 -> 18.8 MB |
+| tint | H | done | pixel_sprite_3d.gd, enemy_data.gd, sprite_creature_visual.gd | creature sprite tint |
+| perf check | H | measured | - | Medium, real grass: spawn 7.75, Hollowmere 6.75, prologue 5.75 fps, load 4.9 s (Phase 3: 8 / 6.25 / 5.25 / 5.2) |
+| U9 / U14 | H (router-hard) | running | wood / UI | resumed after rate limit |
