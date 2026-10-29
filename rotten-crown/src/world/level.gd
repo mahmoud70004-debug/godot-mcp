@@ -86,9 +86,10 @@ func _apply_dev_shot() -> void:
 
 
 ## Zones can overlap; the most recently entered one wins, and leaving all of
-## them falls back to the level's own region.
+## them falls back to the level's own region. A region may have several
+## overlapping triggers (a long forest path): one entry per trigger, so leaving
+## one of them keeps the region while another still holds the player.
 func _on_zone_entered(zone: RegionData) -> void:
-	_zones.erase(zone)
 	_zones.append(zone)
 	_blend_to(zone)
 

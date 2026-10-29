@@ -21,9 +21,12 @@ func _ready() -> void:
 func _on_body_entered(body: Node3D) -> void:
 	if region == null or not body.is_in_group("player"):
 		return
+	# Already inside this region through an overlapping trigger: no second title card.
+	var already_here := GameState.current_region_id == region.id
 	GameState.current_region_id = region.id
 	Events.region_zone_entered.emit(region)
-	if once and _triggered:
+	if (once and _triggered) or already_here:
+		_triggered = true
 		return
 	_triggered = true
 	Events.region_entered.emit(region)
