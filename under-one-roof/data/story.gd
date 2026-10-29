@@ -92,16 +92,16 @@ const SHOP := [
 # ------------------------------------------------------------------ characters & placement
 # spots: [[condition, spot or null], ...] - first matching rule wins.
 const NPCS := {
-	"margaret": {"spots": [[["final_scene"], "margaret_home"], [["ending"], "margaret_shop"], [[], "margaret_home"]]},
+	"margaret": {"action": [19], "spots": [[["final_scene"], "margaret_home"], [["ending"], "margaret_shop"], [[], "margaret_home"]]},
 	"clara": {"wander": 10.0, "spots": [[["final_scene"], "clara_home"], [["ending"], "clara_paint"], [["ch2"], "clara_square"], [[], "clara_home"]]},
 	"elias": {"spots": [[["elias_fled"], null], [["ch8"], "elias_farm"], [["ch6", "!refused_elias"], "elias_study"], [["ch3"], "elias_estate"], [["ch2"], "elias_square"], [[], null]]},
 	"edmund": {"spots": [[["final_scene"], "edmund_home"], [["ending"], "home_yard"], [["ch8", "!elias_fled"], null], [["ch5"], "edmund_barn"], [[], null]]},
-	"bjorn": {"spots": [[[], "bjorn_dock"]]},
+	"bjorn": {"action": [19], "spots": [[[], "bjorn_dock"]]},
 	"sigrid": {"spots": [[[], "sigrid_inn"]]},
-	"leif": {"wander": 6.0, "spots": [[[], "leif_smithy"]]},
-	"astrid": {"wander": 12.0, "spots": [[[], "astrid_cottage"]]},
+	"leif": {"action": [16, 17], "spots": [[[], "leif_smithy"]]},
+	"astrid": {"wander": 12.0, "action": [18], "spots": [[[], "astrid_cottage"]]},
 	"einar": {"spots": [[[], "einar_church"]]},
-	"runa": {"wander": 8.0, "spots": [[[], "runa_house"]]},
+	"runa": {"action": [19], "spots": [[[], "runa_house"]]},
 	"henrik": {"spots": [[[], "henrik_cart"]]},
 	"jonas": {"wander": 10.0, "spots": [[["ch8", "!elias_fled"], "jonas_farm"], [["ch2"], "jonas_square"], [[], "jonas_harbor"]]},
 	"halldor": {"spots": [[[], "halldor_estate"]]},
@@ -205,7 +205,7 @@ const LABELS := {
 	"gideon_bed": "نَم", "harbor_crates": "احمل صندوقًا", "warehouse_drop": "سلّم الصندوق", "henrik_cart": "تسوّق",
 	"elias_coat": "افحص المعطف", "bjorn_boat": "جهّز القارب", "anvil": "ساعد لايف", "estate_garden": "اعمل في الحديقة",
 	"study_cabinet": "افحص الخزانة", "study_desk": "رتّب المكتب", "floorboard": "افحص اللوح", "bridge_gate": "افحص البوابة",
-	"barn_window": "انظر من النافذة", "sheep": "أطعم الأغنام", "wreck": "ابحث في الحطام", "iron_chest": "احمل الصندوق",
+	"barn_window": "انظر من النافذة", "mine": "افحص المنجم", "sheep": "أطعم الأغنام", "wreck": "ابحث في الحطام", "iron_chest": "احمل الصندوق",
 }
 
 # ------------------------------------------------------------------ events
@@ -494,6 +494,8 @@ const EVENTS := {
 			"do": [["take", "church_letter"], ["give", "journal_3"], ["count", "docs"], ["set", "q_priest_done"], ["rep", 1], ["clue", "صفحة من مذكرات إدموند: إلياس وجد أباه حيًّا."]]},
 		{"lines": [["olafur", "هذا الطريق يقود إلى بودير، القرية المجاورة. يومان من المشي، إن كان الطقس رحيمًا."]]},
 	],
+	"mine": [{"if": ["ch4"], "lines": [["gideon", "المنجم القديم... أغلقوه بعد انهيار قبل ثلاثين عامًا. يقولون إن جدّي عمل فيه."]]},
+		{"lines": [["gideon", "مدخل المنجم القديم، مسدود بالألواح. الريح تصفر في الداخل."]]}],
 	"sign_west": [{"lines": [["", "«إلى بودير — مسيرة يومين». الطريق يختفي بين التلال."]]}],
 
 	"monument": [

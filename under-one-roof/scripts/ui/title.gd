@@ -80,7 +80,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_t += delta
-	camera.position = Vector2(700 + sin(_t * 0.05) * 420, 470 + sin(_t * 0.08) * 90)
+	camera.position = Vector2(1000 + sin(_t * 0.05) * 520, 700 + sin(_t * 0.08) * 220)
 
 
 func _new_game() -> void:

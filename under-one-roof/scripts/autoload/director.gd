@@ -127,7 +127,9 @@ func _play_entry(e: Dictionary, ctx: String, npc) -> void:
 		await _say_line(line, ctx)
 	if e.has("mg"):
 		dialogue().close()
+		player().play_action([16, 17])
 		var ok: bool = await main.panels.minigame(e["mg"])
+		player().stop_action()
 		await do_actions(e.get("win" if ok else "lose", []), ctx)
 	await do_actions(e.get("do", []), ctx)
 	if e.has("choice"):
@@ -263,6 +265,9 @@ func do_actions(actions: Array, ctx := "") -> void:
 func _work(mins: int, text: String) -> void:
 	if text != "":
 		Game.toast.emit(text)
+	player().play_action([18, 17] if "أعشاب" in text or "الأغنام" in text else [16, 17])
+	await get_tree().create_timer(0.01 if Game.fast else 1.2).timeout
+	player().stop_action()
 	await main.fader.fade_out(0.35)
 	Audio.sfx("chop" if "حطب" in text else "select")
 	await get_tree().create_timer(0.01 if Game.fast else 0.5).timeout

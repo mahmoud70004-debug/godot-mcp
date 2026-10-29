@@ -10,6 +10,7 @@ Each sprite registers metadata used by the game (data/sprites.json):
 """
 import math
 import zlib
+import gen_buildings
 from PIL import Image
 from pixel import Spr, c, shade, mix, sheet, OUTLINE
 
@@ -17,7 +18,7 @@ META = {}
 OUT = "."
 
 
-def reg(name, spr, base=None, oy=None, door=None, frames=None, fps=0, flat=False):
+def reg(name, spr, base=None, oy=None, door=None, frames=None, fps=0, flat=False, extra=None):
     if frames:
         im = sheet(frames, len(frames))
         w, h = frames[0].w, frames[0].h
@@ -35,6 +36,8 @@ def reg(name, spr, base=None, oy=None, door=None, frames=None, fps=0, flat=False
         m["fps"] = fps
     if flat:
         m["flat"] = True
+    if extra:
+        m.update(extra)
     META[name] = m
 
 
@@ -420,7 +423,7 @@ def boat(name, sail):
         s.hl(4, 8, 24, c("e8e0d0"))
         s.r(14, 4, 4, 2, WOOD_L)
         s.outline()
-        reg(name, s, oy=14)
+        reg(name, s, oy=14, extra={"reflect": True})
         return
     s = Spr(56, 64, seed=29)
     hull = c("e8e0d0")
@@ -434,7 +437,7 @@ def boat(name, sail):
     s.line(28, 2, 53, 44, c("6a6a6a"))
     s.r(14, 40, 10, 4, WOOD)
     s.outline()
-    reg(name, s, oy=62)
+    reg(name, s, oy=62, extra={"reflect": True})
 
 
 def wreck():
@@ -453,21 +456,24 @@ def wreck():
 # ---- nature ---------------------------------------------------------------
 def pine(name, w, h, dark):
     s = Spr(w, h, seed=zlib.crc32(name.encode()) & 0xfff)
-    g1 = c("2f6a4a") if dark else c("3d8050")
-    g2 = shade(g1, 0.78)
-    g3 = shade(g1, 1.2)
-    s.r(w // 2 - 2, h - 9, 4, 7, c("6a4428"))
-    layers = 4 if h > 30 else 3
+    g1 = c("2c6448") if dark else c("3a7c4e")
+    g2 = shade(g1, 0.72)
+    g3 = shade(g1, 1.25)
+    s.r(w // 2 - 2, h - 10, 5, 8, c("6a4428"))
+    s.vl(w // 2 + 2, h - 10, 8, c("4a2e1c"))
+    layers = 5 if h > 40 else 3
     for i in range(layers):
-        top = int(i * (h - 10) / (layers + 0.6))
-        bottom = top + int((h - 8) / layers) + 6
-        half = int((i + 1.4) * (w / 2) / (layers + 0.4))
+        top = int(i * (h - 12) / (layers + 0.8))
+        bottom = top + int((h - 10) / layers) + 7
+        half = int((i + 1.6) * (w / 2) / (layers + 0.6))
         s.poly([(w // 2 - half, bottom), (w // 2, top), (w // 2 + half - 1, bottom)], g1)
-        s.poly([(w // 2, top + 2), (w // 2 + half - 1, bottom), (w // 2, bottom)], g2)
-        s.line(w // 2 - half + 2, bottom - 1, w // 2 - 1, top + 3, g3)
+        s.poly([(w // 2 + 1, top + 2), (w // 2 + half - 1, bottom), (w // 2 + 1, bottom)], g2)
+        for k in range(0, half * 2, 3):
+            s.p(w // 2 - half + k, bottom, g2)
+        s.line(w // 2 - half + 2, bottom - 2, w // 2 - 1, top + 3, g3)
     s.outline()
-    s.shadow(w // 2 - 7, h - 5, 14, 5)
-    reg(name, s, base=[w // 2 - 3, h - 6, 6, 4], oy=h - 2)
+    s.shadow(w // 2 - 9, h - 6, 18, 6)
+    reg(name, s, base=[w // 2 - 3, h - 7, 7, 5], oy=h - 2)
 
 
 def oak():
@@ -510,34 +516,55 @@ def rock(name, w, h, snow=False):
 
 
 def mountain(name, w, h, seed):
+    """Snow-capped range with light from the left and a blue haze at the foot."""
     s = Spr(w, h, seed=seed)
     rng = s.rng
-    peaks = [(int(w * f), int(h * g)) for f, g in ((0.2, 0.35), (0.5, 0.0), (0.8, 0.25))]
-    peaks = [(x + rng.randrange(-6, 6), y) for x, y in peaks]
-    pts = [(0, h)] + peaks + [(w - 1, h)]
-    s.poly(pts, c("6a7896"))
+    peaks = []
+    x = rng.randrange(10, 40)
+    while x < w - 20:
+        peaks.append((x, rng.randrange(int(h * 0.02), int(h * 0.35))))
+        x += rng.randrange(int(w * 0.18), int(w * 0.3))
     for (px, py) in peaks:
-        s.poly([(px, py), (px + w // 4, h), (px, h)], c("56627e"))
-        snow = h // 3
-        s.poly([(px - snow // 2, py + snow), (px, py), (px + snow // 2, py + snow)], c("f2f6fa"))
-        for k in range(0, snow // 2, 3):
-            s.p(px - snow // 2 + k * 2, py + snow + 1, c("f2f6fa"))
-    s.r(0, h - 8, w, 8, c("4a6a5a"))
+        half = int((h - py) * 1.15)
+        base_l, base_r = px - half, px + half
+        s.poly([(base_l, h), (px, py), (base_r, h)], c("7484a2"))
+        s.poly([(px, py), (base_r, h), (px + half // 4, h)], c("56627e"))       # shadow side
+        for k in range(4):                                                      # ridges
+            rx = px + rng.randrange(-half // 2, half // 2)
+            s.line(px, py, rx, h, c("66738f"))
+        sn = (h - py) // 3 + 4
+        pts = [(px - sn // 1.3, py + sn)]
+        for k in range(6):
+            t = k / 5
+            pts.append((px - sn / 1.3 + t * sn * 1.55, py + sn - (rng.randrange(0, 5) if k % 2 else 0) - 2))
+        pts += [(px + sn / 1.2, py + sn), (px, py)]
+        s.poly([(int(a), int(b)) for a, b in pts], c("f4f7fb"))
+        s.poly([(px, py), (int(px + sn / 1.2), py + sn), (px + 2, py + sn - 3)], c("c8d4e6"))
+    for y in range(h - 26, h):
+        t = (y - (h - 26)) / 26
+        for x in range(w):
+            if s.get(x, y)[3]:
+                s.p(x, y, mix(s.get(x, y), c("8fb0c8"), t * 0.6))
+    s.r(0, h - 6, w, 6, c("5a7a64"))
     reg(name, s, oy=h)
 
 
 def waterfall():
     frames = []
     for f in range(3):
-        s = Spr(28, 64, seed=41)
-        s.r(4, 0, 20, 58, c("7ac8e8"))
-        for xx in range(4, 24, 3):
-            for yy in range((f * 5 + xx * 7) % 12, 58, 12):
-                s.r(xx, yy, 1, 5, c("e8f8ff"))
-        s.ell(0, 52, 28, 12, c("f0faff"))
-        s.ell(4, 54, 20, 8, c("c8eefa"))
+        s = Spr(36, 76, seed=41)
+        s.r(5, 0, 26, 66, c("6cc0e6"))
+        s.r(5, 0, 4, 66, c("4aa0d0"))
+        s.r(27, 0, 4, 66, c("4aa0d0"))
+        for xx in range(6, 30, 3):
+            for yy in range((f * 6 + xx * 7) % 14, 66, 14):
+                s.r(xx, yy, 1, 6, c("e8f8ff"))
+        s.ell(0, 60, 36, 16, c("f0faff"))
+        s.ell(5, 62, 26, 10, c("c8eefa"))
+        for k in range(5):
+            s.p(3 + ((k * 7 + f * 5) % 30), 58 + (k * 3 + f) % 6, c("ffffff"))
         frames.append(s)
-    reg("waterfall", None, frames=frames, fps=8, oy=64)
+    reg("waterfall", None, frames=frames, fps=8, oy=76)
 
 
 def flowers(name, cols):
@@ -931,28 +958,16 @@ def icons():
 def build(out_dir):
     global OUT
     OUT = out_dir
-    for name, col, flowers_ in (("house_red", "red", [c("f0f0f0"), c("f0c040")]),
-                                ("house_blue", "blue", [c("e05050"), c("f0f0f0")]),
-                                ("house_yellow", "yellow", [c("e05080"), c("8040c0")]),
-                                ("house_green", "green", [c("f0d040"), c("f0f0f0")]),
-                                ("house_white", "white", [c("e05050"), c("4080e0")])):
-        house(name, 64, 62, WALLS[col], flowers=flowers_)
-    house("house_red_small", 52, 54, WALLS["red"], windows=1, roof=(c("4a5a4a"), c("3a4a3a"), c("5a6a5a")))
-    house("house_gideon", 50, 54, c("7a6a5a"), windows=2, shabby=True, chimney=True, door_col=c("5a4a3a"))
-    house("house_gideon_fixed", 50, 54, c("7a8aa0"), windows=2, chimney=True, flowers=[c("e05050"), c("f0d040")])
-    house("farmhouse", 64, 60, c("8a8a80"), windows=2, shabby=True, broken=True)
-    house("turf_house", 56, 52, c("6a4a32"), windows=1, turf=True)
-    house("turf_house_b", 60, 54, c("8a3a30"), windows=2, turf=True)
-    church(); manor(); inn(); warehouse(); smithy(); barn()
     market_stall("stall_red", c("c0403a")); market_stall("stall_blue", c("3a6ac0")); market_stall("stall_green", c("3a9a5a"))
     cart(); carriage(); boat("rowboat", False); boat("sailboat", True); wreck()
-    pine("pine", 26, 44, False); pine("pine_dark", 26, 44, True); pine("pine_small", 18, 30, False)
+    pine("pine", 32, 56, False); pine("pine_dark", 32, 56, True); pine("pine_small", 22, 36, False)
     oak()
     bush("bush", c("5a9a48")); bush("bush_berry", c("4e8a40"), c("d04050"))
     rock("rock", 16, 13); rock("rock_big", 28, 20); rock("rock_snow", 26, 18, snow=True)
-    mountain("mountain_a", 200, 84, 1); mountain("mountain_b", 168, 72, 2)
+    mountain("mountain_a", 320, 128, 1); mountain("mountain_b", 280, 112, 2)
     waterfall()
     flowers("flowers_a", [c("f0e060"), c("ffffff")]); flowers("flowers_b", [c("e06080"), c("c080f0")])
     simple_props(); interior_props(); char_shadow()
+    gen_buildings.build(reg)
     icon_index = icons()
     return META, icon_index

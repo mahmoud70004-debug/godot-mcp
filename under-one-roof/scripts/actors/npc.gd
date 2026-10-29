@@ -7,6 +7,7 @@ const DIRS := {"down": 0, "left": 1, "right": 2, "up": 3}
 var npc_id := ""
 var sheet := ""
 var wander_radius := 0.0
+var idle_action: Array = []     # action-row frames played while standing still (work)
 var current_spot := ""
 var scripted := false
 var facing := "down"
@@ -27,14 +28,14 @@ func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.texture = load("res://assets/chars/%s.png" % sheet)
 	_sprite.hframes = 4
-	_sprite.vframes = 4
+	_sprite.vframes = 5
 	_sprite.centered = false
-	_sprite.position = Vector2(-8, -26)
+	_sprite.position = Vector2(-10, -30)
 	add_child(_sprite)
 	var shadow := Sprite2D.new()
 	shadow.texture = load("res://assets/sprites/char_shadow.png")
 	shadow.centered = false
-	shadow.position = Vector2(-7, -3)
+	shadow.position = Vector2(-8, -3)
 	shadow.show_behind_parent = true
 	add_child(shadow)
 	move_child(shadow, 0)
@@ -54,9 +55,9 @@ func _ready() -> void:
 	_area.set_meta("npc", self)
 	var acs := CollisionShape2D.new()
 	var rect := RectangleShape2D.new()
-	rect.size = Vector2(18, 26)
+	rect.size = Vector2(20, 30)
 	acs.shape = rect
-	acs.position = Vector2(0, -10)
+	acs.position = Vector2(0, -12)
 	_area.add_child(acs)
 	add_child(_area)
 	visible = false
@@ -124,7 +125,18 @@ func _physics_process(delta: float) -> void:
 		_anim_t += delta * 8.0
 		_update_frame(int(_anim_t) % 4)
 		return
-	if scripted or wander_radius <= 0.0 or Game.input_locked:
+	if scripted or Game.input_locked:
+		return
+	if not idle_action.is_empty() and current_spot != "":
+		# working at their post: alternate between the work pose and looking around
+		_anim_t += delta * 2.5
+		var cycle := int(_anim_t) % (idle_action.size() * 3 + 2)
+		if cycle < idle_action.size() * 3:
+			_sprite.frame = idle_action[cycle % idle_action.size()]
+		else:
+			_update_frame(0)
+		return
+	if wander_radius <= 0.0:
 		return
 	# gentle wandering around the home spot
 	if position.distance_to(_wander_target) < 2.0:

@@ -37,7 +37,7 @@ func _ready() -> void:
 	_expect(p.global_position.y > house_door.y - 20, "the inn wall blocks Gideon (y=%.1f door=%.1f)" % [p.global_position.y, house_door.y])
 
 	# 3. water blocks movement
-	p.global_position = Vector2(20 * 16, 54 * 16)
+	p.global_position = Vector2(24 * 16, 74 * 16)
 	await _wait(0.2)
 	await _hold("move_down", 2.0)
 	var tile := Vector2i(p.global_position / 16.0)

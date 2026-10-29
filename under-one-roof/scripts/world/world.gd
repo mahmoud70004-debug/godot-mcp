@@ -25,6 +25,7 @@ var npc_override := {}         # id -> spot name forced by a cutscene ("" hides)
 
 var entities: Node2D
 var decals: Node2D
+var reflections: Node2D
 var _conditional: Array = []   # [{cond, nodes:[...], shapes:[...]}]
 var _animated: Array = []      # [Sprite2D, fps, frames]
 var _glows: Array = []
@@ -45,7 +46,14 @@ func _ready() -> void:
 	ground.texture = load("res://assets/world/ground.png")
 	ground.centered = false
 	ground.z_index = -10
+	var water := ShaderMaterial.new()
+	water.shader = load("res://assets/shaders/water.gdshader")
+	water.set_shader_parameter("water_mask", load("res://assets/world/water_mask.png"))
+	ground.material = water
 	add_child(ground)
+	reflections = Node2D.new()
+	reflections.z_index = -7
+	add_child(reflections)
 
 	decals = Node2D.new()
 	decals.z_index = -5
@@ -59,6 +67,7 @@ func _ready() -> void:
 	for o in data["objects"]:
 		_build_object(o)
 	_spawn_npcs()
+	_spawn_gulls()
 	Game.flags_changed.connect(refresh)
 	Game.time_changed.connect(_update_glows)
 	refresh()
@@ -162,6 +171,8 @@ func _build_object(o: Dictionary) -> void:
 			spr.hframes = int(m["frames"])
 			_animated.append([spr, float(m["fps"]), int(m["frames"]), randf() * 3.0])
 		root.add_child(spr)
+		if o.get("reflect", false):
+			_add_reflection(o, m, spr)
 		if m.get("flat", false):
 			decals.add_child(root)
 		else:
@@ -192,6 +203,45 @@ func _build_object(o: Dictionary) -> void:
 			_wander(root, spr, float(o["wander"]))
 	if entry["cond"] != null:
 		_conditional.append(entry)
+
+
+## Upside-down, tinted copy of boats and rocks standing in the water.
+func _add_reflection(o: Dictionary, m: Dictionary, spr: Sprite2D) -> void:
+	var r := Sprite2D.new()
+	r.texture = spr.texture
+	r.hframes = spr.hframes
+	r.centered = false
+	r.flip_v = true
+	r.scale = Vector2(1, 0.8)
+	var h := int(m["h"])
+	var waterline := float(o["y"]) + float(m["oy"]) - 2.0
+	r.position = Vector2(o["x"], waterline - (h - 1 - int(m["oy"])) * 0.8)
+	r.modulate = Color(0.55, 0.75, 0.95, 0.32)
+	reflections.add_child(r)
+	var tw := create_tween().set_loops()
+	tw.tween_property(r, "skew", 0.05, 1.6).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(r, "skew", -0.05, 1.6).set_trans(Tween.TRANS_SINE)
+
+
+func _spawn_gulls() -> void:
+	var o: Array = data.get("outdoor", [0, 0, 2400, 1472])
+	for i in 5:
+		var gull := Sprite2D.new()
+		gull.texture = _tex("res://assets/sprites/gull.png")
+		gull.hframes = 2
+		gull.centered = true
+		gull.z_index = 20
+		add_child(gull)
+		_animated.append([gull, 4.0 + i * 0.3, 2, randf()])
+		var y := randf_range(62.0, 84.0) * TS
+		gull.position = Vector2(randf_range(0, o[2]), y)
+		var tw := create_tween().set_loops()
+		var span := randf_range(30.0, 60.0)
+		tw.tween_callback(func(): gull.flip_h = false)
+		tw.tween_property(gull, "position", Vector2(o[2] + 40, y - randf_range(-80, 80)), span)
+		tw.tween_callback(func():
+			gull.position = Vector2(-40, randf_range(60.0, 86.0) * TS))
+		tw.tween_interval(randf_range(2.0, 8.0))
 
 
 func _area(r: Rect2, door: bool) -> Area2D:
@@ -293,7 +343,8 @@ func zone_at(pos: Vector2) -> Dictionary:
 
 
 func outdoor_rect() -> Rect2:
-	return Rect2(0, 0, 116 * TS, 64 * TS)
+	var o: Array = data.get("outdoor", [0, 0, 116 * TS, 64 * TS])
+	return Rect2(o[0], o[1], o[2], o[3])
 
 
 # ---------------------------------------------------------------- NPCs
@@ -304,6 +355,7 @@ func _spawn_npcs() -> void:
 		n.npc_id = id
 		n.sheet = def.get("sheet", id)
 		n.wander_radius = def.get("wander", 0.0)
+		n.idle_action = def.get("action", [])
 		entities.add_child(n)
 		npcs[id] = n
 

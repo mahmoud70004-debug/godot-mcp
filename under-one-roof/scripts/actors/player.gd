@@ -7,7 +7,7 @@ signal target_changed(area: Area2D)
 const WALK_SPEED := 72.0
 const RUN_SPEED := 112.0
 const DIRS := {"down": 0, "left": 1, "right": 2, "up": 3}
-const REACH := {"down": Vector2(0, 10), "up": Vector2(0, -16), "left": Vector2(-12, -4), "right": Vector2(12, -4)}
+const REACH := {"down": Vector2(0, 10), "up": Vector2(0, -18), "left": Vector2(-13, -5), "right": Vector2(13, -5)}
 
 @onready var sprite: Sprite2D = $Sprite
 @onready var reach: Area2D = $Reach
@@ -15,6 +15,8 @@ const REACH := {"down": Vector2(0, 10), "up": Vector2(0, -16), "left": Vector2(-
 
 var facing := "down"
 var target: Area2D = null
+var _action_frames: Array = []
+var _action_t := 0.0
 var _anim_t := 0.0
 var _step_t := 0.0
 
@@ -30,7 +32,22 @@ func face(dir: String) -> void:
 	reach.position = REACH[facing]
 
 
+## Plays the action row (row 4) of the sheet, e.g. [16, 17] for a hammer swing.
+func play_action(frames: Array) -> void:
+	_action_frames = frames
+	_action_t = 0.0
+
+
+func stop_action() -> void:
+	_action_frames = []
+	sprite.frame = DIRS[facing] * 4
+
+
 func _physics_process(delta: float) -> void:
+	if not _action_frames.is_empty():
+		_action_t += delta * 5.0
+		sprite.frame = _action_frames[int(_action_t) % _action_frames.size()]
+		return
 	var input := Vector2.ZERO
 	if not Game.input_locked:
 		input = Input.get_vector("move_left", "move_right", "move_up", "move_down")

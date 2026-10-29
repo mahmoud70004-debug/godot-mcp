@@ -23,14 +23,14 @@ script = ExtResource("1_player")
 [node name="Shadow" type="Sprite2D" parent="."]
 texture = ExtResource("3_shadow")
 centered = false
-offset = Vector2(-7, -3)
+offset = Vector2(-8, -3)
 
 [node name="Sprite" type="Sprite2D" parent="."]
 texture = ExtResource("2_sheet")
 centered = false
-offset = Vector2(-8, -26)
+offset = Vector2(-10, -30)
 hframes = 4
-vframes = 4
+vframes = 5
 
 [node name="Body" type="CollisionShape2D" parent="."]
 position = Vector2(0, -2)
