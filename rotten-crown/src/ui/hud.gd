@@ -52,7 +52,7 @@ func _ready() -> void:
 
 	inventory_menu.closed.connect(close_menu)
 	%QualityOption.item_selected.connect(_on_quality_selected)
-	Events.quality_changed.connect(func(level: int) -> void: %QualityOption.select(level))
+	Events.quality_changed.connect(_on_quality_changed)
 	%ResumeButton.pressed.connect(close_menu)
 	%SaveButton.pressed.connect(_on_save_pressed)
 	%MainMenuButton.pressed.connect(_on_main_menu_pressed)
@@ -259,3 +259,8 @@ func _on_retry_pressed() -> void:
 	get_tree().paused = false
 	if not SaveManager.load_game():
 		SceneLoader.reload_current()
+
+
+## A method, not a lambda: Godot drops the connection when the HUD is freed.
+func _on_quality_changed(level: int) -> void:
+	%QualityOption.select(level)

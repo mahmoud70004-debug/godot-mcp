@@ -37,7 +37,7 @@ func _ready() -> void:
 		_buttons.append(node as TouchActionButton)
 	visible = Settings.uses_touch_controls()
 	get_viewport().size_changed.connect(_on_view_rescaled)
-	Events.quality_changed.connect(func(_level: int) -> void: _on_view_rescaled())
+	Events.quality_changed.connect(_on_quality_changed)
 	DebugBridge.register("touch", func() -> Dictionary:
 		return {"joystick": _joystick_finger, "look": _look_finger, "buttons": _button_fingers.size(), "fingers": _last_positions.size()})
 
@@ -133,3 +133,8 @@ func _forget(finger: int) -> void:
 		joystick.end_touch()
 	if finger == _look_finger:
 		_look_finger = -1
+
+
+## A method, not a lambda: Godot drops the connection when this node is freed.
+func _on_quality_changed(_level: int) -> void:
+	_on_view_rescaled()

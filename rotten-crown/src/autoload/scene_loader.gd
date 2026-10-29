@@ -36,6 +36,9 @@ func change_scene(path: String, fade_time: float = FADE_TIME) -> void:
 	else:
 		get_tree().change_scene_to_packed(packed)
 		await get_tree().process_frame
+		var scene := get_tree().current_scene
+		if scene and scene.get("prewarming"):
+			await scene.prewarmed
 		scene_changed.emit(path)
 	await _fade_to(0.0, fade_time)
 	_fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE

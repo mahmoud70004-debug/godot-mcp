@@ -49,7 +49,7 @@ func _ready() -> void:
 	_rain_player.stream = RAIN_STREAM
 	_thunder_player = _make_player()
 	_apply_rain()
-	Events.quality_changed.connect(func(_level: int) -> void: _apply_rain())
+	Events.quality_changed.connect(_on_quality_changed)
 	_next_strike = _roll_interval()
 	var forced := OS.get_environment("RC_FORCE_LIGHTNING")
 	if not forced.is_empty():
@@ -154,3 +154,8 @@ func _boost_environment(value: float) -> void:
 		if value <= 0.0:
 			env.ambient_light_energy = _base_ambient
 			_have_base = false
+
+
+## A method, not a lambda: Godot drops the connection when this node is freed.
+func _on_quality_changed(_level: int) -> void:
+	_apply_rain()

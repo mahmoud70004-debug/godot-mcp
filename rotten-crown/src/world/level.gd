@@ -2,6 +2,8 @@ class_name Level
 extends Node3D
 ## Root script for every playable level.
 
+signal prewarmed
+
 @export var region: RegionData
 @export var player: Player
 @export var environment: WorldEnvironment
@@ -13,6 +15,8 @@ extends Node3D
 ## Announce the region as soon as the level starts (otherwise use RegionTrigger).
 @export var announce_on_start := false
 
+## True while shaders are being compiled behind the loading fade (SceneLoader waits).
+var prewarming := false
 var _base_region: RegionData
 var _zones: Array[RegionData] = []
 var _blend_tween: Tween
@@ -33,12 +37,28 @@ func _ready() -> void:
 	Events.region_zone_entered.connect(_on_zone_entered)
 	Events.region_zone_exited.connect(_on_zone_exited)
 	_apply_dev_perf_flags()
+	if player:
+		prewarming = true
+		_prewarm.call_deferred()
 	if player and GameState.get_flag("waking_up"):
 		GameState.flags.erase("waking_up")
 		_wake_up.call_deferred()
 
 
+## Compile every material's shader now, under the black fade, instead of the
+## first time the camera turns towards it (stutter on phones).
+func _prewarm() -> void:
+	# Quality applies shadows/grass two frames after the scene enters the tree.
+	for _i in 3:
+		await get_tree().process_frame
+	await ShaderPrewarm.warm(self, player.camera)
+	prewarming = false
+	prewarmed.emit()
+
+
 func _wake_up() -> void:
+	if prewarming:
+		await prewarmed
 	await player.play_wake_up()
 	if region and announce_on_start:
 		Events.region_entered.emit(region)

@@ -13,11 +13,15 @@ const VILLAGER_MAN := preload("res://assets/sprites/villager_man/villager_man.tr
 const VILLAGER_WOMAN := preload("res://assets/sprites/villager_woman/villager_woman.tres")
 const VILLAGER_MUSICIAN := preload("res://assets/sprites/villager_musician/villager_musician.tres")
 
+signal prewarmed
+
 @export var camera: Camera3D
 @export var music: AudioStreamPlayer3D
 @export var wind: AudioStreamPlayer
 @export var post_process: CanvasLayer
 
+## True while shaders compile behind the loading fade (SceneLoader waits on `prewarmed`).
+var prewarming := false
 var _knight: PixelSprite3D
 var _cheerers: Array[PixelSprite3D] = []
 var _ring: Node3D
@@ -42,6 +46,17 @@ func _ready() -> void:
 	_apply_festive_grade()
 	if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+	prewarming = true
+	_begin.call_deferred()
+
+
+## Shaders compile under the loading fade (SceneLoader waits on `prewarmed`), then the film starts.
+func _begin() -> void:
+	for _i in 3:
+		await get_tree().process_frame
+	await ShaderPrewarm.warm(self, camera)
+	prewarming = false
+	prewarmed.emit()
 	_run()
 
 
