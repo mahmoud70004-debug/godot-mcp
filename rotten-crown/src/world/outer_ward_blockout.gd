@@ -16,9 +16,9 @@ extends Node3D
 const OOZE_SHADER := preload("res://assets/shaders/ooze.gdshader")
 const SILHOUETTE_SHADER := preload("res://assets/shaders/silhouette.gdshader")
 const GRASS_SHADER := preload("res://assets/shaders/grass.gdshader")
-const WALL_HEIGHT := 7.0
-const WALL_THICKNESS := 2.0
-const GATE_HALF_WIDTH := 3.5
+const WALL_HEIGHT := CastleProps.WALL_HEIGHT
+const WALL_THICKNESS := CastleProps.WALL_THICKNESS
+const GATE_HALF_WIDTH := CastleProps.GATE_HALF_WIDTH
 const WARM_LIGHT := Color(1.0, 0.6, 0.3)
 const GRASS_CHUNK := 12.0
 const CURSED_LIGHT := Color(0.55, 1.0, 0.3)
@@ -32,6 +32,8 @@ const CURSED_LIGHT := Color(0.55, 1.0, 0.3)
 @export var build_ground := true
 @export var build_horizon := true
 @export var build_grass := true
+## Off when MeadowBuilder dresses the meadow outside the walls (overworld).
+@export var build_meadow := true
 @export_group("Horizon")
 ## Distant silhouette layers, nearest first: base colour, top colour.
 @export var horizon_colors: Array[Color] = [
@@ -49,8 +51,12 @@ const CURSED_LIGHT := Color(0.55, 1.0, 0.3)
 			_build()
 
 var _rng := RandomNumberGenerator.new()
+## Own stream for the Gothic dressing, so the older layout (and the prologue
+## set built from it) keeps its random placement.
+var _castle_rng := RandomNumberGenerator.new()
 var _ooze_mat: ShaderMaterial
 var _blood_mat: ShaderMaterial
+var _castle: CastleProps
 
 
 func _ready() -> void:
@@ -62,17 +68,24 @@ func _build() -> void:
 		remove_child(child)
 		child.free()
 	_rng.seed = seed
+	_castle_rng.seed = seed + 7
 	_make_materials()
+	_castle = CastleProps.new(festive, _castle_rng, _ooze_mat)
 	_build_ground()
 	_build_walls()
-	_build_gate()
+	var gate := _group("Gate")
+	_castle.gatehouse(gate)
+	_castle.gate_banners(gate)
+	if not festive:
+		_castle.feast_spill(_group("FeastSpill"))
 	_build_houses()
 	_build_feast()
 	_build_well()
 	_build_smithy()
 	_build_lanterns()
 	_build_banners()
-	_build_meadow()
+	if build_meadow:
+		_build_meadow()
 	if build_horizon:
 		_build_horizon()
 	if build_grass:
@@ -101,11 +114,11 @@ func _make_materials() -> void:
 
 func _build_ground() -> void:
 	var ground := _group("Ground")
-	# Cobbled plaza for the feast and the road through the gate (kept on terrain too).
+	# Cobbled plaza for the feast (kept on terrain too; the terrain paints its own road).
 	_box(ground, Vector3(16.0, 0.04, 30.0), Vector3(0.0, 0.0, -6.0), RetroMaterials.cobble(), Vector3.ZERO, false)
-	_box(ground, Vector3(4.5, 0.04, 50.0), Vector3(0.0, 0.0, 35.0), RetroMaterials.red_earth(), Vector3.ZERO, false)
 	if not build_ground:
 		return
+	_box(ground, Vector3(4.5, 0.04, 50.0), Vector3(0.0, 0.0, 35.0), RetroMaterials.red_earth(), Vector3.ZERO, false)
 	# Visual tiles: small meshes keep every mesh under the Mobile renderer's
 	# per-mesh light limit (8 omni lights).
 	for ix in range(-3, 3):
@@ -143,14 +156,19 @@ func _build_ground() -> void:
 func _build_walls() -> void:
 	var walls := _group("Walls")
 	var stone := RetroMaterials.stone()
-	var x_in := GATE_HALF_WIDTH + 3.0
-	_wall(walls, Vector3(-40.0, 0.0, 10.0), Vector3(-x_in, 0.0, 10.0), stone, true)
-	_wall(walls, Vector3(x_in, 0.0, 10.0), Vector3(40.0, 0.0, 10.0), stone, true)
+	var x_in := CastleProps.GATE_TOWER_X + CastleProps.GATE_TOWER_HALF
+	_wall(walls, Vector3(-40.0, 0.0, 10.0), Vector3(-x_in, 0.0, 10.0), CastleProps.front_stone(), true)
+	_wall(walls, Vector3(x_in, 0.0, 10.0), Vector3(40.0, 0.0, 10.0), CastleProps.front_stone(), true)
 	_wall(walls, Vector3(-40.0, 0.0, 10.0), Vector3(-40.0, 0.0, -40.0), RetroMaterials.mossy_stone(), false)
 	_wall(walls, Vector3(40.0, 0.0, 10.0), Vector3(40.0, 0.0, -40.0), RetroMaterials.mossy_stone(), false)
 	_wall(walls, Vector3(-40.0, 0.0, -40.0), Vector3(40.0, 0.0, -40.0), stone, false)
 	for corner in [Vector3(-40, 0, 10), Vector3(40, 0, 10), Vector3(-40, 0, -40), Vector3(40, 0, -40)]:
 		_round_tower(walls, corner, 2.6, 11.0)
+	# The face the knight wakes up to: Gothic dressing on the outer front wall.
+	_castle.dress_front(walls, -40.0, -x_in)
+	_castle.dress_front(walls, x_in, 40.0)
+	for side in [-1.0, 1.0]:
+		_castle.wall_tower(walls, Vector3(side * CastleProps.WALL_TOWER_X, 0.0, 10.0))
 
 
 func _wall(parent: Node3D, a: Vector3, b: Vector3, mat: Material, crenellate: bool) -> void:
@@ -161,52 +179,16 @@ func _wall(parent: Node3D, a: Vector3, b: Vector3, mat: Material, crenellate: bo
 	var wall := _box(parent, Vector3(length, WALL_HEIGHT, WALL_THICKNESS), center, mat, Vector3(0.0, yaw, 0.0))
 	if not crenellate:
 		return
+	# Inner parapet of the wall walk (the outer one hangs on the machicolations).
 	var count := int(length / 2.0)
 	for i in count:
 		var x := -length * 0.5 + 1.0 + i * 2.0
-		_box(wall, Vector3(0.9, 0.9, WALL_THICKNESS), Vector3(x, WALL_HEIGHT * 0.5 + 0.45, 0.0), mat, Vector3.ZERO, false)
+		_box(wall, Vector3(0.9, 0.9, 0.5), Vector3(x, WALL_HEIGHT * 0.5 + 0.45, -WALL_THICKNESS * 0.5 + 0.25), mat, Vector3.ZERO, false)
 
 
 func _round_tower(parent: Node3D, base: Vector3, radius: float, height: float) -> void:
 	_cylinder(parent, radius, radius * 1.08, height, base + Vector3(0.0, height * 0.5, 0.0), RetroMaterials.stone(), Vector3.ZERO, true, 10)
 	_cylinder(parent, 0.0, radius * 1.25, 4.5, base + Vector3(0.0, height + 2.25, 0.0), RetroMaterials.roof(), Vector3.ZERO, false, 10)
-
-
-# --- Gate --------------------------------------------------------------------
-
-func _build_gate() -> void:
-	var gate := _group("Gate")
-	var stone := RetroMaterials.stone()
-	var iron := RetroMaterials.iron()
-	var wood := RetroMaterials.wood()
-	for side in [-1.0, 1.0]:
-		_box(gate, Vector3(3.0, 10.0, 3.2), Vector3(side * (GATE_HALF_WIDTH + 1.5), 5.0, 10.0), stone)
-		_cylinder(gate, 0.0, 2.3, 3.0, Vector3(side * (GATE_HALF_WIDTH + 1.5), 11.5, 10.0), RetroMaterials.roof(), Vector3.ZERO, false, 4)
-	_box(gate, Vector3(GATE_HALF_WIDTH * 2.0, 2.6, 2.4), Vector3(0.0, 6.3, 10.0), stone)
-	var hinge := Vector3(-GATE_HALF_WIDTH, 0.0, 8.9)
-	var swing := deg_to_rad(80.0)
-	var dir := Vector3(cos(swing), 0.0, -sin(swing))
-	if festive:
-		# Portcullis raised into the arch, both doors thrown open for the feast.
-		_box(gate, Vector3(GATE_HALF_WIDTH * 2.0, 0.1, 0.1), Vector3(0.0, 5.0, 10.0), iron, Vector3.ZERO, false)
-		_box(gate, Vector3(3.3, 4.8, 0.22), hinge + dir * 1.65 + Vector3(0.0, 2.4, 0.0), wood, Vector3(0.0, swing, 0.0))
-		var hinge_r := Vector3(GATE_HALF_WIDTH, 0.0, 8.9)
-		var dir_r := Vector3(-cos(swing), 0.0, -sin(swing))
-		_box(gate, Vector3(3.3, 4.8, 0.22), hinge_r + dir_r * 1.65 + Vector3(0.0, 2.4, 0.0), wood, Vector3(0.0, PI - swing, 0.0))
-		return
-	# Portcullis, jammed half-way and missing teeth.
-	var x := -GATE_HALF_WIDTH + 0.35
-	while x < GATE_HALF_WIDTH:
-		if _rng.randf() > 0.2:
-			var bar_len := _rng.randf_range(1.0, 1.7)
-			_box(gate, Vector3(0.08, bar_len, 0.08), Vector3(x, 5.0 - bar_len * 0.5, 10.0), iron, Vector3(0.0, 0.0, _rng.randf_range(-0.06, 0.06)), false)
-		x += 0.5
-	_box(gate, Vector3(GATE_HALF_WIDTH * 2.0, 0.1, 0.1), Vector3(0.0, 4.3, 10.0), iron, Vector3.ZERO, false)
-	_box(gate, Vector3(0.09, 1.8, 0.09), Vector3(-1.2, 0.08, 7.5), iron, Vector3(PI * 0.5, 0.4, 0.0), false)
-	_box(gate, Vector3(0.09, 1.4, 0.09), Vector3(1.6, 0.08, 8.2), iron, Vector3(PI * 0.5, -0.9, 0.0), false)
-	# Left door swung inward; right door torn off and lying in the road.
-	_box(gate, Vector3(3.3, 4.8, 0.22), hinge + dir * 1.65 + Vector3(0.0, 2.4, 0.0), wood, Vector3(0.0, swing, 0.0))
-	_box(gate, Vector3(3.3, 4.6, 0.22), Vector3(2.3, 0.18, 5.8), wood, Vector3(deg_to_rad(-86.0), deg_to_rad(18.0), 0.0), false)
 
 
 # --- Houses ------------------------------------------------------------------

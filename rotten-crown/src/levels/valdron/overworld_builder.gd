@@ -2,8 +2,9 @@
 class_name OverworldBuilder
 extends RefCounted
 ## Assembles the semi-open kingdom (layout contract C9): terrain, the Outer
-## Ward courtyard at the origin, the region builders, signposts and the plains
-## grass between them. Used OFFLINE by tools/bake_world.gd; the game loads the
+## Ward courtyard at the origin, the region builders, signposts and the
+## Moonlit Meadows + plains between them (MeadowBuilder: grass, field walls,
+## landmarks, far village silhouettes). Used OFFLINE by tools/bake_world.gd; the game loads the
 ## baked result (src/levels/valdron/baked/overworld_world.scn).
 
 ## Region builder classes, looked up by name so a missing one doesn't break the bake.
@@ -21,6 +22,9 @@ static func build(root: Node3D) -> TerrainBuilder:
 	ward.name = "OuterWard"
 	ward.build_ground = false
 	ward.build_horizon = false
+	# The meadow outside the walls and its grass come from MeadowBuilder.
+	ward.build_grass = false
+	ward.build_meadow = false
 	root.add_child(ward)
 	for class_id in REGION_BUILDERS:
 		var script := _find_class(class_id)
@@ -36,7 +40,7 @@ static func build(root: Node3D) -> TerrainBuilder:
 	shared.name = "Plains"
 	root.add_child(shared)
 	_signposts(shared, terrain, rng)
-	_plains_grass(shared, terrain, rng)
+	MeadowBuilder.build(shared, terrain, rng)
 	MeshMerger.merge_static(shared, 20.0, REGION_RANGE)
 	return terrain
 
@@ -56,18 +60,6 @@ static func _signposts(parent: Node3D, terrain: TerrainBuilder, rng: RandomNumbe
 		post.position = terrain.ground(at.x, at.y)
 		post.rotation.y = rng.randf_range(-0.4, 0.4)
 		parent.add_child(post)
-
-
-## Sparse field grass on the open plains between the regions.
-static func _plains_grass(parent: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> void:
-	var field := load("res://assets/materials/grass_field.tres") as Material
-	var accept := func(p: Vector2) -> bool:
-		if p.distance_to(terrain.spec.flat_center) < terrain.spec.flat_radius + 10.0:
-			return false  # the meadow has its own grass
-		var i := terrain.cols * int((p.y - terrain.spec.min_corner.y) / terrain.spec.cell) + int((p.x - terrain.spec.min_corner.x) / terrain.spec.cell)
-		var c: Color = terrain.paint[clampi(i, 0, terrain.paint.size() - 1)]
-		return c.r < 0.3 and c.g < 0.5 and c.b < 0.5
-	GrassScatter.scatter(parent, terrain, Rect2(-70.0, 60.0, 140.0, 180.0), 2600, field, Vector2(0.75, 0.5), rng, accept)
 
 
 static func _find_class(class_id: String) -> Script:
