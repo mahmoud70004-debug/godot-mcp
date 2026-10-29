@@ -4,6 +4,8 @@ extends Node
 ##   it (see tools/web_touch_repro.cjs).
 ## - Shows a small on-screen readout (FPS, player, touch roles) so testers
 ##   can describe bugs precisely.
+## Also publishes rcState.render (draw calls, primitives, process/physics ms, video memory), refreshed with the
+## rest of the state every 0.1 s.
 ## Disabled (and free) in normal play and on non-web platforms.
 
 var enabled := false
@@ -43,6 +45,14 @@ func _process(delta: float) -> void:
 		return
 	_accum = 0.0
 	var state := {"fps": Engine.get_frames_per_second(), "scene": str(get_tree().current_scene.name) if get_tree().current_scene else ""}
+	state["render"] = {
+		"draw_calls": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
+		"primitives": int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)),
+		"objects": int(Performance.get_monitor(Performance.RENDER_TOTAL_OBJECTS_IN_FRAME)),
+		"process_ms": snappedf(Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, 0.01),
+		"physics_ms": snappedf(Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0, 0.01),
+		"video_mem_mb": snappedf(Performance.get_monitor(Performance.RENDER_VIDEO_MEM_USED) / 1.0e6, 0.1),
+	}
 	for key in _providers.keys():
 		var provider: Callable = _providers[key]
 		if provider.is_valid():
