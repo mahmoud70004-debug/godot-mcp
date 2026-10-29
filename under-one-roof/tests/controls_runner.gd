@@ -107,6 +107,40 @@ func _ready() -> void:
 	_expect(Game.load_game() and Game.money == money and Game.has("c1_fish"), "save and load restore the state")
 	Game.pending_load = false
 
+	# 9. chapter 4 night: Elias only walks while Gideon keeps up, then the barn voice
+	for f in ["ch2", "ch3", "ch4", "met_elias", "bridge_open", "found_edmund_letter"]:
+		Game.set_flag(f)
+	await _wait(0.3)
+	Director.run_event("elias", w.npcs["elias"])
+	for i in 80:
+		if Game.has("follow_active") and not Game.input_locked:
+			break
+		_press("interact")
+		Director.main.fader._tap()
+		await _wait(0.25)
+	_expect(Game.has("follow_active") and Game.hour() >= 22, "night follow started")
+	var elias = w.npcs["elias"]
+	var e0: Vector2 = elias.global_position
+	await _wait(1.5)
+	_expect(elias.global_position.distance_to(e0) < 1.0 or p.global_position.distance_to(e0) < 150.0, "Elias waits when Gideon is far")
+	for i in 120:
+		if Game.has("elias_left_barn"):
+			break
+		if elias.visible:
+			p.global_position = elias.global_position + Vector2(-60, 0)
+		await _wait(0.25)
+	_expect(Game.has("elias_left_barn"), "Elias visited the barn and left")
+	p.global_position = w.spot_pos("spawn_barn_out") + Vector2(0, 8)
+	await _wait(0.3)
+	await _hold("move_up", 0.6)
+	for i in 40:
+		if Game.has("ch5"):
+			break
+		_press("interact")
+		Director.main.fader._tap()
+		await _wait(0.25)
+	_expect(Game.has("heard_voice") and Game.has("ch5"), "heard the voice and woke up in chapter 5")
+
 	print("==== CONTROLS: %d failures ====" % failures)
 	get_tree().quit(1 if failures > 0 else 0)
 
