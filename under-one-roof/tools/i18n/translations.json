@@ -1,0 +1,3226 @@
+{
+ "غيديون": [
+  "Gideon",
+  "ギデオン"
+ ],
+ "مارغريت": [
+  "Margaret",
+  "マーガレット"
+ ],
+ "كلارا": [
+  "Clara",
+  "クララ"
+ ],
+ "إلياس": [
+  "Elias",
+  "エリアス"
+ ],
+ "إدموند": [
+  "Edmund",
+  "エドマンド"
+ ],
+ "بيورن": [
+  "Bjorn",
+  "ビョルン"
+ ],
+ "سيغريد": [
+  "Sigrid",
+  "シグリッド"
+ ],
+ "لايف": [
+  "Leif",
+  "レイフ"
+ ],
+ "أستريد": [
+  "Astrid",
+  "アストリッド"
+ ],
+ "الأب إينار": [
+  "Father Einar",
+  "エイナル神父"
+ ],
+ "رونا": [
+  "Runa",
+  "ルーナ"
+ ],
+ "هنريك": [
+  "Henrik",
+  "ヘンリク"
+ ],
+ "يوناس": [
+  "Jónas",
+  "ヨーナス"
+ ],
+ "هالدور": [
+  "Halldór",
+  "ハルドール"
+ ],
+ "غونار": [
+  "Gunnar",
+  "グンナル"
+ ],
+ "أولافور": [
+  "Ólafur",
+  "オーラヴル"
+ ],
+ "عامل": [
+  "Worker",
+  "作業員"
+ ],
+ "صوت من الداخل": [
+  "Voice from inside",
+  "中からの声"
+ ],
+ "مطرقة": [
+  "Hammer",
+  "ハンマー"
+ ],
+ "مطرقة أبيك القديمة. تصلح بها السياج والقوارب.": [
+  "Your father's old hammer. Good for fences and boats.",
+  "父さんの古いハンマー。柵や船の修理に使える。"
+ ],
+ "فأس": [
+  "Axe",
+  "斧"
+ ],
+ "لتقطيع الحطب عند جذع التقطيع قرب البيت.": [
+  "For chopping wood at the block near the house.",
+  "家の近くの薪割り台で薪を割るための斧。"
+ ],
+ "صنّارة صيد": [
+  "Fishing rod",
+  "釣り竿"
+ ],
+ "أعارها لك بيورن. قف على طرف الرصيف وجرّب حظّك.": [
+  "Lent to you by Bjorn. Stand at the end of a pier and try your luck.",
+  "ビョルンが貸してくれた。桟橋の先で運を試してみよう。"
+ ],
+ "صنّارة بيورن الخاصة": [
+  "Bjorn's special rod",
+  "ビョルンの特別な釣り竿"
+ ],
+ "صنّارة متينة كانت لأبيك. تصطاد بها سمكتين بدل واحدة.": [
+  "A sturdy rod that once belonged to your father. Catches two fish instead of one.",
+  "かつて父さんのものだった丈夫な竿。一度に二匹釣れる。"
+ ],
+ "سمكة": [
+  "Fish",
+  "魚"
+ ],
+ "سمكة طازجة. تشتريها سيغريد في النُّزل بأربع كرونات.": [
+  "A fresh fish. Sigrid buys them at the inn for four krónur.",
+  "新鮮な魚。宿屋のシグリッドが4クローナで買ってくれる。"
+ ],
+ "سلّة سمك": [
+  "Basket of fish",
+  "魚のかご"
+ ],
+ "سلّة من بيورن إلى سيغريد في النُّزل.": [
+  "A basket from Bjorn for Sigrid at the inn.",
+  "ビョルンから宿屋のシグリッドへのかご。"
+ ],
+ "حطب": [
+  "Firewood",
+  "薪"
+ ],
+ "حطب مقطّع. تشتريه سيغريد بثلاث كرونات للحزمة.": [
+  "Chopped firewood. Sigrid pays three krónur a bundle.",
+  "割った薪。シグリッドが一束3クローナで買う。"
+ ],
+ "حزمة حطب للبيت": [
+  "Bundle of firewood for home",
+  "家用の薪の束"
+ ],
+ "أوصلها إلى أمك.": [
+  "Take it to your mother.",
+  "母さんに届けよう。"
+ ],
+ "صندوق بضائع": [
+  "Crate of goods",
+  "荷物の木箱"
+ ],
+ "أوصله إلى مستودع الميناء مقابل خمس كرونات.": [
+  "Deliver it to the harbour warehouse for five krónur.",
+  "港の倉庫に届けると5クローナ。"
+ ],
+ "أعشاب برية": [
+  "Wild herbs",
+  "野草"
+ ],
+ "تشتريها أستريد العشّابة. تنبت من جديد كل صباح.": [
+  "Astrid the herbalist buys them. They grow back every morning.",
+  "薬草師アストリッドが買ってくれる。毎朝また生えてくる。"
+ ],
+ "مفتاح حديدي": [
+  "Iron key",
+  "鉄の鍵"
+ ],
+ "مفتاح قديم ثقيل وجدته في جيب معطف إلياس.": [
+  "A heavy old key you found in the pocket of Elias's coat.",
+  "エリアスのコートのポケットにあった重く古い鍵。"
+ ],
+ "خطّاف لايف": [
+  "Leif's hook",
+  "レイフのフック"
+ ],
+ "أداة رفيعة صنعها لايف لفتح الأقفال القديمة.": [
+  "A thin tool Leif made for opening old locks.",
+  "古い錠を開けるためにレイフが作った細い道具。"
+ ],
+ "رسالة ممزّقة": [
+  "Torn letter",
+  "破れた手紙"
+ ],
+ "قصاصة وجدتها في خزانة إلياس.": [
+  "A scrap you found in Elias's cabinet.",
+  "エリアスの戸棚で見つけた切れ端。"
+ ],
+ "...إن عاد الصبي، فأخبروه أن الحقيقة لم تُدفن مع الموتى...\n\n(بقية الرسالة ممزّقة. الخط قديم ومرتجف.)": [
+  "...if the boy returns, tell him the truth is not buried with the dead...\n\n(The rest of the letter is torn away. The handwriting is old and shaky.)",
+  "……もしあの子が戻ったら、真実は死者と共に埋められてはいないと伝えてくれ……\n\n（手紙の残りは破れている。古く震えた筆跡だ。）"
+ ],
+ "سند مزرعة الشرق": [
+  "Deed to the eastern farm",
+  "東の農場の権利書"
+ ],
+ "وثيقة ملكية باسم إدموند آشفورد.": [
+  "A property deed in the name of Edmund Ashford.",
+  "エドマンド・アシュフォード名義の権利書。"
+ ],
+ "سند ملكية\n\nالأرض والمزرعة الواقعتان شرق النهر، خلف التلال الشرقية لهرافنفيك.\nالمالك المسجّل: إدموند آشفورد.\n\nوفي الهامش، بحبر حديث: «تُنقل إلى إلياس آشفورد — بانتظار توقيع آل آشفورد الآخرين.»": [
+  "Deed of Property\n\nThe land and farm east of the river, beyond the eastern hills of Hrafnvik.\nRegistered owner: Edmund Ashford.\n\nIn the margin, in fresh ink: \"To be transferred to Elias Ashford — awaiting the signature of the other Ashfords.\"",
+  "所有権証書\n\nフラフンヴィークの東の丘の向こう、川の東の土地と農場。\n登記上の所有者：エドマンド・アシュフォード。\n\n余白に新しいインクで：「エリアス・アシュフォードへ譲渡予定 — 他のアシュフォード家の署名待ち」"
+ ],
+ "رسالة إدموند": [
+  "Edmund's letter",
+  "エドマンドの手紙"
+ ],
+ "وجدتها تحت لوح أرضية في بيت المزرعة.": [
+  "Found under a floorboard in the farmhouse.",
+  "農家の床板の下で見つけた。"
+ ],
+ "إن عاد الصبي، فأخبروه أن الحقيقة لم تُدفن مع الموتى.\nلقد انتظرت طويلًا جدًا لأواجه ما فعلت.\n\n— إ. آ.": [
+  "If the boy returns, tell him the truth is not buried with the dead.\nI have waited far too long to face what I have done.\n\n— E. A.",
+  "もしあの子が戻ったら、真実は死者と共に埋められてはいないと伝えてくれ。\n自分のしたことに向き合うまで、私はあまりにも長く待ちすぎた。\n\n— E. A."
+ ],
+ "بوصلة نحاسية": [
+  "Brass compass",
+  "真鍮の羅針盤"
+ ],
+ "بوصلة قديمة محفور عليها حرفان: ج. آ. أعدها إلى بيورن.": [
+  "An old compass engraved with two letters: G. A. Return it to Bjorn.",
+  "二文字が刻まれた古い羅針盤：G. A.。ビョルンに返そう。"
+ ],
+ "صورة عائلية قديمة": [
+  "Old family photograph",
+  "古い家族写真"
+ ],
+ "هدية من بيورن.": [
+  "A gift from Bjorn.",
+  "ビョルンからの贈り物。"
+ ],
+ "صورة باهتة لرجلين شابّين يقفان على رصيف هرافنفيك ويضحكان.\nعلى ظهرها: «الأخوان آشفورد — قبل أن يفرّقنا البحر والمال.»": [
+  "A faded photograph of two young men laughing on the Hrafnvik pier.\nOn the back: \"The Ashford brothers — before the sea and money parted us.\"",
+  "フラフンヴィークの桟橋で笑う二人の若者の色あせた写真。\n裏には：「アシュフォード兄弟 — 海と金が二人を分かつ前に」"
+ ],
+ "قماش": [
+  "Fabric",
+  "布地"
+ ],
+ "طلبية رونا من عربة هنريك.": [
+  "Runa's order from Henrik's cart.",
+  "ヘンリクの荷車から受け取るルーナの注文品。"
+ ],
+ "سترة جديدة": [
+  "New jacket",
+  "新しい上着"
+ ],
+ "خاطتها لك رونا. تبدو كرجل محترم!": [
+  "Runa sewed it for you. You look like a gentleman!",
+  "ルーナが縫ってくれた。まるで紳士だ！"
+ ],
+ "علبة ألوان": [
+  "Box of paints",
+  "絵の具箱"
+ ],
+ "ألوان حقيقية من الخارج. ستفرح بها كلارا.": [
+  "Real paints from abroad. Clara will love them.",
+  "外国から来た本物の絵の具。クララが喜ぶだろう。"
+ ],
+ "صندوق أدوات حديدي": [
+  "Iron toolbox",
+  "鉄の道具箱"
+ ],
+ "وجدته في المزرعة المهجورة. خذه إلى لايف.": [
+  "Found at the abandoned farm. Take it to Leif.",
+  "廃農場で見つけた。レイフに届けよう。"
+ ],
+ "عصا الاستكشاف": [
+  "Divining rod",
+  "探知の杖"
+ ],
+ "أداة غريبة من أدوات إدموند. ترنّ قرب الأشياء المدفونة، فتكشف لك مقتنيات مخفية.": [
+  "A strange tool of Edmund's. It rings near buried things and reveals hidden keepsakes.",
+  "エドマンドの不思議な道具。埋まった物の近くで鳴り、隠れた品を見つけ出す。"
+ ],
+ "رسالة الكاهن": [
+  "The priest's letter",
+  "神父の手紙"
+ ],
+ "سلّمها إلى ساعي البريد أولافور على الطريق الغربي.": [
+  "Give it to Ólafur the postman on the western road.",
+  "西の道にいる郵便配達のオーラヴルに渡そう。"
+ ],
+ "لوح عليه علامة الشحنة": [
+  "Plank with a cargo mark",
+  "積荷の印がある板"
+ ],
+ "علامة شركة إدموند التجارية محفورة على خشب السفينة.": [
+  "The mark of Edmund's trading company carved into the ship's timber.",
+  "船材に刻まれたエドマンドの交易会社の印。"
+ ],
+ "رسائل أبي": [
+  "Father's letters",
+  "父さんの手紙"
+ ],
+ "من صندوق إدموند.": [
+  "From Edmund's box.",
+  "エドマンドの箱から。"
+ ],
+ "أخي إدموند،\nلا يهمّني المال ولا الأرض. أريد فقط أن تعود إلى البيت.\nالباب ما زال مفتوحًا، والمدفأة ما زالت دافئة.\nعُد يا أخي. لا شيء يستحق أن نعيش غرباء.\n\n— أخوك": [
+  "My brother Edmund,\nI care nothing for money or land. I only want you to come home.\nThe door is still open, and the hearth is still warm.\nCome back, brother. Nothing is worth living as strangers.\n\n— Your brother",
+  "弟エドマンドへ\n金も土地もどうでもいい。ただ家に帰ってきてほしいだけだ。\n扉はまだ開いているし、暖炉もまだ温かい。\n帰ってこい。他人として生きる価値のあるものなど何もない。\n\n— 兄より"
+ ],
+ "سند الأرض الأصلي": [
+  "The original land deed",
+  "土地の原本の権利書"
+ ],
+ "الدليل على أن الأرض لعائلة غيديون.": [
+  "Proof that the land belongs to Gideon's family.",
+  "土地がギデオンの家族のものだという証拠。"
+ ],
+ "سند الأرض الأصلي\n\nالأرض الواقعة شرق النهر مسجّلة باسم والد غيديون آشفورد،\nموقّعة وموثّقة في سجلّات الكنيسة قبل خمسة عشر عامًا.\n«لبيتٍ جديد يجمع العائلة كلها تحت سقف واحد.»": [
+  "The Original Land Deed\n\nThe land east of the river is registered to Gideon Ashford's father,\nsigned and witnessed in the church records fifteen years ago.\n\"For a new house that will bring the whole family together under one roof.\"",
+  "土地の原本の権利書\n\n川の東の土地は、ギデオン・アシュフォードの父の名義で登記されている。\n十五年前に教会の記録で署名され、証人も立っている。\n「家族全員がひとつ屋根の下に集う、新しい家のために」"
+ ],
+ "ساعة فضية": [
+  "Silver watch",
+  "銀の懐中時計"
+ ],
+ "ساعة جيب صغيرة. نُقش عليها اسم أبيك.": [
+  "A small pocket watch engraved with your father's name.",
+  "父さんの名が刻まれた小さな懐中時計。"
+ ],
+ "مذكرات إدموند": [
+  "Edmund's journal",
+  "エドマンドの日誌"
+ ],
+ "يوميات إدموند قبل الغرق.": [
+  "Edmund's diary from before the shipwreck.",
+  "難破前のエドマンドの日記。"
+ ],
+ "كنت أظن أن الثروة ستجعلني رجلًا أفضل من أخي.\nأخذت منه الأرض في نزاع تافه، وأبحرت لأثبت أنني على حق.\nثم جاءت العاصفة... ونجوت. لكنني لم أجد الشجاعة لأعود.": [
+  "I thought wealth would make me a better man than my brother.\nI took the land from him over a petty dispute and sailed off to prove I was right.\nThen the storm came... and I survived. But I never found the courage to come back.",
+  "富があれば兄より立派な男になれると思っていた。\nつまらない争いで兄から土地を奪い、自分が正しいと証明するために船出した。\nそして嵐が来て……私は生き延びた。だが帰る勇気は持てなかった。"
+ ],
+ "رغيف خبز": [
+  "Loaf of bread",
+  "パン"
+ ],
+ "خبز جاودار دافئ. أعطه لأمك.": [
+  "Warm rye bread. Give it to your mother.",
+  "温かいライ麦パン。母さんにあげよう。"
+ ],
+ "فانوس": [
+  "Lantern",
+  "ランタン"
+ ],
+ "يضيء طريقك في الليل.": [
+  "Lights your way at night.",
+  "夜道を照らしてくれる。"
+ ],
+ "حذاء متين": [
+  "Sturdy boots",
+  "丈夫なブーツ"
+ ],
+ "تمشي وتركض أسرع قليلًا.": [
+  "You walk and run a little faster.",
+  "歩くのも走るのも少し速くなる。"
+ ],
+ "سجّادة للبيت": [
+  "Rug for the house",
+  "家の敷物"
+ ],
+ "تزيّن بها بيت العائلة.": [
+  "Brightens up the family home.",
+  "家族の家を明るくしてくれる。"
+ ],
+ "شال صوفي": [
+  "Wool shawl",
+  "毛織りのショール"
+ ],
+ "هدية دافئة لأمك.": [
+  "A warm gift for your mother.",
+  "母さんへの暖かい贈り物。"
+ ],
+ "صدفة نادرة": [
+  "Rare shell",
+  "珍しい貝殻"
+ ],
+ "صدفة جميلة من الشاطئ.": [
+  "A beautiful shell from the beach.",
+  "浜辺で見つけた美しい貝殻。"
+ ],
+ "رسالة عائلية قديمة": [
+  "Old family letter",
+  "古い家族の手紙"
+ ],
+ "وجدتها قرب الكنيسة.": [
+  "Found near the church.",
+  "教会の近くで見つけた。"
+ ],
+ "إلى الأب إينار،\nإن حدث لي مكروه في البحر، فلا تدفنوا تابوتًا فارغًا باسمي.\nأريد أن يعرف أخي أنني أخطأت في حقّه.\n— إدموند": [
+  "To Father Einar,\nIf harm comes to me at sea, do not bury an empty coffin in my name.\nI want my brother to know that I wronged him.\n— Edmund",
+  "エイナル神父へ\nもし海で私に何かあっても、私の名で空の棺を埋めないでください。\n兄に、私が兄を傷つけたと知ってほしいのです。\n— エドマンド"
+ ],
+ "صفحة مذكرات (١)": [
+  "Journal page (1)",
+  "日誌の一頁（一）"
+ ],
+ "صفحة من مذكرات إدموند.": [
+  "A page from Edmund's journal.",
+  "エドマンドの日誌の一頁。"
+ ],
+ "اليوم الثالث بعد العاصفة.\nالبحر ابتلع السفينة، لكنه أعاد إليّ صناديق الفضة على الشاطئ.\nأي سخرية هذه؟ نجت الثروة، وغرق كل شيء آخر.": [
+  "The third day after the storm.\nThe sea swallowed the ship, yet gave me back the crates of silver on the shore.\nWhat irony is this? The fortune survived, and everything else drowned.",
+  "嵐から三日目。\n海は船を呑み込んだが、銀の箱を浜に返してよこした。\nなんという皮肉だろう。財産は生き残り、ほかのすべてが沈んだ。"
+ ],
+ "صفحة مذكرات (٢)": [
+  "Journal page (2)",
+  "日誌の一頁（二）"
+ ],
+ "خبّأت الشحنة في مستودع قديم على الساحل.\nشركائي تخلّوا عني، والديون تطاردني.\nلن أعود إلى هرافنفيك. فليظنّوا أنني مت.": [
+  "I hid the cargo in an old warehouse on the coast.\nMy partners abandoned me, and debts hound me.\nI will not return to Hrafnvik. Let them think I am dead.",
+  "積荷は海岸の古い倉庫に隠した。\n仲間は私を見捨て、借金が追いかけてくる。\nフラフンヴィークには戻らない。死んだと思わせておけばいい。"
+ ],
+ "صفحة مذكرات (٣)": [
+  "Journal page (3)",
+  "日誌の一頁（三）"
+ ],
+ "أرسلها صديق إدموند القديم من بودير.": [
+  "Sent by Edmund's old friend from Búðir.",
+  "ブーズィルに住むエドマンドの旧友から届いた。"
+ ],
+ "وجدني إلياس اليوم. ابني... صار رجلًا.\nقلت له: خذ المال وابدأ حياة جديدة، لكن لا تخبر أحدًا أنني حي.\nأخشى أنني علّمته أسوأ ما فيّ.": [
+  "Elias found me today. My son... he has become a man.\nI told him: take the money and start a new life, but tell no one I am alive.\nI fear I have taught him the worst of me.",
+  "今日、エリアスが私を見つけた。息子は……大人になっていた。\n私は言った。金を持って新しい人生を始めろ、だが私が生きていることは誰にも言うな、と。\n私の最も悪いところを教えてしまったのではないかと恐れている。"
+ ],
+ "سجل ملكية قديم": [
+  "Old property record",
+  "古い土地台帳"
+ ],
+ "وجدته في بيت المزرعة.": [
+  "Found in the farmhouse.",
+  "農家で見つけた。"
+ ],
+ "سجل ملكية\nتُثبت هذه الورقة أن الأرض الشرقية انتقلت بالقوة من أخٍ إلى أخيه بعد نزاع تجاري،\nدون توقيع المالك الأصلي.": [
+  "Property Record\nThis paper shows that the eastern land passed by force from one brother to the other after a trade dispute,\nwithout the signature of the original owner.",
+  "土地台帳\nこの書類は、東の土地が商売上の争いの後、元の所有者の署名なしに\n兄弟の一方から他方へ力ずくで移ったことを示している。"
+ ],
+ "منحوتة خشبية": [
+  "Wooden carving",
+  "木彫り"
+ ],
+ "حصان صغير نحته أبوك لك حين كنت طفلًا.": [
+  "A little horse your father carved for you when you were a child.",
+  "子供の頃、父さんが彫ってくれた小さな馬。"
+ ],
+ "عدّة صيد عتيقة": [
+  "Antique fishing gear",
+  "古い漁具"
+ ],
+ "شباك وخطاطيف من زمن جدّك.": [
+  "Nets and hooks from your grandfather's day.",
+  "祖父の時代の網と釣り針。"
+ ],
+ "صورة من النُّزل": [
+  "Photograph from the inn",
+  "宿屋の写真"
+ ],
+ "صورة لأهل القرية في عيد الصيادين قبل عشرين عامًا.": [
+  "The villagers at the fishermen's festival twenty years ago.",
+  "二十年前の漁師祭りの村人たち。"
+ ],
+ "صندوق إدموند": [
+  "Edmund's box",
+  "エドマンドの箱"
+ ],
+ "صندوق خشبي قديم.": [
+  "An old wooden box.",
+  "古い木の箱。"
+ ],
+ "كرونة": [
+  "króna",
+  "クローナ"
+ ],
+ "أعطه لأمك فتشكرك.": [
+  "Give it to your mother and she'll thank you.",
+  "母さんにあげると喜ぶ。"
+ ],
+ "ينير لك الليل.": [
+  "Lights up the night.",
+  "夜を照らす。"
+ ],
+ "خطوات أسرع.": [
+  "Faster steps.",
+  "足が速くなる。"
+ ],
+ "هدية لكلارا.": [
+  "A gift for Clara.",
+  "クララへの贈り物。"
+ ],
+ "هدية لأمك.": [
+  "A gift for your mother.",
+  "母さんへの贈り物。"
+ ],
+ "تحسين للبيت.": [
+  "An improvement for the house.",
+  "家の改善。"
+ ],
+ "فرشت السجادة في البيت": [
+  "You laid the rug in the house",
+  "家に敷物を敷いた"
+ ],
+ "الفصل الأول": [
+  "Chapter One",
+  "第一章"
+ ],
+ "صباح رجل فقير": [
+  "A Poor Man's Morning",
+  "貧しい男の朝"
+ ],
+ "الفصل الثاني": [
+  "Chapter Two",
+  "第二章"
+ ],
+ "الغريب": [
+  "The Stranger",
+  "見知らぬ客"
+ ],
+ "الفصل الثالث": [
+  "Chapter Three",
+  "第三章"
+ ],
+ "ضيعة آشفورد": [
+  "The Ashford Estate",
+  "アシュフォード邸"
+ ],
+ "الفصل الرابع": [
+  "Chapter Four",
+  "第四章"
+ ],
+ "المزرعة المنسية": [
+  "The Forgotten Farm",
+  "忘れられた農場"
+ ],
+ "الفصل الخامس": [
+  "Chapter Five",
+  "第五章"
+ ],
+ "الرجل في الحظيرة": [
+  "The Man in the Barn",
+  "納屋の男"
+ ],
+ "الفصل السادس": [
+  "Chapter Six",
+  "第六章"
+ ],
+ "سرّ ابن العم": [
+  "The Cousin's Secret",
+  "いとこの秘密"
+ ],
+ "الفصل السابع": [
+  "Chapter Seven",
+  "第七章"
+ ],
+ "سرّ آل آشفورد": [
+  "The Ashford Secret",
+  "アシュフォード家の秘密"
+ ],
+ "الفصل الثامن": [
+  "Chapter Eight",
+  "第八章"
+ ],
+ "المواجهة الأخيرة": [
+  "The Final Confrontation",
+  "最後の対決"
+ ],
+ "وثائق العائلة": [
+  "Family documents",
+  "家族の文書"
+ ],
+ "رسائل وصفحات مذكرات وسجلات. اجمعها كلها لتكشف رسالة أخيرة في نهاية القصة.": [
+  "Letters, journal pages and records. Collect them all to reveal a final letter at the end of the story.",
+  "手紙、日誌の頁、記録。すべて集めると物語の最後に一通の手紙が明かされる。"
+ ],
+ "تذكارات القرية": [
+  "Village keepsakes",
+  "村の思い出の品"
+ ],
+ "صور ومنحوتات وأدوات قديمة. بعضها لا يظهر إلا بأداة خاصة.": [
+  "Photographs, carvings and old tools. Some only appear with a special tool.",
+  "写真、木彫り、古い道具。特別な道具でしか見つからないものもある。"
+ ],
+ "الأصداف النادرة": [
+  "Rare shells",
+  "珍しい貝殻"
+ ],
+ "على شواطئ هرافنفيك.": [
+  "On the beaches of Hrafnvik.",
+  "フラフンヴィークの浜辺に。"
+ ],
+ "العملات المنسية": [
+  "Lost coins",
+  "なくした硬貨"
+ ],
+ "كرونات ضائعة في أرجاء القرية والتلال.": [
+  "Krónur lost around the village and the hills.",
+  "村や丘のあちこちで失くされたクローナ。"
+ ],
+ "صباح جديد": [
+  "A New Morning",
+  "新しい朝"
+ ],
+ "تحدّث إلى أمك.": [
+  "Talk to your mother.",
+  "母さんと話そう。"
+ ],
+ "أعمال الصباح": [
+  "Morning Chores",
+  "朝の仕事"
+ ],
+ "ساعد بيورن في تجهيز قاربه": [
+  "Help Bjorn get his boat ready",
+  "ビョルンの船の準備を手伝う"
+ ],
+ "أوصل سلّة السمك إلى سيغريد في النُّزل": [
+  "Take the basket of fish to Sigrid at the inn",
+  "魚のかごを宿屋のシグリッドに届ける"
+ ],
+ "أحضر الحطب لأمك": [
+  "Bring firewood to your mother",
+  "母さんに薪を届ける"
+ ],
+ "أصلح السياج المكسور قرب البيت": [
+  "Mend the broken fence by the house",
+  "家のそばの壊れた柵を直す"
+ ],
+ "العودة إلى البيت": [
+  "Back Home",
+  "家に帰る"
+ ],
+ "أخبر أمك أن أعمال اليوم انتهت.": [
+  "Tell your mother the day's work is done.",
+  "今日の仕事が終わったと母さんに伝えよう。"
+ ],
+ "نهاية يوم طويل": [
+  "The End of a Long Day",
+  "長い一日の終わり"
+ ],
+ "اذهب إلى سريرك وارتح.": [
+  "Go to your bed and rest.",
+  "ベッドで休もう。"
+ ],
+ "اذهب إلى ساحة القرية وانظر من وصل.": [
+  "Go to the village square and see who has arrived.",
+  "村の広場に行って誰が来たのか見てみよう。"
+ ],
+ "أحاديث القرية": [
+  "Village Talk",
+  "村のうわさ"
+ ],
+ "استمع إلى ما يقوله أهل القرية عن إلياس (%d من 3).": [
+  "Listen to what the villagers say about Elias (%d of 3).",
+  "村人たちがエリアスについて話すことを聞こう（%d／3）。"
+ ],
+ "المعطف المتروك": [
+  "The Abandoned Coat",
+  "置き忘れたコート"
+ ],
+ "تفقّد المعطف الذي تركه إلياس على مقعد في الساحة.": [
+  "Check the coat Elias left on a bench in the square.",
+  "エリアスが広場のベンチに置いていったコートを調べよう。"
+ ],
+ "المفتاح الحديدي": [
+  "The Iron Key",
+  "鉄の鍵"
+ ],
+ "اسأل إلياس عن المفتاح.": [
+  "Ask Elias about the key.",
+  "鍵のことをエリアスに聞こう。"
+ ],
+ "ليلة قلقة": [
+  "A Restless Night",
+  "眠れない夜"
+ ],
+ "عد إلى البيت ونَم.": [
+  "Go home and sleep.",
+  "家に帰って眠ろう。"
+ ],
+ "اذهب إلى ضيعة إلياس وتحدّث إلى خادمه هالدور.": [
+  "Go to Elias's estate and talk to his butler Halldór.",
+  "エリアスの屋敷へ行き、執事のハルドールと話そう。"
+ ],
+ "العمل في الضيعة": [
+  "Working at the Estate",
+  "屋敷での仕事"
+ ],
+ "رتّب مكتب إلياس داخل القصر.": [
+  "Tidy Elias's study inside the manor.",
+  "屋敷の中のエリアスの書斎を片付けよう。"
+ ],
+ "الخزانة المقفلة": [
+  "The Locked Cabinet",
+  "鍵のかかった戸棚"
+ ],
+ "ابحث عن طريقة لفتح الخزانة. ربما يعرف الحدّاد لايف شيئًا عن الأقفال.": [
+  "Find a way to open the cabinet. Perhaps Leif the blacksmith knows about locks.",
+  "戸棚を開ける方法を探そう。鍛冶屋のレイフが錠に詳しいかもしれない。"
+ ],
+ "افتح الخزانة في مكتب إلياس.": [
+  "Open the cabinet in Elias's study.",
+  "エリアスの書斎の戸棚を開けよう。"
+ ],
+ "سند المزرعة": [
+  "The Farm Deed",
+  "農場の権利書"
+ ],
+ "اسأل إلياس عن المزرعة الواقعة شرق القرية.": [
+  "Ask Elias about the farm east of the village.",
+  "村の東の農場についてエリアスに聞こう。"
+ ],
+ "ذكريات البحر": [
+  "Memories of the Sea",
+  "海の記憶"
+ ],
+ "زُر بيورن عند الميناء واسأله عن عمّك إدموند.": [
+  "Visit Bjorn at the harbour and ask him about your uncle Edmund.",
+  "港のビョルンを訪ね、エドマンドおじさんのことを聞こう。"
+ ],
+ "أسئلة بلا أجوبة": [
+  "Questions Without Answers",
+  "答えのない問い"
+ ],
+ "اسأل العشّابة أستريد عن الطريق إلى المزرعة المهجورة.": [
+  "Ask Astrid the herbalist the way to the abandoned farm.",
+  "薬草師アストリッドに廃農場への道を聞こう。"
+ ],
+ "اعبر الجسر شرقًا وابحث في بيت المزرعة المهجور.": [
+  "Cross the bridge to the east and search the abandoned farmhouse.",
+  "橋を渡って東へ行き、廃農家を調べよう。"
+ ],
+ "المواجهة الأولى": [
+  "The First Confrontation",
+  "最初の対決"
+ ],
+ "عد إلى الضيعة وواجه إلياس بالرسالة.": [
+  "Return to the estate and confront Elias with the letter.",
+  "屋敷に戻り、手紙を突きつけてエリアスと対峙しよう。"
+ ],
+ "في جوف الليل": [
+  "In the Dead of Night",
+  "真夜中に"
+ ],
+ "اتبع إلياس دون أن يراك.": [
+  "Follow Elias without being seen.",
+  "見つからないようにエリアスの後をつけよう。"
+ ],
+ "اقترب من باب الحظيرة.": [
+  "Approach the barn door.",
+  "納屋の扉に近づこう。"
+ ],
+ "عد إلى الحظيرة وانظر من نافذتها الصغيرة.": [
+  "Go back to the barn and look through its small window.",
+  "納屋に戻り、小さな窓からのぞいてみよう。"
+ ],
+ "ادخل الحظيرة.": [
+  "Go into the barn.",
+  "納屋に入ろう。"
+ ],
+ "واجه إلياس في مكتبه بالقصر.": [
+  "Confront Elias in his study at the manor.",
+  "屋敷の書斎でエリアスと対峙しよう。"
+ ],
+ "عد إلى الحظيرة وأخبر إدموند بخطة إلياس.": [
+  "Return to the barn and tell Edmund about Elias's plan.",
+  "納屋に戻り、エリアスの計画をエドマンドに伝えよう。"
+ ],
+ "قبل الفجر": [
+  "Before Dawn",
+  "夜明け前"
+ ],
+ "عد إلى البيت ونَم. غدًا عند الفجر في المزرعة.": [
+  "Go home and sleep. Tomorrow at dawn, at the farm.",
+  "家に帰って眠ろう。明日の夜明け、農場で。"
+ ],
+ "اذهب إلى المزرعة المهجورة.": [
+  "Go to the abandoned farm.",
+  "廃農場へ行こう。"
+ ],
+ "بداية جديدة": [
+  "A New Beginning",
+  "新たな始まり"
+ ],
+ "تجوّل في القرية وتحدّث إلى أهلها، ثم عد إلى البيت حين تشاء.": [
+  "Wander the village and talk to its people, then go home whenever you like.",
+  "村を歩いて人々と話し、好きな時に家に帰ろう。"
+ ],
+ "البوصلة الضائعة": [
+  "The Lost Compass",
+  "失くした羅針盤"
+ ],
+ "ابحث عن بوصلة بيورن قرب الرصيف الغربي ثم أعدها إليه.": [
+  "Find Bjorn's compass near the west pier and return it to him.",
+  "西の桟橋の近くでビョルンの羅針盤を探して返そう。"
+ ],
+ "حلم الخيّاطة": [
+  "The Seamstress's Dream",
+  "お針子の夢"
+ ],
+ "أحضر القماش من عربة هنريك إلى رونا.": [
+  "Bring the fabric from Henrik's cart to Runa.",
+  "ヘンリクの荷車から布地をルーナに届けよう。"
+ ],
+ "لوحات كلارا": [
+  "Clara's Paintings",
+  "クララの絵"
+ ],
+ "زُر أجمل أماكن القرية: الميناء، والكنيسة، والشلال، ومقعد التلال الشمالية. ثم عد إلى كلارا.": [
+  "Visit the most beautiful places in the village: the harbour, the church, the waterfall and the bench on the northern hills. Then return to Clara.",
+  "村で一番美しい場所を訪ねよう：港、教会、滝、北の丘のベンチ。それからクララのもとへ戻ろう。"
+ ],
+ "سرّ الحدّاد": [
+  "The Blacksmith's Secret",
+  "鍛冶屋の秘密"
+ ],
+ "أحضر الصندوق الحديدي من المزرعة المهجورة إلى لايف.": [
+  "Bring the iron chest from the abandoned farm to Leif.",
+  "廃農場の鉄の箱をレイフに届けよう。"
+ ],
+ "سلّم رسالة الأب إينار إلى ساعي البريد أولافور عند الطريق الغربي.": [
+  "Deliver Father Einar's letter to Ólafur the postman on the western road.",
+  "エイナル神父の手紙を西の道の郵便配達オーラヴルに届けよう。"
+ ],
+ "حطام السفينة": [
+  "The Shipwreck",
+  "難破船"
+ ],
+ "ابحث في حطام السفينة على الساحل الشرقي ثم عد إلى بيورن.": [
+  "Search the shipwreck on the eastern coast, then return to Bjorn.",
+  "東の海岸の難破船を調べ、ビョルンのもとへ戻ろう。"
+ ],
+ "عمل يومي: الماشية": [
+  "Daily job: livestock",
+  "毎日の仕事：家畜"
+ ],
+ "أطعم أغنام غونار مرة كل يوم مقابل أربع كرونات.": [
+  "Feed Gunnar's sheep once a day for four krónur.",
+  "一日一回グンナルの羊に餌をやって4クローナ。"
+ ],
+ "قصر فخم... كان مهجورًا منذ سنوات. الباب مقفل.": [
+  "A grand house... it stood empty for years. The door is locked.",
+  "立派な屋敷……何年も空き家だった。扉には鍵がかかっている。"
+ ],
+ "السيد إلياس رحل. لا أحد يدخل القصر بعد الآن.": [
+  "Master Elias is gone. No one enters the manor any more.",
+  "エリアス様は去られました。もう誰も屋敷には入りません。"
+ ],
+ "يقترب غيديون من الباب بحذر. ضوء خافت يتسلّل من بين الألواح...": [
+  "Gideon approaches the door carefully. A faint light slips between the boards...",
+  "ギデオンは慎重に扉へ近づく。板の隙間からかすかな光が漏れている……"
+ ],
+ "إلياس؟ أهذا أنت؟... هل أحضرت الصبي؟": [
+  "Elias? Is that you?... Did you bring the boy?",
+  "エリアスか？……あの子を連れてきたのか？"
+ ],
+ "تجمّد غيديون في مكانه. صوت رجل عجوز... صوت يعرفه من مكان ما.": [
+  "Gideon freezes. An old man's voice... a voice he knows from somewhere.",
+  "ギデオンは凍りついた。老人の声……どこかで聞いたことのある声だ。"
+ ],
+ "عاد غيديون إلى البيت قبل الفجر، والصوت لا يفارق رأسه.": [
+  "Gideon returned home before dawn, the voice still ringing in his head.",
+  "ギデオンは夜明け前に家へ戻った。あの声が頭から離れない。"
+ ],
+ "ليس الآن... إلياس قد يراني.": [
+  "Not now... Elias might see me.",
+  "今はだめだ……エリアスに見られる。"
+ ],
+ "قبل أن أطرق الباب... لأنظر من النافذة الصغيرة على اليسار أولًا.": [
+  "Before I knock... let me look through the little window on the left first.",
+  "ノックする前に……まず左の小さな窓からのぞいてみよう。"
+ ],
+ "الباب مقفل بقفل جديد لامع، مع أن كل ما حوله صدئ ومهجور. غريب.": [
+  "The door is fastened with a shiny new lock, though everything around it is rusty and abandoned. Strange.",
+  "扉にはぴかぴかの新しい錠。周りはすべて錆びて荒れ果てているのに。妙だ。"
+ ],
+ "حظيرة المزرعة المهجورة مقفلة بقفل جديد.": [
+  "The abandoned farm's barn is locked with a new lock.",
+  "廃農場の納屋に新しい錠がかけられている。"
+ ],
+ "أهلًا بك في متجري! بضائع وصلت للتو من بيرغن وكوبنهاغن.": [
+  "Welcome to my shop! Goods just in from Bergen and Copenhagen.",
+  "いらっしゃい！ベルゲンとコペンハーゲンから品物が届いたところだ。"
+ ],
+ "باب الكنيسة مغلق الآن. الأب إينار يقف في الخارج عادة.": [
+  "The church door is closed now. Father Einar usually stands outside.",
+  "教会の扉は今は閉まっている。エイナル神父はたいてい外にいる。"
+ ],
+ "رائحة الأعشاب المجففة تفوح من بيت أستريد. لا أحد في الداخل.": [
+  "The smell of dried herbs drifts from Astrid's house. No one is inside.",
+  "アストリッドの家から乾いた薬草の香りが漂う。中には誰もいない。"
+ ],
+ "بيت بيورن ذو السقف العشبي. بيورن في الميناء كالعادة.": [
+  "Bjorn's turf-roofed house. Bjorn is at the harbour as usual.",
+  "ビョルンの芝屋根の家。ビョルンはいつものように港にいる。"
+ ],
+ "بيت رونا. أسمع صوت مقصّ في الداخل.": [
+  "Runa's house. I can hear scissors inside.",
+  "ルーナの家。中から鋏の音が聞こえる。"
+ ],
+ "مستودع شركة التجارة. البضائع تُسلَّم عند الباب الجانبي.": [
+  "The trading company's warehouse. Goods are delivered at the side door.",
+  "交易会社の倉庫。荷は横の扉で受け渡しする。"
+ ],
+ "خذ الحطب": [
+  "Take firewood",
+  "薪を取る"
+ ],
+ "قطّع الحطب": [
+  "Chop wood",
+  "薪を割る"
+ ],
+ "اصطد": [
+  "Fish",
+  "釣る"
+ ],
+ "أصلح": [
+  "Repair",
+  "直す"
+ ],
+ "نَم": [
+  "Sleep",
+  "眠る"
+ ],
+ "احمل صندوقًا": [
+  "Carry a crate",
+  "木箱を運ぶ"
+ ],
+ "سلّم الصندوق": [
+  "Deliver the crate",
+  "木箱を届ける"
+ ],
+ "تسوّق": [
+  "Shop",
+  "買い物"
+ ],
+ "افحص المعطف": [
+  "Examine the coat",
+  "コートを調べる"
+ ],
+ "جهّز القارب": [
+  "Ready the boat",
+  "船を準備する"
+ ],
+ "ساعد لايف": [
+  "Help Leif",
+  "レイフを手伝う"
+ ],
+ "اعمل في الحديقة": [
+  "Work in the garden",
+  "庭仕事をする"
+ ],
+ "افحص الخزانة": [
+  "Examine the cabinet",
+  "戸棚を調べる"
+ ],
+ "رتّب المكتب": [
+  "Tidy the desk",
+  "机を片付ける"
+ ],
+ "افحص اللوح": [
+  "Examine the board",
+  "床板を調べる"
+ ],
+ "افحص البوابة": [
+  "Examine the gate",
+  "門を調べる"
+ ],
+ "انظر من النافذة": [
+  "Look through the window",
+  "窓からのぞく"
+ ],
+ "افحص المنجم": [
+  "Examine the mine",
+  "鉱山を調べる"
+ ],
+ "أطعم الأغنام": [
+  "Feed the sheep",
+  "羊に餌をやる"
+ ],
+ "ابحث في الحطام": [
+  "Search the wreck",
+  "難破船を調べる"
+ ],
+ "احمل الصندوق": [
+  "Carry the chest",
+  "箱を運ぶ"
+ ],
+ "غيديون... استيقظ يا بنيّ. الشمس أشرقت منذ ساعة.": [
+  "Gideon... wake up, son. The sun rose an hour ago.",
+  "ギデオン……起きなさい。もう一時間も前に日が昇ったわよ。"
+ ],
+ "صباح الخير يا أمي. كان المطر يتسرّب من السقف طوال الليل.": [
+  "Good morning, Mother. The rain was leaking through the roof all night.",
+  "おはよう、母さん。一晩中、屋根から雨漏りしてたね。"
+ ],
+ "وضعتُ الدلو تحت الشقّ كالعادة... لكن ليس هذا ما يقلقني.": [
+  "I put the bucket under the crack as usual... but that's not what worries me.",
+  "いつものように割れ目の下にバケツを置いたわ……でも心配なのはそれじゃないの。"
+ ],
+ "وصلت رسالة أخرى من صاحب الأرض. يطالبنا بالدين كاملًا قبل نهاية الشهر.": [
+  "Another letter came from the landlord. He wants the whole debt before the end of the month.",
+  "地主からまた手紙が来たの。月末までに借金を全部払えって。"
+ ],
+ "سأعمل أكثر يا أمي. سأجد المال، أعدك.": [
+  "I'll work harder, Mother. I'll find the money, I promise.",
+  "もっと働くよ、母さん。お金は必ず何とかする、約束する。"
+ ],
+ "أعرف يا بنيّ... أبوك كان سيفخر بك.": [
+  "I know, son... your father would have been proud of you.",
+  "わかってるわ……お父さんもきっとあなたを誇りに思ったでしょう。"
+ ],
+ "بيورن يحتاج من يساعده في تجهيز قاربه، وسيغريد تنتظر السمك في النُّزل.": [
+  "Bjorn needs someone to help ready his boat, and Sigrid is waiting for fish at the inn.",
+  "ビョルンが船の準備に人手を欲しがってるし、シグリッドが宿で魚を待ってるわ。"
+ ],
+ "ونحتاج حطبًا للمدفأة... والسياج خلف البيت انكسر مرة أخرى.": [
+  "And we need firewood for the stove... and the fence behind the house is broken again.",
+  "それに暖炉の薪もいるし……家の裏の柵がまた壊れたの。"
+ ],
+ "وأنا سأرسم القرية كلها اليوم! حتى البحر!": [
+  "And I'm going to paint the whole village today! Even the sea!",
+  "わたしは今日、村じゅうを描くの！海もよ！"
+ ],
+ "ارسميها جميلة يا كلارا. سأعود قبل المساء.": [
+  "Paint it beautiful, Clara. I'll be back before evening.",
+  "きれいに描いてね、クララ。夕方までには戻るよ。"
+ ],
+ "مهمة جديدة: أعمال الصباح": [
+  "New quest: Morning Chores",
+  "新しい目標：朝の仕事"
+ ],
+ "انظر يا غيديون! محلّ خياطة صغير... باسمي أنا.": [
+  "Look, Gideon! A little sewing shop... in my own name.",
+  "見て、ギデオン！小さな仕立て屋……わたしの名前のお店よ。"
+ ],
+ "لم أظن أنني سأبتسم هكذا مرة أخرى.": [
+  "I never thought I'd smile like this again.",
+  "またこんなふうに笑える日が来るなんて思わなかった。"
+ ],
+ "هذا لكِ يا أمي. شال صوفي، للأيام الباردة.": [
+  "This is for you, Mother. A wool shawl, for the cold days.",
+  "これ、母さんに。寒い日のための毛織りのショールだよ。"
+ ],
+ "يا ولدي... لم يكن عليك أن تنفق مالك عليّ.": [
+  "My boy... you didn't have to spend your money on me.",
+  "まあ……わたしのためにお金を使わなくてよかったのに。"
+ ],
+ "لكنه جميل. جميل حقًا.": [
+  "But it's lovely. Truly lovely.",
+  "でも素敵ね。本当に素敵。"
+ ],
+ "أحضرت خبزًا طازجًا.": [
+  "I brought fresh bread.",
+  "焼きたてのパンを持ってきたよ。"
+ ],
+ "بارك الله فيك. كلارا ستفرح.": [
+  "Bless you. Clara will be happy.",
+  "ありがとう。クララが喜ぶわ。"
+ ],
+ "انتهيت من كل شيء يا أمي. وأحضرت بعض المال.": [
+  "I've finished everything, Mother. And I brought some money.",
+  "全部終わったよ、母さん。少しお金も持ってきた。"
+ ],
+ "اجلس يا بنيّ... يجب أن أقول لك شيئًا.": [
+  "Sit down, son... I have to tell you something.",
+  "座って……話さなきゃいけないことがあるの。"
+ ],
+ "حتى لو عملنا كل يوم، لن نجمع المبلغ في الوقت المحدد.": [
+  "Even if we work every day, we won't raise the sum in time.",
+  "毎日働いても、期限までにお金は集まらないわ。"
+ ],
+ "ربما... ربما علينا أن نبيع البيت.": [
+  "Perhaps... perhaps we'll have to sell the house.",
+  "もしかしたら……この家を売らなきゃいけないかもしれない。"
+ ],
+ "لا. هذا بيت أبي. سأجد طريقة، أقسم لكِ.": [
+  "No. This is Father's house. I'll find a way, I swear to you.",
+  "だめだ。ここは父さんの家だ。何とかする、誓うよ。"
+ ],
+ "أنت تشبهه كثيرًا... اذهب ونَم. الغد يحمل همّه معه.": [
+  "You're so like him... go and sleep. Tomorrow brings its own worries.",
+  "本当にお父さんそっくりね……もう寝なさい。明日のことは明日考えましょう。"
+ ],
+ "اذهب إلى سريرك لتنام": [
+  "Go to your bed to sleep",
+  "ベッドで眠ろう"
+ ],
+ "أحضرت الحطب.": [
+  "I brought the firewood.",
+  "薪を持ってきたよ。"
+ ],
+ "شكرًا يا غيديون. الليلة لن نشعر بالبرد.": [
+  "Thank you, Gideon. We won't be cold tonight.",
+  "ありがとう、ギデオン。今夜は寒くないわね。"
+ ],
+ "بيورن في الميناء، وسيغريد في النُّزل. والحطب عند كومة الخشب خلف البيت.": [
+  "Bjorn is at the harbour and Sigrid at the inn. The firewood is by the woodpile behind the house.",
+  "ビョルンは港、シグリッドは宿よ。薪は家の裏の薪の山にあるわ。"
+ ],
+ "الجميع يتحدثون عن عربة فخمة وصلت إلى الساحة! اذهب وانظر.": [
+  "Everyone is talking about a fine carriage that arrived in the square! Go and see.",
+  "広場に立派な馬車が来たって、みんな噂してるわ！見てきなさい。"
+ ],
+ "إلياس... ابن عمّك. كان صبيًا نحيلًا حين غادر.": [
+  "Elias... your cousin. He was a skinny boy when he left.",
+  "エリアス……あなたのいとこよ。出ていった時はやせっぽちの男の子だった。"
+ ],
+ "أبوه إدموند كان رجلًا متكبّرًا وطموحًا. غادر القرية بعد شجار مرير مع أبيك.": [
+  "His father Edmund was a proud, ambitious man. He left the village after a bitter quarrel with your father.",
+  "父親のエドマンドは誇り高くて野心家だった。あなたのお父さんとひどく言い争って村を出ていったの。"
+ ],
+ "لم يخبرني أبوك قط عن سبب الشجار. هناك أسرار في هذه العائلة لم يشرحها أحد.": [
+  "Your father never told me what the quarrel was about. There are secrets in this family no one ever explained.",
+  "お父さんは喧嘩の理由を一度も話してくれなかった。この家族には誰も説明しなかった秘密があるのよ。"
+ ],
+ "أمي: إدموند غادر القرية بعد شجار مرير مع أبي. لا أحد يعرف السبب.": [
+  "Mother: Edmund left the village after a bitter quarrel with Father. No one knows why.",
+  "母さん：エドマンドは父さんとひどく言い争って村を出た。理由は誰も知らない。"
+ ],
+ "إلياس دفع ديوننا وأصلح السقف... أنا ممتنة له.": [
+  "Elias paid our debts and fixed the roof... I'm grateful to him.",
+  "エリアスが借金を払って屋根も直してくれた……感謝してるわ。"
+ ],
+ "لكن شيئًا في عينيه يقلقني. كن حذرًا يا بنيّ.": [
+  "But something in his eyes worries me. Be careful, son.",
+  "でもあの目つきが気になるの。気をつけなさい。"
+ ],
+ "أين تذهب كل يوم يا غيديون؟ أراك شاردًا. أيًّا كان ما تبحث عنه، عُد إلينا سالمًا.": [
+  "Where do you go every day, Gideon? You look lost in thought. Whatever you're looking for, come back to us safe.",
+  "毎日どこへ行ってるの、ギデオン？考え込んでいるみたい。何を探しているにせよ、無事に帰ってきてね。"
+ ],
+ "باع هنريك ثلاث لوحات من لوحاتي! ثلاث!": [
+  "Henrik sold three of my paintings! Three!",
+  "ヘンリクさんがわたしの絵を三枚も売ったの！三枚よ！"
+ ],
+ "سأرسمك أنت والعم إدموند أمام البيت. لا تتحرّك!": [
+  "I'll paint you and Uncle Edmund in front of the house. Don't move!",
+  "お兄ちゃんとエドマンドおじさんを家の前で描くね。動かないで！"
+ ],
+ "انظري ماذا أحضرت لك.": [
+  "Look what I brought you.",
+  "ほら、何を持ってきたと思う？"
+ ],
+ "ألوان حقيقية؟! من الخارج؟! أنت أفضل أخ في آيسلندا كلها!": [
+  "Real paints?! From abroad?! You're the best brother in all of Iceland!",
+  "本物の絵の具？！外国の？！アイスランドで一番のお兄ちゃんだね！"
+ ],
+ "زرت الأماكن الأربعة: الميناء، والكنيسة، والشلال، والتلال. وحفظت كل تفصيلة لكِ.": [
+  "I visited all four places: the harbour, the church, the waterfall and the hills. I remembered every detail for you.",
+  "四つの場所を全部回ったよ：港、教会、滝、そして丘。細かいところまで全部覚えてきた。"
+ ],
+ "إذن احكِ لي! لون الماء؟ شكل الغيوم فوق الكنيسة؟": [
+  "Then tell me! The colour of the water? The shape of the clouds over the church?",
+  "じゃあ教えて！水の色は？教会の上の雲の形は？"
+ ],
+ "يصف غيديون كل منظر بالتفصيل، وكلارا ترسم بسرعة وعيناها تلمعان.": [
+  "Gideon describes every view in detail, and Clara paints quickly, her eyes shining.",
+  "ギデオンが一つ一つの景色を詳しく語り、クララは目を輝かせながら素早く描いていく。"
+ ],
+ "انتهيت! سنعلّق اللوحات في بيتنا. ليصبح جميلًا مثل القرية.": [
+  "Done! We'll hang the paintings in our house. So it's as beautiful as the village.",
+  "できた！絵をうちに飾ろう。村みたいにきれいな家になるように。"
+ ],
+ "عُلِّقت لوحات كلارا في البيت": [
+  "Clara's paintings now hang in the house",
+  "クララの絵が家に飾られた"
+ ],
+ "ما هذه الرسالة؟ أرني!... هذا الرمز في الزاوية!": [
+  "What's this letter? Show me!... That symbol in the corner!",
+  "その手紙なに？見せて！……隅にあるその印！"
+ ],
+ "رأيته من قبل! محفورًا على باب الحظيرة الحمراء الكبيرة خلف التلال الشرقية. رسمته الصيف الماضي.": [
+  "I've seen it before! Carved on the door of the big red barn beyond the eastern hills. I drew it last summer.",
+  "前に見たことある！東の丘の向こうの大きな赤い納屋の扉に彫ってあった。去年の夏に描いたの。"
+ ],
+ "الحظيرة... إذن الرسالة والحظيرة مرتبطتان.": [
+  "The barn... so the letter and the barn are connected.",
+  "納屋……つまり手紙と納屋はつながっているんだ。"
+ ],
+ "كلارا: الرمز على رسالة إدموند محفور أيضًا على باب الحظيرة الشرقية.": [
+  "Clara: the symbol on Edmund's letter is also carved on the eastern barn's door.",
+  "クララ：エドマンドの手紙の印は東の納屋の扉にも彫られている。"
+ ],
+ "غيديون! أريد أن أرسم أجمل أماكن القرية، لكن أمي لا تسمح لي بالذهاب بعيدًا وحدي.": [
+  "Gideon! I want to paint the most beautiful places in the village, but Mother won't let me go far alone.",
+  "ギデオン！村で一番きれいな場所を描きたいのに、母さんが一人で遠くへ行かせてくれないの。"
+ ],
+ "هل تزور الأماكن عني وتخبرني كيف تبدو؟ الميناء، والكنيسة، والشلال، والمقعد فوق التلال الشمالية!": [
+  "Will you visit them for me and tell me what they look like? The harbour, the church, the waterfall and the bench on the northern hills!",
+  "わたしの代わりに行って、どんな景色か教えてくれる？港、教会、滝、それに北の丘のベンチ！"
+ ],
+ "اتفقنا يا رسّامتي الصغيرة.": [
+  "It's a deal, my little painter.",
+  "いいとも、小さな画家さん。"
+ ],
+ "مهمة جانبية: لوحات كلارا": [
+  "Side quest: Clara's Paintings",
+  "サイドクエスト：クララの絵"
+ ],
+ "هل زرت الأماكن الأربعة؟ زرت $views منها حتى الآن... لا تنسَ أيًا منها!": [
+  "Have you visited the four places? You've seen $views so far... don't forget any of them!",
+  "四つの場所に行った？今のところ$viewsか所……忘れないでね！"
+ ],
+ "أرسم البحر! لكن الأزرق عندي لا يكفي أبدًا...": [
+  "I'm painting the sea! But I never have enough blue...",
+  "海を描いてるの！でも青がいつも足りないの……"
+ ],
+ "ابن عمّنا إلياس لديه عربة زرقاء وحصان أسود! ربما جاء بالسحر إلى حياتنا!": [
+  "Our cousin Elias has a blue carriage and a black horse! Maybe he brought magic into our lives!",
+  "いとこのエリアスは青い馬車と黒い馬を持ってるの！わたしたちの暮らしに魔法を持ってきたのかも！"
+ ],
+ "أنت متعب يا غيديون. هل تريد أن أرسمك وأنت نائم؟": [
+  "You look tired, Gideon. Shall I paint you while you sleep?",
+  "疲れてるね、ギデオン。寝てるところを描いてあげようか？"
+ ],
+ "لا وقت للنوم الآن.": [
+  "No time for sleep now.",
+  "今は眠っている場合じゃない。"
+ ],
+ "يوم طويل... غدًا سأجد طريقة.": [
+  "A long day... tomorrow I'll find a way.",
+  "長い一日だった……明日こそ方法を見つける。"
+ ],
+ "في تلك الليلة، بينما كانت هرافنفيك نائمة،\nتردّد على الطريق صوت عجلات عربة تقترب من القرية...": [
+  "That night, while Hrafnvik slept,\nthe sound of carriage wheels echoed along the road as they approached the village...",
+  "その夜、フラフンヴィークが眠る中、\n村へ近づく馬車の車輪の音が道に響いた……"
+ ],
+ "«مكان كان يجب أن يبقى منسيًّا»... ماذا كان يقصد؟": [
+  "\"A place that should have remained forgotten\"... what did he mean?",
+  "「忘れられたままであるべき場所」……どういう意味だ？"
+ ],
+ "لم ينم غيديون كثيرًا تلك الليلة.": [
+  "Gideon slept little that night.",
+  "その夜、ギデオンはほとんど眠れなかった。"
+ ],
+ "لم يجدوا جثته أبدًا... وأبي كان يظن أنه نجا.": [
+  "They never found his body... and Father thought he had survived.",
+  "遺体は見つからなかった……そして父さんは生きていると思っていた。"
+ ],
+ "بدأ غيديون يشكّ في قصة موت عمّه.": [
+  "Gideon began to doubt the story of his uncle's death.",
+  "ギデオンはおじの死の話を疑い始めた。"
+ ],
+ "غدًا يأتي إلياس بالعمّال... وغدًا تنتهي الأسرار.": [
+  "Tomorrow Elias comes with the workers... and tomorrow the secrets end.",
+  "明日、エリアスが作業員を連れてくる……そして明日、秘密は終わる。"
+ ],
+ "قبل الفجر، كانت الريح تهبّ من البحر باردة وحادة.": [
+  "Before dawn, the wind blew cold and sharp from the sea.",
+  "夜明け前、海から冷たく鋭い風が吹いていた。"
+ ],
+ "ليس قبل العشاء. أمي تنتظرني.": [
+  "Not before supper. Mother is waiting for me.",
+  "夕食の前はだめだ。母さんが待ってる。"
+ ],
+ "هل أنام حتى الصباح؟": [
+  "Sleep until morning?",
+  "朝まで眠る？"
+ ],
+ "نعم، أنام": [
+  "Yes, sleep",
+  "はい、眠る"
+ ],
+ "ليس بعد": [
+  "Not yet",
+  "まだだ"
+ ],
+ "ما زال الوقت مبكرًا على النوم. هناك عمل ينتظرني.": [
+  "It's still too early to sleep. There's work waiting.",
+  "まだ眠るには早い。仕事が待っている。"
+ ],
+ "حزمة حطب للمدفأة... ثقيلة لكنها تكفي الليلة.": [
+  "A bundle of firewood for the stove... heavy, but enough for tonight.",
+  "暖炉用の薪の束……重いけど、今夜はこれで足りる。"
+ ],
+ "كومة الحطب. إن أردت المزيد للبيع، فعليّ أن أقطّعه عند الجذع.": [
+  "The woodpile. If I want more to sell, I'll have to chop it at the block.",
+  "薪の山だ。売る分が欲しければ、割り台で割らないと。"
+ ],
+ "لنقطّع بعض الحطب. سيغريد تشتريه دائمًا.": [
+  "Let's chop some wood. Sigrid always buys it.",
+  "薪を割ろう。シグリッドがいつも買ってくれる。"
+ ],
+ "الخشب عنيد اليوم...": [
+  "The wood is stubborn today...",
+  "今日の木は手ごわい……"
+ ],
+ "السياج المكسور. سأحتاج إلى مطرقتي وبعض المسامير.": [
+  "The broken fence. I'll need my hammer and a few nails.",
+  "壊れた柵だ。ハンマーと釘が要るな。"
+ ],
+ "أصلحت السياج": [
+  "You mended the fence",
+  "柵を直した"
+ ],
+ "انزلقت المطرقة... حاول مرة أخرى": [
+  "The hammer slipped... try again",
+  "ハンマーが滑った……もう一度"
+ ],
+ "الحبال متشابكة كشبكة عنكبوت. لنبدأ.": [
+  "The ropes are tangled like a spider's web. Let's begin.",
+  "ロープがクモの巣みたいに絡まってる。始めよう。"
+ ],
+ "انفلت الحبل... حاول مرة أخرى": [
+  "The rope slipped away... try again",
+  "ロープが外れた……もう一度"
+ ],
+ "قارب بيورن. يجب أن أتحدث إليه أولًا.": [
+  "Bjorn's boat. I should talk to him first.",
+  "ビョルンの船だ。まず本人と話さないと。"
+ ],
+ "قارب صغير متين. بيورن يعتني به كأنه ابنه.": [
+  "A small, sturdy boat. Bjorn looks after it like a son.",
+  "小さくて丈夫な船。ビョルンは息子のように大事にしている。"
+ ],
+ "أحسنت يا فتى! يداك مثل يدي أبيك.": [
+  "Well done, lad! You've got your father's hands.",
+  "よくやった、坊主！親父さん譲りの腕だな。"
+ ],
+ "خذ هذه الصنّارة. تعال اصطد متى شئت، وسيغريد تشتري السمك.": [
+  "Take this rod. Come and fish whenever you like; Sigrid buys the catch.",
+  "この竿をやろう。好きな時に釣りに来い。獲れた魚はシグリッドが買ってくれる。"
+ ],
+ "قارب جديد يا غيديون! بأشرعة بيضاء كالثلج!": [
+  "A new boat, Gideon! With sails white as snow!",
+  "新しい船だ、ギデオン！雪みたいに白い帆だぞ！"
+ ],
+ "أبوك كان سيضحك حتى تدمع عيناه. لقد بنيتَ حلمه.": [
+  "Your father would have laughed till he cried. You've built his dream.",
+  "親父さんなら涙が出るほど笑っただろうな。お前はあいつの夢を形にしたんだ。"
+ ],
+ "غيديون! جئت في وقتك يا فتى.": [
+  "Gideon! Just in time, lad.",
+  "ギデオン！ちょうどいいところに来たな。"
+ ],
+ "خذ سلّة السمك هذه إلى سيغريد في النُّزل. ستدفع لك أربع كرونات.": [
+  "Take this basket of fish to Sigrid at the inn. She'll pay you four krónur.",
+  "この魚のかごを宿屋のシグリッドに持っていってくれ。4クローナ払ってくれる。"
+ ],
+ "وحين تفرغ، ساعدني في تجهيز قاربي الصغير قرب الرصيف الغربي. الحبال متشابكة تمامًا.": [
+  "And when you're free, help me ready my little boat by the west pier. The ropes are a complete tangle.",
+  "手が空いたら、西の桟橋の小舟の準備を手伝ってくれ。ロープがぐちゃぐちゃなんだ。"
+ ],
+ "بيورن... ماذا تعرف عن عمّي إدموند؟": [
+  "Bjorn... what do you know about my uncle Edmund?",
+  "ビョルン……エドマンドおじさんのことを何か知ってる？"
+ ],
+ "إدموند... كان يملك سفينة تجارية، أسرع سفينة بين آيسلندا وموانئ الشمال.": [
+  "Edmund... he owned a trading ship, the fastest between Iceland and the northern ports.",
+  "エドマンドか……交易船を持っていた。アイスランドと北の港を結ぶ一番速い船だった。"
+ ],
+ "في خريف ذلك العام، خرجت السفينة إلى البحر ولم تعد. عاصفة رهيبة.": [
+  "That autumn the ship put out to sea and never came back. A terrible storm.",
+  "その年の秋、船は海に出て二度と戻らなかった。ひどい嵐だった。"
+ ],
+ "قالوا إنه غرق. لكن لم يجدوا جثته أبدًا.": [
+  "They said he drowned. But they never found his body.",
+  "溺れたと言われた。だが遺体は見つからなかった。"
+ ],
+ "وأبوك... رحمه الله، كان يقول دائمًا: «إدموند لم يمت. أخي أعند من أن يغرق.»": [
+  "And your father, God rest him, always said: \"Edmund isn't dead. My brother is too stubborn to drown.\"",
+  "そしてお前の親父さんは、安らかに眠れ、いつも言っていた。「エドマンドは死んでない。あいつは溺れるには頑固すぎる」とな。"
+ ],
+ "لم يجدوا جثته...": [
+  "They never found his body...",
+  "遺体は見つからなかった……"
+ ],
+ "بيورن: سفينة إدموند غرقت في عاصفة ولم يُعثر على جثته أبدًا.": [
+  "Bjorn: Edmund's ship sank in a storm and his body was never found.",
+  "ビョルン：エドマンドの船は嵐で沈み、遺体は見つからなかった。"
+ ],
+ "كان أبي يؤمن بأن إدموند نجا من الغرق.": [
+  "Father believed Edmund survived the wreck.",
+  "父さんはエドマンドが難破から生き延びたと信じていた。"
+ ],
+ "عد إلى البيت ونَم": [
+  "Go home and sleep",
+  "家に帰って眠ろう"
+ ],
+ "بوصلتي! أين وجدتها؟": [
+  "My compass! Where did you find it?",
+  "わしの羅針盤！どこで見つけた？"
+ ],
+ "أتعرف؟ هذه البوصلة كانت لأبيك. أعطاني إياها حين حلم بأن يبني تجارة صيد هنا في هرافنفيك.": [
+  "You know? This compass was your father's. He gave it to me when he dreamed of building a fishing business here in Hrafnvik.",
+  "知ってるか？この羅針盤はお前の親父さんのものだった。ここフラフンヴィークで漁の商売を興すと夢見ていた頃にくれたんだ。"
+ ],
+ "كان يقول: «لن يضطر أحد في هذه القرية إلى الرحيل ليعيش.»": [
+  "He used to say: \"No one in this village should have to leave to make a living.\"",
+  "あいつはよく言っていた。「この村の誰も、生きるために出ていかなくていいようにしたい」とな。"
+ ],
+ "خذ هذه الصورة القديمة، وهذه الصنّارة. كانت له أيضًا.": [
+  "Take this old photograph, and this rod. They were his too.",
+  "この古い写真と、この竿を持っていけ。これもあいつのものだ。"
+ ],
+ "حلم أبي ببناء تجارة صيد في هرافنفيك.": [
+  "Father dreamed of building a fishing business in Hrafnvik.",
+  "父さんはフラフンヴィークで漁業の商売を興す夢を持っていた。"
+ ],
+ "آه، قبل أن أنسى... أضعت بوصلتي النحاسية القديمة قرب الرصيف الغربي.": [
+  "Ah, before I forget... I lost my old brass compass near the west pier.",
+  "ああ、忘れるところだった……西の桟橋の近くで古い真鍮の羅針盤を失くしたんだ。"
+ ],
+ "إن رأيت شيئًا يلمع بين الحجارة، فهو لي.": [
+  "If you see something glinting between the stones, it's mine.",
+  "石の間で何か光るものを見たら、それはわしのだ。"
+ ],
+ "مهمة جانبية: البوصلة الضائعة": [
+  "Side quest: The Lost Compass",
+  "サイドクエスト：失くした羅針盤"
+ ],
+ "هذه... علامة شركة إدموند! هذا خشب سفينته، أنا متأكد.": [
+  "This... is the mark of Edmund's company! This is timber from his ship, I'm sure of it.",
+  "これは……エドマンドの会社の印だ！あいつの船の材木に間違いない。"
+ ],
+ "إذن البحر لم يأخذ كل شيء. ربما أعاد أكثر مما نظن.": [
+  "So the sea didn't take everything. Perhaps it gave back more than we think.",
+  "海はすべてを奪ったわけじゃなかったのか。思ったより多くを返したのかもしれん。"
+ ],
+ "حطام الساحل الشرقي هو سفينة إدموند نفسها.": [
+  "The wreck on the eastern coast is Edmund's own ship.",
+  "東の海岸の難破船はエドマンド自身の船だ。"
+ ],
+ "سمعت أن الجسر الشرقي فُتح. على الساحل خلفه بقايا سفينة قديمة جرفها البحر قبل سنين.": [
+  "I hear the eastern bridge is open. On the coast beyond lie the remains of an old ship the sea threw up years ago.",
+  "東の橋が開いたそうだな。その先の海岸に、何年も前に打ち上げられた古い船の残骸がある。"
+ ],
+ "إن مررت بها، فابحث عن علامات الشحنة على الخشب.": [
+  "If you pass by, look for cargo marks on the timber.",
+  "通りかかったら、材木に積荷の印がないか探してみろ。"
+ ],
+ "مهمة جانبية: حطام السفينة": [
+  "Side quest: The Shipwreck",
+  "サイドクエスト：難破船"
+ ],
+ "إلياس ثري؟ أبوه إدموند كان يحب المال أكثر من البحر نفسه.": [
+  "Elias rich? His father Edmund loved money more than the sea itself.",
+  "エリアスが金持ち？あいつの親父のエドマンドは海より金が好きだった。"
+ ],
+ "لكن من أين جاء الابن بكل هذه الثروة؟ التجارة لا تُغني أحدًا بهذه السرعة.": [
+  "But where did the son get all that wealth? Trade doesn't make anyone rich that fast.",
+  "だが息子はどこであんな大金を手に入れた？商売でそんなに早く金持ちにはなれん。"
+ ],
+ "بيورن يتساءل: كيف أصبح إلياس ثريًا بهذه السرعة؟": [
+  "Bjorn wonders: how did Elias get rich so quickly?",
+  "ビョルンの疑問：エリアスはどうしてそんなに早く金持ちになったのか？"
+ ],
+ "القارب الصغير قرب الرصيف الغربي. لا تدع الحبال تهزمك!": [
+  "The little boat is by the west pier. Don't let the ropes beat you!",
+  "小舟は西の桟橋のそばだ。ロープに負けるなよ！"
+ ],
+ "بعض الناس يقولون إن أباك جلب الفقر لعائلتكم. لا تصدّقهم. كان رجلًا شريفًا.": [
+  "Some people say your father brought poverty on your family. Don't believe them. He was an honest man.",
+  "お前の親父が家族を貧しくしたと言う連中もいる。信じるな。あいつは正直な男だった。"
+ ],
+ "نصف القرية صارت تمدح آل آشفورد فجأة. المال يغيّر الألسنة بسرعة.": [
+  "Half the village suddenly praises the Ashfords. Money changes tongues quickly.",
+  "村の半分が急にアシュフォード家を褒め出した。金は舌をすぐに変えるもんだ。"
+ ],
+ "البحر هادئ اليوم. لكن البحر الهادئ يخبّئ أشياء كثيرة يا فتى.": [
+  "The sea is calm today. But a calm sea hides many things, lad.",
+  "今日の海は穏やかだ。だが穏やかな海ほど多くを隠しているもんだ、坊主。"
+ ],
+ "النُّزل ممتلئ كل ليلة الآن! عمّال مستودعك يأكلون كالذئاب.": [
+  "The inn is full every night now! Your warehouse workers eat like wolves.",
+  "宿は毎晩満員よ！あなたの倉庫の人たち、狼みたいに食べるんだから。"
+ ],
+ "شكرًا لأنك أبقيت الأرض لأهلها يا غيديون.": [
+  "Thank you for keeping the land for its people, Gideon.",
+  "土地を村の人たちのために守ってくれてありがとう、ギデオン。"
+ ],
+ "سمك بيورن! في وقته تمامًا. خذ أجرك يا غيديون.": [
+  "Bjorn's fish! Right on time. Here's your pay, Gideon.",
+  "ビョルンの魚ね！ちょうどいいわ。お駄賃よ、ギデオン。"
+ ],
+ "وسمعت أن صاحب الأرض يضيّق عليكم... إن احتجتم شيئًا، فبابي مفتوح.": [
+  "And I hear the landlord is pressing you... if you need anything, my door is open.",
+  "地主に追い詰められてるって聞いたわ……何か要るなら、うちの扉はいつでも開いてるからね。"
+ ],
+ "سمك طازج؟ سأشتريه كله، أربع كرونات للسمكة.": [
+  "Fresh fish? I'll buy it all, four krónur a fish.",
+  "新鮮な魚？全部買うわ。一匹4クローナよ。"
+ ],
+ "حطب! المدفأة لا تشبع أبدًا. ثلاث كرونات للحزمة.": [
+  "Firewood! The stove is never satisfied. Three krónur a bundle.",
+  "薪ね！暖炉はいくらあっても足りないの。一束3クローナよ。"
+ ],
+ "سأخبرك بشيء، لكن لا تقل إنني من قاله.": [
+  "I'll tell you something, but don't say it came from me.",
+  "ひとつ教えてあげる。でも私から聞いたとは言わないで。"
+ ],
+ "ابن عمّك لم يصل البارحة. رأيته هنا قبل أسابيع، متخفيًّا بمعطف قديم.": [
+  "Your cousin didn't arrive yesterday. I saw him here weeks ago, hidden in an old coat.",
+  "あなたのいとこは昨日来たんじゃないわ。何週間も前に、古いコートで顔を隠してここにいたのを見たの。"
+ ],
+ "وكان يسأل عن سجلّات الأراضي القديمة. أي أرض تملكها عائلة آشفورد، ومن وقّع عليها.": [
+  "And he was asking about the old land records. Which land the Ashfords own, and who signed for it.",
+  "それに古い土地の記録のことを聞いてたわ。アシュフォード家がどの土地を持っていて、誰が署名したのかって。"
+ ],
+ "سيغريد: إلياس كان في القرية قبل أسابيع من «عودته» يسأل عن سجلّات الأراضي.": [
+  "Sigrid: Elias was in the village weeks before his \"return\", asking about land records.",
+  "シグリッド：エリアスは「帰郷」の何週間も前から村にいて、土地の記録について尋ねていた。"
+ ],
+ "عربة إلياس تخرج نحو الشرق في الليل، وتعود قبل الفجر. رأيتها من نافذتي.": [
+  "Elias's carriage heads east at night and comes back before dawn. I saw it from my window.",
+  "エリアスの馬車は夜になると東へ出ていって、夜明け前に戻ってくるの。窓から見たわ。"
+ ],
+ "سيغريد: عربة إلياس تتجه شرقًا في الليل.": [
+  "Sigrid: Elias's carriage heads east at night.",
+  "シグリッド：エリアスの馬車は夜に東へ向かう。"
+ ],
+ "أهلًا بك في النُّزل. إن كان معك سمك أو حطب، فأنا أشتري.": [
+  "Welcome to the inn. If you have fish or firewood, I'm buying.",
+  "宿へようこそ。魚か薪があれば買い取るわよ。"
+ ],
+ "حساء سمك ساخن بثلاث كرونات؟": [
+  "Hot fish soup for three krónur?",
+  "熱い魚のスープ、3クローナでどう？"
+ ],
+ "نعم، شكرًا": [
+  "Yes, thank you",
+  "はい、ありがとう"
+ ],
+ "دفّأك الحساء وأعاد إليك نشاطك": [
+  "The soup warms you and restores your energy",
+  "スープで体が温まり、元気が戻った"
+ ],
+ "لا، شكرًا": [
+  "No, thank you",
+  "いいえ、結構です"
+ ],
+ "رائحة الحساء رائعة... لكن جيبي فارغ.": [
+  "The soup smells wonderful... but my pockets are empty.",
+  "スープのいい匂い……でも財布は空っぽだ。"
+ ],
+ "وسّعت الورشة. صار عندي مساعدان، تخيّل!": [
+  "I've enlarged the workshop. I've got two apprentices now, imagine!",
+  "工房を広げたんだ。弟子が二人もいるんだぞ、信じられるか！"
+ ],
+ "لايف... هل تعرف كيف يُفتح قفل قديم دون مفتاحه؟": [
+  "Leif... do you know how to open an old lock without its key?",
+  "レイフ……鍵なしで古い錠を開ける方法を知ってる？"
+ ],
+ "...لماذا تسأل؟": [
+  "...Why do you ask?",
+  "……なぜ聞く？"
+ ],
+ "خزانة في مكتب إلياس. أظن أن فيها ما يخصّ عائلتي.": [
+  "A cabinet in Elias's study. I think there's something in it that belongs to my family.",
+  "エリアスの書斎の戸棚だ。家族のものが入っている気がする。"
+ ],
+ "إلياس... أتعرف؟ أصلحت له قفلًا كبيرًا قبل أسابيع. قفل حظيرة في المزرعة القديمة شرق النهر.": [
+  "Elias... you know what? I repaired a big lock for him a few weeks ago. A barn lock, on the old farm east of the river.",
+  "エリアスか……実はな、何週間か前にあいつの大きな錠を直したんだ。川の東の古い農場の納屋の錠だ。"
+ ],
+ "عمل غريب لمزرعة مهجورة. خذ هذا الخطّاف. أدخله وأدره ببطء حتى تسمع النقرة.": [
+  "Strange work for an abandoned farm. Take this hook. Put it in and turn it slowly until you hear the click.",
+  "廃農場にしては妙な仕事だった。このフックを持っていけ。差し込んで、カチッと鳴るまでゆっくり回すんだ。"
+ ],
+ "لايف أصلح لإلياس قفل حظيرة في المزرعة المهجورة شرق النهر.": [
+  "Leif repaired a barn lock for Elias at the abandoned farm east of the river.",
+  "レイフは川の東の廃農場の納屋の錠をエリアスのために直した。"
+ ],
+ "هذه الأدوات... أعرفها! أنا من أصلحها قبل خمسة عشر عامًا.": [
+  "These tools... I know them! I repaired them myself fifteen years ago.",
+  "この道具……見覚えがある！十五年前に俺が直したものだ。"
+ ],
+ "كانت لإدموند آشفورد. لكن بعضها جديد الاستعمال... كأن أحدًا استعملها هذا الشتاء.": [
+  "They belonged to Edmund Ashford. But some show fresh wear... as if someone used them this winter.",
+  "エドマンド・アシュフォードのものだった。だがいくつかは使ったばかりの跡がある……この冬に誰かが使ったみたいだ。"
+ ],
+ "خذ هذه. عصا صنعها إدموند لكشف المعادن المدفونة. ستجد بها أشياء لا تراها العين.": [
+  "Take this. A rod Edmund made for finding buried metal. You'll find things the eye can't see.",
+  "これを持っていけ。エドマンドが埋まった金属を探すために作った杖だ。目に見えないものが見つかるぞ。"
+ ],
+ "أدوات إدموند استُعملت هذا الشتاء.": [
+  "Edmund's tools were used this winter.",
+  "エドマンドの道具はこの冬に使われていた。"
+ ],
+ "بما أنك تذهب إلى المزرعة الشرقية... هناك صندوق حديدي قديم قرب الحظيرة.": [
+  "Since you're going to the eastern farm... there's an old iron chest near the barn.",
+  "東の農場へ行くなら……納屋の近くに古い鉄の箱がある。"
+ ],
+ "أحضره لي. أظن أنني أعرف صاحبه.": [
+  "Bring it to me. I think I know who owns it.",
+  "持ってきてくれ。持ち主に心当たりがある。"
+ ],
+ "مهمة جانبية: سرّ الحدّاد": [
+  "Side quest: The Blacksmith's Secret",
+  "サイドクエスト：鍛冶屋の秘密"
+ ],
+ "إلياس دفع لي ضعف أجري. لا أشتكي... لكن الرجل الذي يدفع أكثر مما يجب، يشتري شيئًا أكثر من العمل.": [
+  "Elias paid me double. I'm not complaining... but a man who pays more than he should is buying more than work.",
+  "エリアスは倍の手間賃を払った。文句はないが……払いすぎる男は仕事以上のものを買っているもんだ。"
+ ],
+ "إن كانت لديك ساعة فراغ، ساعدني عند السندان. أدفع ست كرونات.": [
+  "If you have an hour free, help me at the anvil. I pay six krónur.",
+  "一時間空いてるなら金床を手伝ってくれ。6クローナ払う。"
+ ],
+ "الحديد لا يكذب يا غيديون. إن طرقته جيدًا، صار ما تريد.": [
+  "Iron doesn't lie, Gideon. Strike it well and it becomes what you want.",
+  "鉄は嘘をつかない、ギデオン。うまく打てば望む形になる。"
+ ],
+ "أمسك المطرقة. اطرق حين أقول لك!": [
+  "Hold the hammer. Strike when I tell you!",
+  "ハンマーを持て。俺が言ったら打て！"
+ ],
+ "حاول غدًا مرة أخرى": [
+  "Try again tomorrow",
+  "また明日やってみよう"
+ ],
+ "يكفي لليوم. عد غدًا.": [
+  "Enough for today. Come back tomorrow.",
+  "今日はここまでだ。明日また来い。"
+ ],
+ "السندان ما زال دافئًا.": [
+  "The anvil is still warm.",
+  "金床はまだ温かい。"
+ ],
+ "الدخان لم يعد يتصاعد من المزرعة. الآن صارت مجرد أرض تنتظر من يزرعها.": [
+  "No more smoke rises from the farm. Now it's just land waiting for someone to sow it.",
+  "農場からもう煙は上がらない。今はただ、種をまく人を待つ土地だ。"
+ ],
+ "أعشاب برية! سأشتريها بثلاث كرونات للحزمة.": [
+  "Wild herbs! I'll buy them for three krónur a bundle.",
+  "野草ね！一束3クローナで買うわ。"
+ ],
+ "أستريد، أنتِ تعرفين التلال الشرقية أكثر من أي أحد.": [
+  "Astrid, you know the eastern hills better than anyone.",
+  "アストリッド、東の丘のことは誰よりも詳しいよね。"
+ ],
+ "أعرف كل عشبة فيها. لماذا؟": [
+  "I know every blade of grass there. Why?",
+  "草の一本一本まで知ってるわ。どうして？"
+ ],
+ "أبحث عن مزرعة مهجورة شرق النهر.": [
+  "I'm looking for an abandoned farm east of the river.",
+  "川の東にある廃農場を探してるんだ。"
+ ],
+ "المزرعة القديمة... منذ أسابيع أرى دخانًا يتصاعد منها في المساء. مزرعة مهجورة لا يتصاعد منها دخان.": [
+  "The old farm... for weeks I've seen smoke rising from it in the evenings. Abandoned farms don't smoke.",
+  "あの古い農場……何週間も、夕方になると煙が上がっているのを見たわ。廃農場から煙は出ないものよ。"
+ ],
+ "بوابة الجسر مربوطة بحبل وسلسلة صدئة. فككتها لك هذا الصباح. اعبر النهر واتبع الدرب القديم.": [
+  "The bridge gate is tied with rope and a rusty chain. I undid it for you this morning. Cross the river and follow the old track.",
+  "橋の門はロープと錆びた鎖で縛ってあったわ。今朝ほどいておいた。川を渡って古い道をたどって。"
+ ],
+ "أستريد: دخان يتصاعد من المزرعة المهجورة في المساء.": [
+  "Astrid: smoke rises from the abandoned farm in the evenings.",
+  "アストリッド：夕方、廃農場から煙が上がる。"
+ ],
+ "فُتحت بوابة الجسر الشرقي": [
+  "The eastern bridge gate is open",
+  "東の橋の門が開いた"
+ ],
+ "حصان إلياس الأسود يأكل من عشبي على طريق الشرق. ماذا يفعل ابن عمّك هناك؟": [
+  "Elias's black horse grazes my herbs on the eastern road. What is your cousin doing out there?",
+  "エリアスの黒い馬が東の道で私の薬草を食べてるの。あなたのいとこはあそこで何をしているのかしら？"
+ ],
+ "الأعشاب البنفسجية تنمو في كل مكان حول القرية. اقطفها وأحضرها لي، وتنبت من جديد كل صباح.": [
+  "Purple herbs grow all around the village. Pick them and bring them to me; they grow back every morning.",
+  "紫の薬草は村じゅうに生えているわ。摘んで持ってきて。毎朝また生えてくるから。"
+ ],
+ "إدموند جاء إلى الكنيسة أمس. جلس صامتًا ساعة كاملة، ثم بكى.": [
+  "Edmund came to the church yesterday. He sat in silence for a whole hour, then wept.",
+  "エドマンドが昨日教会に来ました。一時間黙って座り、それから泣いていました。"
+ ],
+ "بعض الجروح لا تُشفى إلا حين نسمح لها أن تُرى.": [
+  "Some wounds only heal once we allow them to be seen.",
+  "見られることを許して初めて癒える傷もあるのです。"
+ ],
+ "غيديون... سمعت أنك تسأل عن عمّك.": [
+  "Gideon... I hear you've been asking about your uncle.",
+  "ギデオン……おじさんのことを尋ねていると聞きました。"
+ ],
+ "في سجلّات الكنيسة شيء يحيّرني منذ سنين: إدموند آشفورد لم يُدفن قط. لا قبر، ولا جنازة.": [
+  "Something in the church records has puzzled me for years: Edmund Ashford was never buried. No grave, no funeral.",
+  "教会の記録に、何年も気になっていることがあります。エドマンド・アシュフォードは埋葬されていないのです。墓も葬儀もありません。"
+ ],
+ "لا أتّهم أحدًا دون دليل. لكن إن أردت المساعدة... خذ هذه الرسالة إلى أولافور، ساعي البريد على الطريق الغربي.": [
+  "I accuse no one without proof. But if you want to help... take this letter to Ólafur, the postman on the western road.",
+  "証拠もなく誰かを責めはしません。ですが手伝ってくれるなら……この手紙を西の道の郵便配達、オーラヴルに届けてください。"
+ ],
+ "إنها لصديق قديم لإدموند في بودير. ربما يعرف أكثر مما نعرف.": [
+  "It's for an old friend of Edmund's in Búðir. Perhaps he knows more than we do.",
+  "ブーズィルにいるエドマンドの旧友宛てです。私たちより多くを知っているかもしれません。"
+ ],
+ "الأب إينار: إدموند لم يُدفن قط. لا قبر ولا جنازة.": [
+  "Father Einar: Edmund was never buried. No grave and no funeral.",
+  "エイナル神父：エドマンドは埋葬されていない。墓も葬儀もない。"
+ ],
+ "مهمة جانبية: رسالة الكاهن": [
+  "Side quest: The Priest's Letter",
+  "サイドクエスト：神父の手紙"
+ ],
+ "تبرّع إلياس بمبلغ كبير للكنيسة. الكرم جميل يا بنيّ...": [
+  "Elias gave a large sum to the church. Generosity is a fine thing, my son...",
+  "エリアスは教会に多額の寄付をしました。寛大さは素晴らしいことです……"
+ ],
+ "لكنني لاحظت أنه لم يطلب صلاة واحدة على روح أبيه.": [
+  "But I noticed he never asked for a single prayer for his father's soul.",
+  "ですが、父親の魂のために祈ってほしいとは一度も言いませんでした。"
+ ],
+ "الأب إينار: إلياس لم يطلب صلاة واحدة على روح أبيه «المتوفّى».": [
+  "Father Einar: Elias never asked for a single prayer for his \"late\" father's soul.",
+  "エイナル神父：エリアスは「亡き」父の魂のための祈りを一度も頼まなかった。"
+ ],
+ "بارك الله صباحك يا غيديون. أمك امرأة قوية، وأنت تحمل الكثير على كتفيك.": [
+  "God bless your morning, Gideon. Your mother is a strong woman, and you carry a great deal on your shoulders.",
+  "良い朝を、ギデオン。お母さんは強い人です。そしてあなたは多くを背負っていますね。"
+ ],
+ "الحقيقة كالبذرة يا بنيّ. قد تُدفن طويلًا، لكنها تنبت دائمًا.": [
+  "Truth is like a seed, my son. It may stay buried a long time, but it always grows.",
+  "真実は種のようなものです。長く埋もれていても、必ず芽を出します。"
+ ],
+ "افتتحت محلّي أخيرًا! وأمّك تخيط معي كل صباح.": [
+  "I finally opened my shop! And your mother sews with me every morning.",
+  "ついにお店を開いたの！あなたのお母さんも毎朝一緒に縫ってくれてるわ。"
+ ],
+ "القماش! أخيرًا! سأخيط أول سترة في محلّي المستقبلي... لك أنت!": [
+  "The fabric! At last! I'll sew the first jacket of my future shop... for you!",
+  "布地！やっと！未来のお店の最初の上着を縫うわ……あなたのために！"
+ ],
+ "ومن الآن، لك خصم في كل ما تشتريه من هنريك. أخبرته أنك صديقي.": [
+  "And from now on you get a discount on everything at Henrik's. I told him you're my friend.",
+  "それにこれからはヘンリクの店で何でも割引よ。あなたは私の友達だって伝えたから。"
+ ],
+ "غيديون! أحلم بأن أفتح محلّ خياطة خاصًا بي، لكن القماش غالٍ جدًا.": [
+  "Gideon! I dream of opening my own sewing shop, but fabric is so expensive.",
+  "ギデオン！自分の仕立て屋を開くのが夢なんだけど、布がとても高いの。"
+ ],
+ "إلياس دفع لي مقدّمًا لأخيط ستائر قصره، فاشتريت قماشًا من هنريك. هل تحضره لي من عربته؟": [
+  "Elias paid me in advance to sew curtains for his manor, so I bought fabric from Henrik. Will you fetch it from his cart?",
+  "エリアスがお屋敷のカーテンを縫う前金をくれたから、ヘンリクから布を買ったの。荷車から取ってきてくれる？"
+ ],
+ "مهمة جانبية: حلم الخيّاطة": [
+  "Side quest: The Seamstress's Dream",
+  "サイドクエスト：お針子の夢"
+ ],
+ "مال إلياس يغيّر كل شيء! لأول مرة أستطيع أن أحلم بمحلّي.": [
+  "Elias's money changes everything! For the first time I can dream of my own shop.",
+  "エリアスのお金で何もかも変わるわ！初めて自分のお店を夢見られるの。"
+ ],
+ "لكن... لماذا يشتري كل هذا من أجل قرية صغيرة كهذه؟": [
+  "But... why is he buying all this for a village as small as ours?",
+  "でも……こんな小さな村のために、どうしてこんなに買い込むのかしら？"
+ ],
+ "أساعد أمك في الخياطة أحيانًا. إنها أمهر مني بكثير.": [
+  "I help your mother with the sewing sometimes. She's far more skilled than I am.",
+  "ときどきお母さんの縫い物を手伝ってるの。私よりずっと上手なのよ。"
+ ],
+ "طلبية رونا؟ مدفوعة مسبقًا. تفضّل.": [
+  "Runa's order? Already paid. Here you are.",
+  "ルーナの注文品かい？支払い済みだ。どうぞ。"
+ ],
+ "آشفورد... قابلت إدموند آشفورد مرة، في رحلة تجارية إلى بيرغن.": [
+  "Ashford... I met Edmund Ashford once, on a trading voyage to Bergen.",
+  "アシュフォードか……ベルゲンへの交易の旅で、エドマンド・アシュフォードに一度会ったことがある。"
+ ],
+ "رجل حاد الذكاء، ولا يثق بأحد. ثم سمعت أنه غرق.": [
+  "A sharp man who trusted no one. Then I heard he had drowned.",
+  "頭の切れる男で、誰も信用していなかった。その後、溺れ死んだと聞いたよ。"
+ ],
+ "خذ هذه الرسالة القديمة. وجدتها بين أوراق اشتريتها من مزاد في الجنوب. عليها اسمه.": [
+  "Take this old letter. I found it among papers I bought at an auction in the south. It has his name on it.",
+  "この古い手紙を持っていきな。南の競売で買った書類の中にあったんだ。彼の名前が書いてある。"
+ ],
+ "رسالة قديمة من هنريك": [
+  "An old letter from Henrik",
+  "ヘンリクからの古い手紙"
+ ],
+ "إلى السيد إدموند آشفورد،\nنؤكد استلام شحنة الفضة المستردّة من الساحل،\nوقد خُزّنت في المستودع حسب طلبك.\nلن نذكر اسمك في السجلّات.\n— شركة التجارة الشمالية": [
+  "To Mr Edmund Ashford,\nWe confirm receipt of the silver cargo recovered from the coast,\nand it has been stored in the warehouse as you requested.\nYour name will not appear in the records.\n— The Northern Trading Company",
+  "エドマンド・アシュフォード様\n海岸から回収された銀の積荷を受け取ったことを確認いたします。\nご指示どおり倉庫に保管いたしました。\n記録にお名前は残しません。\n— 北方交易会社"
+ ],
+ "رسالة هنريك: شحنة فضة «مستردّة» خُزّنت سرًّا باسم إدموند.": [
+  "Henrik's letter: a \"recovered\" silver cargo was secretly stored in Edmund's name.",
+  "ヘンリクの手紙：「回収された」銀の積荷がエドマンドの名で密かに保管された。"
+ ],
+ "بضائع من وراء البحار! ألق نظرة.": [
+  "Goods from across the sea! Have a look.",
+  "海の向こうの品物だよ！見ていってくれ。"
+ ],
+ "صرت أعمل في مستودعك يا رئيس! هل تعطيني يوم عطلة لأصطاد؟": [
+  "I work at your warehouse now, boss! Can I have a day off to go fishing?",
+  "今はあんたの倉庫で働いてるんだ、親方！釣りに行くから一日休みもらえる？"
+ ],
+ "أنا معك يا غيديون. مهما حدث.": [
+  "I'm with you, Gideon. Whatever happens.",
+  "俺はお前の味方だ、ギデオン。何があっても。"
+ ],
+ "رأيت ابن عمّك يرمي معطفه على المقعد هناك كأنه خرقة! معطف بثمن قارب!": [
+  "I saw your cousin throw his coat on that bench like a rag! A coat worth as much as a boat!",
+  "お前のいとこがあのベンチにコートをぼろきれみたいに放り投げたのを見たぞ！船一隻分の値段のコートをだぜ！"
+ ],
+ "والطريف أنه تركه ونسيه. الأغنياء غريبون.": [
+  "And the funny thing is, he left it there and forgot it. Rich folk are strange.",
+  "おかしいのは、置いたまま忘れていったことさ。金持ちって変だよな。"
+ ],
+ "تذهب إلى المزرعة المهجورة؟ الكل يقول إنها مسكونة بالأشباح. خذني معك في المرة القادمة!": [
+  "You're going to the abandoned farm? Everyone says it's haunted. Take me with you next time!",
+  "廃農場に行くのか？みんな幽霊が出るって言ってるぞ。次は俺も連れてってくれ！"
+ ],
+ "تعمل في القصر الآن؟ لا تنسَ أصدقاءك الفقراء يا سيد آشفورد!": [
+  "Working at the manor now? Don't forget your poor friends, Mr Ashford!",
+  "今はお屋敷で働いてるのか？貧乏な友達を忘れるなよ、アシュフォード様！"
+ ],
+ "غيديون! هل رأيت حجم السمكة التي اصطدتها أمس؟... حسنًا، هربت. لكنها كانت ضخمة!": [
+  "Gideon! Did you see the size of the fish I caught yesterday?... Well, it got away. But it was huge!",
+  "ギデオン！昨日釣った魚の大きさ見たか？……まあ、逃げられたけどな。でも、でかかったんだ！"
+ ],
+ "السيد إلياس رحل في الليل دون كلمة. والضيعة... لا أعرف لمن صارت.": [
+  "Master Elias left in the night without a word. And the estate... I don't know whose it is now.",
+  "エリアス様は夜のうちに一言もなく去られました。お屋敷が今は誰のものなのか……私にはわかりません。"
+ ],
+ "السيد غيديون؟ السيد إلياس أخبرني أن أنتظرك.": [
+  "Mr Gideon? Master Elias told me to expect you.",
+  "ギデオン様ですか？エリアス様からお待ちするよう言いつかっております。"
+ ],
+ "الحديقة تحتاج إلى من يقلع الأعشاب الضارة، والمكتب في الداخل يحتاج إلى ترتيب.": [
+  "The garden needs weeding, and the study inside needs tidying.",
+  "庭は草むしりが必要で、中の書斎は片付けが必要です。"
+ ],
+ "السيد إلياس لا يحب أن يلمس أحد أوراقه... لكنه هو من طلب ترتيبها. باب القصر مفتوح.": [
+  "Master Elias doesn't like anyone touching his papers... yet he was the one who asked for them to be tidied. The manor door is open.",
+  "エリアス様は書類に触れられるのをお嫌いになります……ですが片付けを頼まれたのはご本人です。お屋敷の扉は開いております。"
+ ],
+ "العمل في الحديقة يُدفع ثماني كرونات في اليوم.": [
+  "Garden work pays eight krónur a day.",
+  "庭仕事は一日8クローナです。"
+ ],
+ "أخدم هذه الضيعة منذ أن كانت مهجورة. لم يسكنها أحد حتى جاء السيد إلياس.": [
+  "I have served this estate since it stood empty. No one lived here until Master Elias came.",
+  "このお屋敷が空き家だった頃からお仕えしております。エリアス様がいらっしゃるまで、誰も住んでいませんでした。"
+ ],
+ "لنبدأ بالأعشاب الضارة.": [
+  "Let's start with the weeds.",
+  "まずは雑草からだ。"
+ ],
+ "تقلع الأعشاب وتشذّب الشجيرات...": [
+  "You pull weeds and trim the shrubs...",
+  "雑草を抜き、低木を刈り込む……"
+ ],
+ "الحديقة مرتّبة لليوم.": [
+  "The garden is tidy for today.",
+  "今日の庭はきれいになった。"
+ ],
+ "حديقة جميلة. ورود في آيسلندا؟ لا بد أنها كلّفت ثروة.": [
+  "A beautiful garden. Roses in Iceland? They must have cost a fortune.",
+  "美しい庭だ。アイスランドにバラ？ひと財産かかっただろう。"
+ ],
+ "بئر مزخرفة بالحجر الأبيض. حتى الماء هنا يبدو غنيًا.": [
+  "A well decorated with white stone. Even the water looks rich here.",
+  "白い石で飾られた井戸。ここでは水まで裕福に見える。"
+ ],
+ "غيديون! ظهري يؤلمني. هل تطعم الأغنام عني كل يوم؟ أدفع أربع كرونات.": [
+  "Gideon! My back aches. Will you feed the sheep for me every day? I pay four krónur.",
+  "ギデオン！腰が痛くてな。毎日羊に餌をやってくれないか？4クローナ払う。"
+ ],
+ "ابن عمّك عرض أن يشتري أرضي. رفضت. الأرض ليست للبيع، حتى لو جاء ملك الدنمارك نفسه.": [
+  "Your cousin offered to buy my land. I refused. The land isn't for sale, not even if the King of Denmark himself came.",
+  "お前のいとこがわしの土地を買いたいと言ってきた。断ったよ。たとえデンマーク国王が来ても、この土地は売らん。"
+ ],
+ "غونار: إلياس يحاول شراء الأراضي حول القرية.": [
+  "Gunnar: Elias is trying to buy up the land around the village.",
+  "グンナル：エリアスは村の周りの土地を買い集めようとしている。"
+ ],
+ "الحصان الآيسلندي صغير، لكنه أقوى مما تظن. مثلك تمامًا.": [
+  "An Icelandic horse is small, but stronger than you think. Just like you.",
+  "アイスランド馬は小さいが、思ったより強い。お前と同じだ。"
+ ],
+ "هيا يا صغار، الفطور!": [
+  "Come on, little ones, breakfast!",
+  "さあ、みんな、朝ごはんだよ！"
+ ],
+ "تطعم الأغنام وتملأ الحوض...": [
+  "You feed the sheep and fill the trough...",
+  "羊に餌をやり、桶に水を満たす……"
+ ],
+ "ماااء!": [
+  "Baaa!",
+  "メェェ！"
+ ],
+ "حصان آيسلندي قصير وقوي. يقولون إنه لا يخاف من شيء.": [
+  "A short, strong Icelandic horse. They say it fears nothing.",
+  "背は低いが力強いアイスランド馬。何も恐れないと言われている。"
+ ],
+ "رسالة من الأب إينار إلى بودير؟ سأوصلها خلال يومين.": [
+  "A letter from Father Einar to Búðir? I'll deliver it within two days.",
+  "エイナル神父からブーズィル宛ての手紙？二日で届けますよ。"
+ ],
+ "انتظر... أنا أعرف هذا العنوان. صديق إدموند القديم أعطاني صفحة لأوصلها إلى من يسأل عنه من آل آشفورد.": [
+  "Wait... I know this address. Edmund's old friend gave me a page to deliver to any Ashford who came asking about him.",
+  "待てよ……この宛先は知っている。エドマンドの旧友が、彼のことを尋ねてくるアシュフォード家の誰かに渡してくれと一枚の紙を預けたんだ。"
+ ],
+ "خذها. يبدو أنها انتظرتك طويلًا.": [
+  "Take it. It seems it has waited a long time for you.",
+  "どうぞ。ずっとあなたを待っていたようだ。"
+ ],
+ "صفحة من مذكرات إدموند: إلياس وجد أباه حيًّا.": [
+  "A page of Edmund's journal: Elias found his father alive.",
+  "エドマンドの日誌の一頁：エリアスは父が生きているのを見つけた。"
+ ],
+ "هذا الطريق يقود إلى بودير، القرية المجاورة. يومان من المشي، إن كان الطقس رحيمًا.": [
+  "This road leads to Búðir, the next village. Two days' walk, if the weather is kind.",
+  "この道は隣村のブーズィルへ続いています。天気が良ければ歩いて二日です。"
+ ],
+ "المنجم القديم... أغلقوه بعد انهيار قبل ثلاثين عامًا. يقولون إن جدّي عمل فيه.": [
+  "The old mine... they closed it after a collapse thirty years ago. They say my grandfather worked in it.",
+  "古い鉱山……三十年前の落盤の後に閉じられた。祖父がここで働いていたらしい。"
+ ],
+ "مدخل المنجم القديم، مسدود بالألواح. الريح تصفر في الداخل.": [
+  "The entrance to the old mine, boarded up. The wind whistles inside.",
+  "板でふさがれた古い鉱山の入口。中で風がうなっている。"
+ ],
+ "«إلى بودير — مسيرة يومين». الطريق يختفي بين التلال.": [
+  "\"To Búðir — two days' walk\". The road disappears into the hills.",
+  "「ブーズィルまで — 徒歩二日」。道は丘の中へ消えていく。"
+ ],
+ "نصب تذكاري للصيادين الذين ابتلعهم البحر.": [
+  "A memorial to the fishermen swallowed by the sea.",
+  "海に呑まれた漁師たちの記念碑。"
+ ],
+ "اسم إدموند ليس هنا... مع أن الجميع يقولون إنه مات في البحر.": [
+  "Edmund's name isn't here... even though everyone says he died at sea.",
+  "エドマンドの名前がない……みんな海で死んだと言っているのに。"
+ ],
+ "اسم إدموند غير موجود على نصب الغرقى.": [
+  "Edmund's name is not on the memorial to the drowned.",
+  "エドマンドの名前は海難者の記念碑にない。"
+ ],
+ "نصب تذكاري للصيادين الذين ابتلعهم البحر. أسماء كثيرة محفورة في الحجر.": [
+  "A memorial to the fishermen swallowed by the sea. Many names are carved in the stone.",
+  "海に呑まれた漁師たちの記念碑。石に多くの名が刻まれている。"
+ ],
+ "قبر أبي هنا... وقبر جدّي. لكن لا قبر لإدموند.": [
+  "Father's grave is here... and Grandfather's. But there's no grave for Edmund.",
+  "父さんの墓がここに……祖父の墓も。でもエドマンドの墓はない。"
+ ],
+ "لا يوجد قبر لإدموند في مقبرة الكنيسة.": [
+  "There is no grave for Edmund in the churchyard.",
+  "教会の墓地にエドマンドの墓はない。"
+ ],
+ "قبر أبي. أزوره كلما أستطيع.": [
+  "Father's grave. I visit whenever I can.",
+  "父さんの墓。来られる時はいつも来ている。"
+ ],
+ "كشك سمك مملّح ومجفّف. رائحته تملأ الساحة.": [
+  "A stall of salted and dried fish. Its smell fills the square.",
+  "塩漬けと干し魚の屋台。匂いが広場いっぱいに広がる。"
+ ],
+ "خبز الجاودار الأسود. يمكنك شراؤه من عربة هنريك.": [
+  "Dark rye bread. You can buy it at Henrik's cart.",
+  "黒いライ麦パン。ヘンリクの荷車で買える。"
+ ],
+ "طاولتنا الصغيرة. أمي تحرص على أن نأكل معًا، حتى لو كان العشاء قليلًا.": [
+  "Our little table. Mother makes sure we eat together, even when supper is small.",
+  "うちの小さなテーブル。夕食が少なくても、母さんは必ずみんなで食べるようにしている。"
+ ],
+ "لوحة لم تكتمل بعد: البحر وثلاثة قوارب... والسماء بلون الورد.": [
+  "An unfinished painting: the sea and three boats... and a rose-coloured sky.",
+  "描きかけの絵：海と三艘の船……そしてバラ色の空。"
+ ],
+ "تك... تك... قطرات المطر من السقف. يجب أن نصلحه يومًا ما.": [
+  "Drip... drip... raindrops from the roof. We must fix it one day.",
+  "ポタ……ポタ……屋根からの雨だれ。いつか直さないと。"
+ ],
+ "الشلال... الماء أبيض كالحليب، والضباب يلمع بألوان قوس قزح. ستحبه كلارا.": [
+  "The waterfall... the water white as milk, the mist shimmering with rainbow colours. Clara will love it.",
+  "滝……ミルクのように白い水、虹色にきらめくしぶき。クララはきっと気に入る。"
+ ],
+ "صوت الشلال يغسل كل الهموم.": [
+  "The sound of the waterfall washes all worries away.",
+  "滝の音が心配事をすべて洗い流してくれる。"
+ ],
+ "الميناء من آخر الرصيف: القوارب والأشرعة البيضاء والبيوت الملوّنة خلفها.": [
+  "The harbour from the end of the pier: boats, white sails and the colourful houses behind them.",
+  "桟橋の先から見た港：船、白い帆、その後ろの色とりどりの家々。"
+ ],
+ "الكنيسة البيضاء فوق التل، وخلفها الجبال المكسوّة بالثلج.": [
+  "The white church on the hill, with snow-covered mountains behind it.",
+  "丘の上の白い教会、その後ろには雪をかぶった山々。"
+ ],
+ "من هذا المقعد ترى القرية كلها: الساحة والميناء والبحر حتى الأفق.": [
+  "From this bench you can see the whole village: the square, the harbour and the sea to the horizon.",
+  "このベンチから村全体が見える：広場、港、そして水平線まで続く海。"
+ ],
+ "مقعد خشبي قديم فوق التلال. أجمل منظر في هرافنفيك.": [
+  "An old wooden bench above the hills. The most beautiful view in Hrafnvik.",
+  "丘の上の古い木のベンチ。フラフンヴィークで一番美しい眺め。"
+ ],
+ "لنرَ ما يخبّئه البحر اليوم.": [
+  "Let's see what the sea is hiding today.",
+  "今日は海が何を隠しているか見てみよう。"
+ ],
+ "أفلتت السمكة!": [
+  "The fish got away!",
+  "魚に逃げられた！"
+ ],
+ "الماء عميق هنا. لو كانت معي صنّارة...": [
+  "The water is deep here. If only I had a rod...",
+  "ここは深い。釣り竿さえあれば……"
+ ],
+ "أحمل صندوقًا بالفعل. يداي ليستا أربعًا!": [
+  "I'm already carrying a crate. I don't have four hands!",
+  "もう木箱を持ってる。手は四本もないよ！"
+ ],
+ "صناديق شركة التجارة. خمس كرونات لكل صندوق يصل إلى المستودع.": [
+  "The trading company's crates. Five krónur for every crate that reaches the warehouse.",
+  "交易会社の木箱。倉庫まで届けると一箱5クローナ。"
+ ],
+ "تفرغ الصندوق في المستودع...": [
+  "You unload the crate at the warehouse...",
+  "倉庫で木箱を降ろす……"
+ ],
+ "باب المستودع الجانبي. هنا تُسلَّم الصناديق.": [
+  "The warehouse side door. Crates are delivered here.",
+  "倉庫の横の扉。木箱はここで受け渡す。"
+ ],
+ "غيديون! استيقظ! وصلت عربة زرقاء فخمة إلى الساحة في الليل!": [
+  "Gideon! Wake up! A fine blue carriage arrived in the square during the night!",
+  "ギデオン！起きて！夜のうちに立派な青い馬車が広場に着いたのよ！"
+ ],
+ "ربما هو أمير! أو قرصان غني!": [
+  "Maybe it's a prince! Or a rich pirate!",
+  "王子さまかも！それともお金持ちの海賊かも！"
+ ],
+ "اذهب وانظر من هو. القرية كلها هناك.": [
+  "Go and see who it is. The whole village is there.",
+  "誰なのか見てきなさい。村じゅうの人が集まってるわ。"
+ ],
+ "تنحَّ جانبًا يا غيديون.": [
+  "Step aside, Gideon.",
+  "どいてくれ、ギデオン。"
+ ],
+ "غيديون؟... غيديون آشفورد! انظر إليك، صرت رجلًا!": [
+  "Gideon?... Gideon Ashford! Look at you, you've grown into a man!",
+  "ギデオン？……ギデオン・アシュフォード！見違えたな、立派な大人じゃないか！"
+ ],
+ "إلياس؟ ابن عمّي إلياس؟ لم نسمع عنك شيئًا منذ سبع سنين!": [
+  "Elias? My cousin Elias? We haven't heard a word from you in seven years!",
+  "エリアス？いとこのエリアスか？七年間、何の便りもなかったじゃないか！"
+ ],
+ "وعدتكم بأن أعود يومًا، أليس كذلك؟": [
+  "I promised you I'd come back one day, didn't I?",
+  "いつか戻ると約束しただろう？"
+ ],
+ "أبي، إدموند... مات قبل سنوات. وترك لي ميراثًا كبيرًا: مالًا، وسفنًا، وعلاقات تجارية.": [
+  "My father, Edmund... died years ago. He left me a great inheritance: money, ships and trading connections.",
+  "父のエドマンドは……何年も前に亡くなった。莫大な遺産を残してくれたよ。金、船、それに交易の伝手だ。"
+ ],
+ "عمّي إدموند... مات؟": [
+  "Uncle Edmund... is dead?",
+  "エドマンドおじさんが……亡くなった？"
+ ],
+ "رحمه الله. لكن لنتحدث عنكم. سمعت عن الديون، وعن البيت.": [
+  "God rest him. But let's talk about you. I've heard about the debts, and about the house.",
+  "安らかに。だが君たちの話をしよう。借金のことも、家のことも聞いたよ。"
+ ],
+ "سأدفع ديونكم كلها. وسأصلح بيتكم. وغدًا، تعال إلى ضيعتي. عندي عمل لك بأجر محترم.": [
+  "I'll pay all your debts. And I'll repair your house. And tomorrow, come to my estate. I have work for you at a decent wage.",
+  "借金は全部私が払う。家も直そう。それから明日、私の屋敷に来てくれ。まともな給金の仕事がある。"
+ ],
+ "خذ هذه هدية لعمّتي مارغريت وكلارا. العائلة يجب أن تساند بعضها.": [
+  "Take this as a gift for Aunt Margaret and Clara. Family should stand by one another.",
+  "これはマーガレットおばさんとクララへの贈り物だ。家族は支え合うものだからな。"
+ ],
+ "إلياس يقول إن أباه إدموند مات قبل سنوات وترك له ثروة.": [
+  "Elias says his father Edmund died years ago and left him a fortune.",
+  "エリアスによれば、父のエドマンドは何年も前に亡くなり、彼に財産を残した。"
+ ],
+ "استمع إلى ما يقوله أهل القرية": [
+  "Listen to what the villagers are saying",
+  "村人たちの話を聞こう"
+ ],
+ "إلياس، وجدت هذا المفتاح في جيب معطفك. لأي باب هو؟": [
+  "Elias, I found this key in your coat pocket. Which door is it for?",
+  "エリアス、コートのポケットでこの鍵を見つけた。どの扉の鍵なんだ？"
+ ],
+ "أعطني إياه!": [
+  "Give it to me!",
+  "それをよこせ！"
+ ],
+ "ينتزع إلياس المفتاح من يد غيديون بسرعة.": [
+  "Elias snatches the key from Gideon's hand.",
+  "エリアスはギデオンの手から鍵をひったくった。"
+ ],
+ "...المعذرة. إنه مفتاح قديم، له قيمة عاطفية.": [
+  "...Forgive me. It's an old key, of sentimental value.",
+  "……失礼。古い鍵でね、思い出の品なんだ。"
+ ],
+ "هناك مكان خارج هذه القرية يجب أن أزوره. مكان كان يجب أن يبقى منسيًّا.": [
+  "There is a place outside this village that I need to visit. A place that should have remained forgotten.",
+  "この村の外に、行かなければならない場所がある。忘れられたままであるべき場所だ。"
+ ],
+ "إلياس: «مكان خارج القرية... كان يجب أن يبقى منسيًّا.»": [
+  "Elias: \"A place outside the village... that should have remained forgotten.\"",
+  "エリアス：「村の外の場所……忘れられたままであるべき場所」"
+ ],
+ "تعال إلى ضيعتي غدًا يا ابن العم. شمال شرق القرية، لن تخطئها.": [
+  "Come to my estate tomorrow, cousin. North-east of the village; you can't miss it.",
+  "明日、私の屋敷に来てくれ、いとこよ。村の北東だ、すぐわかる。"
+ ],
+ "إلياس... وجدت في مكتبك سندًا لمزرعة شرق القرية. باسم أبيك.": [
+  "Elias... I found a deed in your study for a farm east of the village. In your father's name.",
+  "エリアス……書斎で村の東の農場の権利書を見つけた。君の父さんの名義だ。"
+ ],
+ "من سمح لك بفتح خزانتي؟!": [
+  "Who gave you permission to open my cabinet?!",
+  "誰が私の戸棚を開けていいと言った？！"
+ ],
+ "لماذا تريد مزرعة مهجورة؟": [
+  "Why do you want an abandoned farm?",
+  "どうして廃農場なんか欲しいんだ？"
+ ],
+ "انسَ تلك المزرعة! إنها مجرد أطلال. ولا تتدخّل في ما لا يعنيك.": [
+  "Forget that farm! It's nothing but ruins. And don't meddle in what doesn't concern you.",
+  "あの農場のことは忘れろ！ただの廃墟だ。君に関係のないことに首を突っ込むな。"
+ ],
+ "إلياس غضب حين سألته عن المزرعة الشرقية.": [
+  "Elias grew angry when I asked about the eastern farm.",
+  "東の農場のことを聞くと、エリアスは怒った。"
+ ],
+ "«إن عاد الصبي، فأخبروه أن الحقيقة لم تُدفن مع الموتى.» من كتب هذا يا إلياس؟": [
+  "\"If the boy returns, tell him the truth is not buried with the dead.\" Who wrote this, Elias?",
+  "「もしあの子が戻ったら、真実は死者と共に埋められてはいないと伝えてくれ」誰が書いたんだ、エリアス？"
+ ],
+ "...أين وجدت هذه؟": [
+  "...Where did you find this?",
+  "……どこでそれを見つけた？"
+ ],
+ "في المزرعة التي طلبت مني أن أنساها. من هو الصبي؟ وأي حقيقة؟": [
+  "At the farm you told me to forget. Who is the boy? And what truth?",
+  "君が忘れろと言った農場でだ。あの子って誰だ？真実って何だ？"
+ ],
+ "أنت تحفر في أشياء لا تخصّك يا غيديون. ارجع إلى بيتك.": [
+  "You're digging into things that don't concern you, Gideon. Go home.",
+  "君には関係のないことを掘り返しているんだ、ギデオン。家に帰れ。"
+ ],
+ "رأيته يا إلياس. عمّي إدموند حيّ. يعيش في تلك الحظيرة.": [
+  "I saw him, Elias. Uncle Edmund is alive. He lives in that barn.",
+  "見たんだ、エリアス。エドマンドおじさんは生きている。あの納屋で暮らしている。"
+ ],
+ "...إذن عرفت.": [
+  "...So you know.",
+  "……知ってしまったのか。"
+ ],
+ "نعم. أبي حيّ. ساعدته في استعادة شحنة السفينة الغارقة، وبنيت بالمال حياة جديدة.": [
+  "Yes. My father is alive. I helped him recover the sunken ship's cargo, and with the money I built a new life.",
+  "ああ。父は生きている。沈んだ船の積荷を取り戻すのを手伝って、その金で新しい人生を築いたんだ。"
+ ],
+ "وعدته ألّا أكشف أنه حيّ. القرية لن تغفر لرجل هجر عائلته وتظاهر بالموت.": [
+  "I promised him I wouldn't reveal that he's alive. The village would never forgive a man who abandoned his family and pretended to be dead.",
+  "父が生きていることは明かさないと約束した。家族を捨てて死んだふりをした男を、村は決して許さないだろう。"
+ ],
+ "وهذا كل شيء؟": [
+  "And that's all?",
+  "それだけか？"
+ ],
+ "...لا. الأرض. أرض آل آشفورد الشرقية. فيها أطلال مستودع تجاري كان لأبي.": [
+  "...No. The land. The Ashfords' eastern land. On it stand the ruins of a trading warehouse that belonged to my father.",
+  "……いや。土地だ。アシュフォード家の東の土地。そこに父の交易倉庫の廃墟がある。"
+ ],
+ "سأعيد بناءه، وأصنع منه تجارة كبيرة. لكنني أحتاج إلى توقيعك على هذه الورقة.": [
+  "I'll rebuild it and make it into a great trade. But I need your signature on this paper.",
+  "それを建て直して大きな商売にする。だが、この書類に君の署名が必要なんだ。"
+ ],
+ "أوقّع...": [
+  "I'll sign...",
+  "署名する……"
+ ],
+ "لن أوقّع.": [
+  "I won't sign.",
+  "署名しない。"
+ ],
+ "اخرج من ضيعتي يا غيديون. لقد اخترت طريقك.": [
+  "Get off my estate, Gideon. You've chosen your path.",
+  "私の屋敷から出ていけ、ギデオン。君は自分の道を選んだ。"
+ ],
+ "هالدور سيريك ما تفعله. اكسب أجرك يا ابن العم.": [
+  "Halldór will show you what to do. Earn your wage, cousin.",
+  "ハルドールが仕事を教える。給金分は働いてくれよ、いとこ。"
+ ],
+ "ليس الآن يا غيديون. عندي أعمال كثيرة.": [
+  "Not now, Gideon. I have a great deal of business.",
+  "今はだめだ、ギデオン。仕事が山ほどある。"
+ ],
+ "يمسك غيديون القلم. الحبر يلمع على الورقة البيضاء.": [
+  "Gideon picks up the pen. The ink glistens on the white paper.",
+  "ギデオンはペンを取る。白い紙の上でインクが光る。"
+ ],
+ "يتذكّر وجه أمه وهي تتحدث عن بيع البيت... ويتذكّر رسائل أبيه.": [
+  "He remembers his mother's face as she spoke of selling the house... and he remembers his father's letters.",
+  "家を売る話をした時の母の顔を思い出す……そして父の手紙を思い出す。"
+ ],
+ "...لا. لا أستطيع.": [
+  "...No. I can't.",
+  "……だめだ。できない。"
+ ],
+ "جلبت لنا المال وسمّيته كرمًا. لكنك لم تخبرنا قط بما كنت تأخذه في المقابل.": [
+  "You brought us money and called it kindness. But you never told us what you were taking in return.",
+  "君は金を持ってきて、それを親切と呼んだ。でも、その代わりに何を奪おうとしていたのかは一度も言わなかった。"
+ ],
+ "ليس لديك أي فكرة عن مدى صعوبة بناء ثروة!": [
+  "You have no idea how hard it is to build a fortune!",
+  "財産を築くのがどれほど大変か、君にはわからない！"
+ ],
+ "وليس لديك أي فكرة عن مدى صعوبة العيش من دونها.": [
+  "And you have no idea how hard it is to live without one.",
+  "そして君には、財産なしで生きるのがどれほど大変かわからない。"
+ ],
+ "افترق ابنا العم في صمت.": [
+  "The two cousins part in silence.",
+  "二人のいとこは黙って別れた。"
+ ],
+ "معطف إلياس... ما زال على المقعد. شيء ثقيل في الجيب.": [
+  "Elias's coat... still on the bench. Something heavy in the pocket.",
+  "エリアスのコート……まだベンチの上だ。ポケットに何か重いものがある。"
+ ],
+ "يجد غيديون مفتاحًا حديديًا قديمًا، صدئًا عند أطرافه.": [
+  "Gideon finds an old iron key, rusted at the edges.",
+  "ギデオンは縁の錆びた古い鉄の鍵を見つけた。"
+ ],
+ "مفتاح حديدي قديم في جيب معطف إلياس.": [
+  "An old iron key in the pocket of Elias's coat.",
+  "エリアスのコートのポケットにあった古い鉄の鍵。"
+ ],
+ "معطف أسود فاخر تركه إلياس على المقعد. من الأفضل ألّا ألمسه... الآن.": [
+  "A fine black coat Elias left on the bench. Better not touch it... for now.",
+  "エリアスがベンチに置いていった上等な黒いコート。今は……触らないほうがいい。"
+ ],
+ "غيديون! جاء عمّال عند الفجر وأصلحوا السقف كله!": [
+  "Gideon! Workers came at dawn and fixed the whole roof!",
+  "ギデオン！夜明けに職人さんたちが来て、屋根を全部直してくれたの！"
+ ],
+ "وصاحب الأرض أرسل رسالة: الدين مدفوع بالكامل. إلياس دفع كل شيء.": [
+  "And the landlord sent a letter: the debt is paid in full. Elias paid everything.",
+  "それに地主から手紙が来たわ。借金は全額支払われたって。エリアスが全部払ってくれたの。"
+ ],
+ "لا مزيد من الدلو! لا مزيد من تك تك تك!": [
+  "No more bucket! No more drip drip drip!",
+  "もうバケツはいらない！ポタポタもおしまい！"
+ ],
+ "اذهب إلى ضيعته. لا نريد أن نبدو جاحدين.": [
+  "Go to his estate. We don't want to seem ungrateful.",
+  "お屋敷へ行きなさい。恩知らずと思われたくないわ。"
+ ],
+ "يرتّب غيديون الكتب والخرائط. كتب عن طرق التجارة، وجداول أسعار الفضة، وخرائط موانئ الشمال.": [
+  "Gideon tidies the books and maps. Books on trade routes, tables of silver prices, maps of the northern ports.",
+  "ギデオンは本や地図を片付ける。交易路の本、銀の相場表、北の港の地図。"
+ ],
+ "وتلك الخزانة في الزاوية... مقفلة بقفل حديدي ثقيل.": [
+  "And that cabinet in the corner... locked with a heavy iron lock.",
+  "そして隅の戸棚……重い鉄の錠がかかっている。"
+ ],
+ "أوراق كثيرة عن التجارة. إلياس يخطط لشيء كبير.": [
+  "So many papers about trade. Elias is planning something big.",
+  "交易の書類がたくさん。エリアスは何か大きなことを企んでいる。"
+ ],
+ "لم يبقَ في الخزانة غير دفاتر حسابات قديمة.": [
+  "Only old account books are left in the cabinet.",
+  "戸棚に残っているのは古い帳簿だけだ。"
+ ],
+ "خطّاف لايف... أدخله ببطء، وأدره حتى أسمع النقرة.": [
+  "Leif's hook... in slowly, then turn until I hear the click.",
+  "レイフのフック……ゆっくり差し込んで、カチッと鳴るまで回す。"
+ ],
+ "في الخزانة": [
+  "In the cabinet",
+  "戸棚の中"
+ ],
+ "وثائق كثيرة تحمل اسم إدموند آشفورد.\nبينها سند ملكية لمزرعة شرق القرية، وقصاصة رسالة ممزّقة كُتب فيها:\n\n«...إن عاد الصبي، فأخبروه أن الحقيقة لم تُدفن مع الموتى...»": [
+  "Many documents bearing the name Edmund Ashford.\nAmong them, a property deed for a farm east of the village, and a scrap of a torn letter reading:\n\n\"...if the boy returns, tell him the truth is not buried with the dead...\"",
+  "エドマンド・アシュフォードの名が記された多くの書類。\nその中に村の東の農場の権利書と、こう書かれた破れた手紙の切れ端があった。\n\n「……もしあの子が戻ったら、真実は死者と共に埋められてはいないと伝えてくれ……」"
+ ],
+ "في خزانة إلياس: سند مزرعة شرق القرية باسم إدموند، ورسالة ممزّقة.": [
+  "In Elias's cabinet: a deed to a farm east of the village in Edmund's name, and a torn letter.",
+  "エリアスの戸棚：エドマンド名義の村の東の農場の権利書と、破れた手紙。"
+ ],
+ "القفل يقاوم... حاول مرة أخرى": [
+  "The lock resists... try again",
+  "錠が抵抗する……もう一度"
+ ],
+ "مقفلة بإحكام. أحتاج إلى أداة ما.": [
+  "Locked tight. I need some kind of tool.",
+  "しっかり鍵がかかっている。何か道具が要る。"
+ ],
+ "خريطة لهرافنفيك وما حولها. المزرعة الواقعة شرق النهر محاطة بدائرة حمراء.": [
+  "A map of Hrafnvik and its surroundings. The farm east of the river is circled in red.",
+  "フラフンヴィークとその周辺の地図。川の東の農場が赤い丸で囲まれている。"
+ ],
+ "على خريطة إلياس: المزرعة شرق النهر محاطة بدائرة حمراء.": [
+  "On Elias's map: the farm east of the river is circled in red.",
+  "エリアスの地図：川の東の農場が赤丸で囲まれている。"
+ ],
+ "سند المزرعة... رسالة عن صبي وحقيقة لم تُدفن... وعمّ لم يُعثر على جثته.": [
+  "The farm deed... a letter about a boy and a truth not buried... and an uncle whose body was never found.",
+  "農場の権利書……あの子と埋められていない真実の手紙……そして遺体の見つからなかったおじ。"
+ ],
+ "مرّت أستريد العشّابة هذا الصباح وسألت عنك. هي تعرف التلال الشرقية كراحة يدها.": [
+  "Astrid the herbalist came by this morning asking for you. She knows the eastern hills like the back of her hand.",
+  "今朝、薬草師のアストリッドがあなたを訪ねてきたわ。東の丘のことなら隅々まで知ってる人よ。"
+ ],
+ "بوابة قديمة مربوطة بحبل وسلسلة صدئة. خلفها الجسر والطريق إلى التلال الشرقية.": [
+  "An old gate tied with rope and a rusty chain. Beyond it, the bridge and the road to the eastern hills.",
+  "ロープと錆びた鎖で縛られた古い門。その先に橋と東の丘への道がある。"
+ ],
+ "آثار أقدام جديدة في الطين... حذاء رجل، تتجه نحو الحظيرة.": [
+  "Fresh footprints in the mud... a man's boots, heading for the barn.",
+  "泥に新しい足跡……男のブーツだ。納屋へ向かっている。"
+ ],
+ "آثار أقدام جديدة تقود إلى الحظيرة المهجورة.": [
+  "Fresh footprints lead to the abandoned barn.",
+  "新しい足跡が廃屋の納屋へ続いている。"
+ ],
+ "آثار الأقدام تتجه إلى باب الحظيرة.": [
+  "The footprints lead to the barn door.",
+  "足跡は納屋の扉へ続いている。"
+ ],
+ "هذا اللوح يتحرّك... هناك شيء تحته.": [
+  "This board moves... there's something underneath.",
+  "この板は動く……下に何かある。"
+ ],
+ "رسالة تحت الأرضية": [
+  "A letter under the floor",
+  "床下の手紙"
+ ],
+ "رسالة بتوقيع «إ. آ.» تحت أرضية المزرعة: إدموند قد يكون حيًّا.": [
+  "A letter signed \"E. A.\" under the farmhouse floor: Edmund may be alive.",
+  "農家の床下にあった「E. A.」署名の手紙：エドマンドは生きているかもしれない。"
+ ],
+ "لا شيء آخر تحت اللوح.": [
+  "Nothing else under the board.",
+  "板の下にはもう何もない。"
+ ],
+ "إ. آ.... إدموند آشفورد؟ هل يمكن أن يكون عمّي حيًّا؟": [
+  "E. A.... Edmund Ashford? Could my uncle be alive?",
+  "E. A.……エドマンド・アシュフォード？おじさんが生きているなんてことがあるのか？"
+ ],
+ "إيصالات قديمة مبلّلة. على إحداها توقيع واضح: «إ. آشفورد»، وتاريخ من هذا الشتاء.": [
+  "Old, damp receipts. One bears a clear signature: \"E. Ashford\", dated this winter.",
+  "湿った古い領収書。一枚にはっきりと「E. アシュフォード」の署名があり、日付は今年の冬だ。"
+ ],
+ "إيصالات بتوقيع «إ. آشفورد» بتاريخ هذا الشتاء في بيت المزرعة.": [
+  "Receipts signed \"E. Ashford\" and dated this winter, in the farmhouse.",
+  "農家にあった今年の冬の日付の「E. アシュフォード」署名の領収書。"
+ ],
+ "الصندوق الحديدي الذي ذكره لايف. ثقيل جدًا!": [
+  "The iron chest Leif mentioned. So heavy!",
+  "レイフが言っていた鉄の箱だ。すごく重い！"
+ ],
+ "على أحد الألواح علامة محفورة... شعار شركة تجارية. وتحت الرمل صناديق محطّمة.": [
+  "One of the planks bears a carved mark... a trading company's emblem. Under the sand lie smashed crates.",
+  "板の一枚に彫られた印……交易会社の紋章だ。砂の下には壊れた木箱がある。"
+ ],
+ "على حطام السفينة علامة شحنة تجارية.": [
+  "A trading cargo mark on the shipwreck.",
+  "難破船に交易の積荷の印がある。"
+ ],
+ "بقايا سفينة تجارية قديمة. البحر لم يترك منها إلا الضلوع.": [
+  "The remains of an old trading ship. The sea has left only its ribs.",
+  "古い交易船の残骸。海は肋骨のような骨組みしか残していない。"
+ ],
+ "يقترب غيديون من النافذة الصغيرة ويمسح الغبار عن الزجاج.": [
+  "Gideon approaches the small window and wipes the dust from the glass.",
+  "ギデオンは小さな窓に近づき、ガラスのほこりをぬぐう。"
+ ],
+ "في الداخل، رجل عجوز يجلس قرب مدفأة. ثيابه قديمة متّسخة، وشعره رمادي، ووجهه محفور بسنوات من القسوة.": [
+  "Inside, an old man sits by a fire. His clothes are old and dirty, his hair grey, his face carved by years of hardship.",
+  "中では老人が暖炉のそばに座っている。古く汚れた服、白髪まじりの髪、長年の苦労が刻まれた顔。"
+ ],
+ "هذا الوجه... رأيته في صورة قديمة مع أبي.": [
+  "That face... I've seen it in an old photograph with Father.",
+  "あの顔……父さんと一緒に写った古い写真で見たことがある。"
+ ],
+ "عمّي إدموند.": [
+  "Uncle Edmund.",
+  "エドマンドおじさんだ。"
+ ],
+ "إدموند آشفورد حيّ، يعيش في الحظيرة.": [
+  "Edmund Ashford is alive, living in the barn.",
+  "エドマンド・アシュフォードは生きていて、納屋で暮らしている。"
+ ],
+ "إنه هناك، قرب المدفأة.": [
+  "He's there, by the fire.",
+  "あそこにいる。暖炉のそばに。"
+ ],
+ "زجاج متّسخ ومكسور. لا أرى شيئًا في العتمة.": [
+  "Dirty, broken glass. I can't see anything in the dark.",
+  "汚れて割れたガラス。暗くて何も見えない。"
+ ],
+ "«هل أحضرت الصبي؟»... ذلك الصوت. يجب أن أعود إلى الحظيرة.": [
+  "\"Did you bring the boy?\"... that voice. I have to go back to the barn.",
+  "「あの子を連れてきたのか？」……あの声。納屋に戻らなければ。"
+ ],
+ "يفتح غيديون باب الحظيرة. يرفع العجوز رأسه.": [
+  "Gideon opens the barn door. The old man raises his head.",
+  "ギデオンは納屋の扉を開ける。老人が顔を上げた。"
+ ],
+ "لوقت طويل، لا يتكلّم أحدهما.": [
+  "For a long moment, neither of them speaks.",
+  "長いあいだ、二人とも口を開かない。"
+ ],
+ "تشبه أباك تمامًا.": [
+  "You look just like your father.",
+  "お前は父親にそっくりだな。"
+ ],
+ "لماذا تظاهرت بالموت؟! أمي باعت أشياءنا لتدفع الديون، وأنت هنا... حيّ!": [
+  "Why did you pretend to be dead?! Mother sold our things to pay the debts, and you're here... alive!",
+  "どうして死んだふりなんかしたんだ？！母さんは借金を払うために家の物を売ったのに、あんたはここで……生きていたなんて！"
+ ],
+ "لم أمت. نجوت من الغرق الذي ظنّه الجميع قد قتلني.": [
+  "I never died. I survived the shipwreck everyone believed had killed me.",
+  "私は死ななかった。誰もが私を死なせたと信じた難破から生き延びたのだ。"
+ ],
+ "بعد العاصفة، عدت إلى آيسلندا ومعي ثروة: فضة مستردّة، وبضائع، وشحنة كاملة جرفها البحر إلى الساحل.": [
+  "After the storm I returned to Iceland with a fortune: recovered silver, goods, a whole cargo the sea had washed ashore.",
+  "嵐の後、私は財産を携えてアイスランドに戻った。回収した銀、品物、海が岸に打ち上げた積荷のすべてだ。"
+ ],
+ "لكنني خسرت كل شيء آخر. شركائي تخلّوا عني. وكانت عليّ ديون.": [
+  "But I had lost everything else. My partners abandoned me. And I had debts.",
+  "だが、それ以外のすべてを失っていた。仲間には見捨てられ、借金もあった。"
+ ],
+ "وكنت أخجل... من الطريقة التي عاملت بها أخي. أباك.": [
+  "And I was ashamed... of the way I had treated my brother. Your father.",
+  "そして恥じていた……兄にした仕打ちを。お前の父親にだ。"
+ ],
+ "بدل أن أعود وأواجه، اختبأت. قلت لإلياس أن يخبر الجميع أنني مت. هو وحده يعرف الحقيقة.": [
+  "Instead of coming back to face it, I hid. I told Elias to tell everyone I was dead. He alone knows the truth.",
+  "戻って向き合う代わりに、私は隠れた。皆に私が死んだと伝えるようエリアスに言った。真実を知るのはあの子だけだ。"
+ ],
+ "ولماذا ادّعى إلياس أن الثروة ميراث؟": [
+  "And why did Elias claim the fortune was an inheritance?",
+  "じゃあ、どうしてエリアスは財産を遺産だと言ったんだ？"
+ ],
+ "لأنه ساعدني في استعادة الشحنة. المال مالي، لكنني أعطيته السيطرة عليه.": [
+  "Because he helped me recover the cargo. The money is mine, but I gave him control of it.",
+  "あの子が積荷を取り戻すのを手伝ったからだ。金は私のものだが、管理はあの子に任せた。"
+ ],
+ "الثروة حقيقية. والميراث كذبة. وأنا... حيّ.": [
+  "The fortune is real. The inheritance is a lie. And I... am alive.",
+  "財産は本物だ。遺産は嘘だ。そして私は……生きている。"
+ ],
+ "إدموند نجا من الغرق واختبأ. إلياس استعمل ثروة أبيه وادّعى أنها ميراث.": [
+  "Edmund survived the shipwreck and went into hiding. Elias used his father's fortune and claimed it was an inheritance.",
+  "エドマンドは難破を生き延びて身を隠した。エリアスは父の財産を使い、それを遺産だと偽った。"
+ ],
+ "أصلح الشباك مع غيديون كل صباح. يداي بطيئتان... لكنهما تتعلّمان.": [
+  "I mend the nets with Gideon every morning. My hands are slow... but they're learning.",
+  "毎朝ギデオンと網を繕っている。手は遅いが……覚えてきている。"
+ ],
+ "مارغريت تسامحني قليلًا كل يوم. وهذا أكثر مما أستحق.": [
+  "Margaret forgives me a little more each day. That's more than I deserve.",
+  "マーガレットは毎日少しずつ許してくれる。私には過ぎたことだ。"
+ ],
+ "إلياس يريد شراء أرضنا الشرقية. يريد توقيعي.": [
+  "Elias wants to buy our eastern land. He wants my signature.",
+  "エリアスがうちの東の土地を買いたがっている。僕の署名が欲しいんだ。"
+ ],
+ "الأرض؟!... لا. لا، هذه الأرض لم تكن لي قط.": [
+  "The land?!... No. No, that land was never mine.",
+  "土地だと？！……いや。いや、あの土地は一度も私のものではなかった。"
+ ],
+ "كانت لأبيك. أراد أن يبني عليها بيتًا جديدًا للعائلة كلها. أخذتها منه في نزاع تجاري مرير.": [
+  "It was your father's. He wanted to build a new house on it for the whole family. I took it from him in a bitter trade dispute.",
+  "お前の父親のものだった。家族みんなのための新しい家を建てたがっていた。私は商売上のひどい争いで、それを兄から奪ったのだ。"
+ ],
+ "وندمت على ذلك كل يوم منذ ذلك الحين.": [
+  "And I have regretted it every day since.",
+  "そしてそれ以来、毎日後悔してきた。"
+ ],
+ "يُخرج إدموند صندوقًا خشبيًا قديمًا ويضعه بين يدي غيديون.": [
+  "Edmund takes out an old wooden box and places it in Gideon's hands.",
+  "エドマンドは古い木箱を取り出し、ギデオンの手に置いた。"
+ ],
+ "فيه رسائل أبيك، والسند الأصلي للأرض، وساعة فضية صغيرة، ومذكراتي قبل الغرق.": [
+  "Inside are your father's letters, the original land deed, a small silver watch, and my journal from before the wreck.",
+  "中にはお前の父親の手紙、土地の原本の権利書、小さな銀時計、そして難破前の私の日誌が入っている。"
+ ],
+ "يقرأ غيديون الرسائل. لم يكره أبوه إدموند قط. كان يريد فقط أن يعود أخوه إلى البيت.": [
+  "Gideon reads the letters. His father never hated Edmund. He only wanted his brother to come home.",
+  "ギデオンは手紙を読む。父はエドマンドを憎んでなどいなかった。ただ弟に帰ってきてほしかっただけだった。"
+ ],
+ "أدركت الآن أن أكبر خطأ ارتكبته لم يكن خسارة ثروتي... بل هجر الناس الذين أحبوني.": [
+  "I see now that my greatest mistake was not losing my fortune... but abandoning the people who loved me.",
+  "今になってわかる。私の最大の過ちは財産を失ったことではない……私を愛してくれた人々を見捨てたことだ。"
+ ],
+ "لا أستطيع أن أغيّر الماضي يا عمّي. لكنك تستطيع أن تختار ما يحدث بعد الآن.": [
+  "I can't change the past, Uncle. But you can choose what happens from now on.",
+  "過去は変えられないよ、おじさん。でも、これから何が起きるかは選べる。"
+ ],
+ "...إذن سأختار. لن أختبئ بعد اليوم.": [
+  "...Then I will choose. I won't hide any more.",
+  "……ならば選ぼう。もう隠れはしない。"
+ ],
+ "إلياس سيأتي إلى المزرعة غدًا مع العمّال ليهدم كل شيء. كن هنا عند الفجر. ومعك السند.": [
+  "Elias will come to the farm tomorrow with workers to tear everything down. Be here at dawn. And bring the deed.",
+  "エリアスは明日、作業員を連れて農場に来て、すべてを取り壊すつもりだ。夜明けにここへ来い。権利書を持ってな。"
+ ],
+ "الأرض الشرقية كانت لأبي. إدموند أخذها منه في نزاع تجاري.": [
+  "The eastern land was Father's. Edmund took it from him in a trade dispute.",
+  "東の土地は父さんのものだった。エドマンドが商売の争いで奪った。"
+ ],
+ "السند الأصلي للأرض معي الآن.": [
+  "I now have the original land deed.",
+  "土地の原本の権利書は今、僕の手にある。"
+ ],
+ "اذهب إلى إلياس. اسأله بنفسك لماذا كذب. ثم عُد إليّ.": [
+  "Go to Elias. Ask him yourself why he lied. Then come back to me.",
+  "エリアスのところへ行け。なぜ嘘をついたのか自分で聞いてこい。それから戻ってこい。"
+ ],
+ "غدًا عند الفجر. لا تتأخّر يا ابن أخي.": [
+  "Tomorrow at dawn. Don't be late, nephew.",
+  "明日の夜明けだ。遅れるなよ、甥っ子。"
+ ],
+ "اجلس قرب النار. الحظيرة باردة، لكنها كانت بيتي سنوات.": [
+  "Sit by the fire. The barn is cold, but it was my home for years.",
+  "火のそばに座れ。納屋は寒いが、何年も私の家だった。"
+ ],
+ "صندوق خشبي قديم بقفل نحاسي. إدموند لا يرفع عينيه عنه.": [
+  "An old wooden box with a brass lock. Edmund never takes his eyes off it.",
+  "真鍮の錠がついた古い木箱。エドマンドは片時も目を離さない。"
+ ],
+ "رأيت إلياس يمرّ مع عمّال ومعاول نحو الجسر الشرقي... ماذا يحدث يا غيديون؟": [
+  "I saw Elias pass with workers and pickaxes towards the eastern bridge... what's happening, Gideon?",
+  "エリアスが作業員とつるはしを連れて東の橋へ向かうのを見たわ……何が起きてるの、ギデオン？"
+ ],
+ "سأخبرك بكل شيء الليلة يا أمي. أعدك.": [
+  "I'll tell you everything tonight, Mother. I promise.",
+  "今夜全部話すよ、母さん。約束する。"
+ ],
+ "نحن نعمل لمن يدفع يا سيدي.": [
+  "We work for whoever pays, sir.",
+  "旦那、俺たちは金を払う人のために働くだけでさ。"
+ ],
+ "قيل لنا إن الأرض صارت للسيد إلياس...": [
+  "We were told the land belonged to Mr Elias now...",
+  "土地はもうエリアス様のものだと聞いてたんですが……"
+ ],
+ "شيء يلمع بين الحجارة... بوصلة نحاسية قديمة!": [
+  "Something glinting between the stones... an old brass compass!",
+  "石の間で何かが光っている……古い真鍮の羅針盤だ！"
+ ],
+ "ورقة مطويّة عالقة بين حجارة السور... رسالة قديمة!": [
+  "A folded paper caught between the stones of the wall... an old letter!",
+  "塀の石の間に挟まった折りたたまれた紙……古い手紙だ！"
+ ],
+ "رسالة إدموند إلى الكاهن: «لا تدفنوا تابوتًا فارغًا باسمي.»": [
+  "Edmund's letter to the priest: \"Do not bury an empty coffin in my name.\"",
+  "エドマンドから神父への手紙：「私の名で空の棺を埋めないでください」"
+ ],
+ "صفحة ممزّقة من دفتر، محشورة بين الأعشاب الطويلة.": [
+  "A torn page from a notebook, stuck among the tall grass.",
+  "背の高い草の間に引っかかった、手帳の破れた一頁。"
+ ],
+ "صفحة أخرى في زجاجة جرفها الموج!": [
+  "Another page, in a bottle washed up by the waves!",
+  "波に打ち上げられた瓶の中にもう一頁！"
+ ],
+ "ورقة رسمية مخبّأة خلف السرير القديم.": [
+  "An official paper hidden behind the old bed.",
+  "古いベッドの裏に隠された公的な書類。"
+ ],
+ "رنّت العصا! تحت التراب... حصان خشبي صغير. أبي نحته لي حين كنت طفلًا!": [
+  "The rod rang! Under the soil... a little wooden horse. Father carved it for me when I was a child!",
+  "杖が鳴った！土の下に……小さな木の馬。子供の頃、父さんが彫ってくれたものだ！"
+ ],
+ "رنّت العصا قرب الرصيف! عدّة صيد قديمة جدًا، مدفونة في الرمل.": [
+  "The rod rang near the pier! Very old fishing gear, buried in the sand.",
+  "桟橋の近くで杖が鳴った！砂に埋もれたとても古い漁具だ。"
+ ],
+ "صورة قديمة سقطت خلف البراميل. أهل القرية في عيد الصيادين... وأبي في الوسط يضحك.": [
+  "An old photograph fallen behind the barrels. The villagers at the fishermen's festival... and Father in the middle, laughing.",
+  "樽の裏に落ちた古い写真。漁師祭りの村人たち……そして真ん中で笑う父さん。"
+ ],
+ "غيديون آشفورد، شاب في التاسعة عشرة.\nمات أبوه قبل سنوات وترك ديونًا كثيرة، ويعيش مع أمه مارغريت وأخته الصغيرة كلارا في بيت خشبي قديم على الطرف الشرقي للقرية.\nالسقف يسرّب المطر، والدائنون لا ينتظرون...": [
+  "Gideon Ashford, nineteen years old.\nHis father died years ago and left heavy debts; he lives with his mother Margaret and his little sister Clara in an old wooden house at the eastern edge of the village.\nThe roof leaks, and the creditors will not wait...",
+  "ギデオン・アシュフォード、十九歳。\n父は何年も前に亡くなり、多くの借金を残した。母マーガレットと幼い妹クララと共に、村の東の外れの古い木の家で暮らしている。\n屋根は雨漏りし、債権者は待ってくれない……"
+ ],
+ "عند الفجر، يصل إلياس إلى المزرعة ومعه عمّال يحملون المعاول والحبال.": [
+  "At dawn, Elias arrives at the farm with workers carrying pickaxes and ropes.",
+  "夜明け、エリアスがつるはしとロープを持った作業員たちを連れて農場に現れる。"
+ ],
+ "أخرجوا كل هذه الخردة. سنمهّد الأرض للبناء قبل الشتاء.": [
+  "Clear out all this junk. We'll level the ground for building before winter.",
+  "このがらくたを全部運び出せ。冬までに建物のために地ならしをする。"
+ ],
+ "لن يلمس أحد هذه الأرض يا إلياس.": [
+  "No one is going to touch this land, Elias.",
+  "誰にもこの土地には触らせない、エリアス。"
+ ],
+ "تنحَّ يا غيديون.": [
+  "Stand aside, Gideon.",
+  "どけ、ギデオン。"
+ ],
+ "لا.": [
+  "No.",
+  "いやだ。"
+ ],
+ "يا لك من جاحد! دفعت ديونكم، وأصلحت بيتكم، وأعطيتكم فرصة لحياة أفضل!": [
+  "You ungrateful wretch! I paid your debts, repaired your house and gave you a chance at a better life!",
+  "恩知らずめ！借金を払い、家を直し、より良い暮らしの機会をやったのに！"
+ ],
+ "أعرف أنك ساعدتنا يا إلياس. لكن اللطف لا يجب أن يُستعمل سلاحًا.": [
+  "I know you helped us, Elias. But kindness should never be used as a weapon.",
+  "助けてくれたことはわかってる、エリアス。でも優しさを武器にしてはいけない。"
+ ],
+ "يُفتح باب الحظيرة ببطء.": [
+  "The barn door slowly opens.",
+  "納屋の扉がゆっくりと開く。"
+ ],
+ "يتجمّد إلياس. لأول مرة منذ سنوات، يقف الأب وابنه وجهًا لوجه في ضوء النهار.": [
+  "Elias freezes. For the first time in years, father and son stand face to face in daylight.",
+  "エリアスは凍りついた。何年ぶりかで、父と息子が昼の光の中で向かい合う。"
+ ],
+ "يكفي يا إلياس. لم أعد أريد أن أختبئ.": [
+  "Enough, Elias. I don't want to hide any more.",
+  "もういい、エリアス。私はもう隠れたくない。"
+ ],
+ "أخطأت حين هجرت عائلتي. والثروة لم تكن يومًا لنسيطر بها على أحد.": [
+  "I was wrong to abandon my family. And the fortune was never meant for controlling anyone.",
+  "家族を見捨てたのは間違いだった。そして財産は誰かを支配するためのものではなかった。"
+ ],
+ "كانت لنمنح العائلة فرصة لتبدأ من جديد. دع الأرض لغيديون.": [
+  "It was meant to give the family a chance to start again. Leave the land to Gideon.",
+  "家族がやり直す機会を与えるためのものだった。土地はギデオンに任せろ。"
+ ],
+ "يتردّد إلياس طويلًا...": [
+  "Elias hesitates for a long time...",
+  "エリアスは長いあいだためらう……"
+ ],
+ "لا. الأرض صارت لي. وإن لم يتنحَّ، فسأتّهمه بالسرقة أمام القرية كلها!": [
+  "No. The land is mine now. And if he won't step aside, I'll accuse him of theft before the whole village!",
+  "いやだ。土地はもう私のものだ。どかないなら、村じゅうの前でこいつを泥棒として訴えてやる！"
+ ],
+ "هذا هو السند الأصلي للأرض، باسم أبي. وهذه رسائله. الأرض لعائلتي.": [
+  "This is the original land deed, in my father's name. And these are his letters. The land belongs to my family.",
+  "これが父の名義の土地の原本の権利書だ。そしてこれが父の手紙。土地は僕の家族のものだ。"
+ ],
+ "سند موثّق في سجلّات الكنيسة؟... لن نهدم شيئًا يا سيد إلياس.": [
+  "A deed recorded in the church registers?... We won't tear anything down, Mr Elias.",
+  "教会の記録に残る権利書だって？……何も壊しませんよ、エリアス様。"
+ ],
+ "ولم يقل لنا أحد إن أباك حيّ!": [
+  "And nobody told us your father was alive!",
+  "それに、あんたの親父さんが生きてるなんて誰も言わなかったじゃないか！"
+ ],
+ "ينظر إلياس حوله. لا أحد يقف معه.": [
+  "Elias looks around. No one stands with him.",
+  "エリアスは周りを見回す。誰も彼の味方をしない。"
+ ],
+ "في تلك الليلة، جمع إلياس أغراضه وغادر هرافنفيك سرًّا.\nلم يعتذر. لم يودّع أحدًا.\nاختفى في الظلام، تاركًا ضيعته خلفه.": [
+  "That night, Elias gathered his belongings and left Hrafnvik in secret.\nHe did not apologise. He said goodbye to no one.\nHe vanished into the darkness, leaving his estate behind.",
+  "その夜、エリアスは荷物をまとめ、ひそかにフラフンヴィークを去った。\n謝りもせず、誰にも別れを告げなかった。\n屋敷を残して、闇の中へ消えていった。"
+ ],
+ "بعد أسابيع، بدأت هرافنفيك تتغيّر.\nأصلحت عائلة آشفورد بيتها القديم، وافتتحت مارغريت محلّ خياطة صغيرًا،\nوصارت كلارا تبيع لوحاتها في السوق.": [
+  "Weeks later, Hrafnvik began to change.\nThe Ashford family repaired their old house, Margaret opened a small sewing shop,\nand Clara began selling her paintings at the market.",
+  "数週間後、フラフンヴィークは変わり始めた。\nアシュフォード家は古い家を修繕し、マーガレットは小さな仕立て屋を開き、\nクララは市場で絵を売り始めた。"
+ ],
+ "استعمل غيديون جزءًا من الثروة ليرمّم المستودع القديم ويحوّله إلى تجارة صيد،\nووظّف أهل القرية الذين لم يجدوا عملًا.\nحصل بيورن على قارب جديد، ووسّع لايف ورشته، وافتتحت رونا محلّها.": [
+  "Gideon used part of the fortune to restore the old warehouse and turn it into a fishing trade,\nhiring villagers who had been unable to find work.\nBjorn got a new boat, Leif expanded his workshop, and Runa opened her shop.",
+  "ギデオンは財産の一部で古い倉庫を修復し、漁業の商売を始め、\n仕事のなかった村人たちを雇った。\nビョルンは新しい船を手に入れ、レイフは工房を広げ、ルーナは自分の店を開いた。"
+ ],
+ "انتقل إدموند إلى كوخ صغير قرب بيت العائلة،\nيساعد غيديون في عمله، ويعيد بناء علاقته بمارغريت وكلارا ببطء.\n\nأما إلياس، فلا أحد يعرف أين ذهب.": [
+  "Edmund moved into a small cottage near the family home,\nhelping Gideon with his work and slowly rebuilding his bond with Margaret and Clara.\n\nAs for Elias, no one knows where he went.",
+  "エドマンドは家族の家の近くの小さな小屋に移り住み、\nギデオンの仕事を手伝いながら、マーガレットやクララとの絆をゆっくりと取り戻していった。\n\nエリアスがどこへ行ったのかは、誰も知らない。"
+ ],
+ "أمسية هادئة. القرية مضاءة بالفوانيس الدافئة، والبحر ساكن.": [
+  "A quiet evening. The village glows with warm lanterns, and the sea is still.",
+  "静かな夕暮れ。村は温かなランタンの光に包まれ、海は穏やかだ。"
+ ],
+ "غيديون! العشاء جاهز. ادخل قبل أن يبرد!": [
+  "Gideon! Supper's ready. Come in before it gets cold!",
+  "ギデオン！夕食ができたわよ。冷めないうちに入りなさい！"
+ ],
+ "انظر! رسمت البيت... ورسمتنا كلنا. حتى العم إدموند!": [
+  "Look! I painted the house... and all of us. Even Uncle Edmund!",
+  "見て！家を描いたの……それにみんなも。エドマンドおじさんもよ！"
+ ],
+ "تعال واجلس يا ابن أخي. المدفأة دافئة.": [
+  "Come and sit, nephew. The fire is warm.",
+  "座りなさい、甥っ子。暖炉は暖かいぞ。"
+ ],
+ "لأول مرة منذ سنوات، لا يقلق غيديون بشأن الغد.": [
+  "For the first time in years, Gideon does not worry about tomorrow.",
+  "何年ぶりかで、ギデオンは明日のことを心配していない。"
+ ],
+ "إلى ابني غيديون،\n\nإن قرأت هذه الكلمات، فقد عرفت الحقيقة.\nلم أكره أخي يومًا. كنت أنتظره كل مساء عند الباب.\nلا تجعل المال يفرّقك عن الناس الذين تحبهم.\nالبيت ليس جدرانًا وسقفًا... البيت هو نحن.\n\n— أبوك": [
+  "To my son Gideon,\n\nIf you are reading these words, you have learned the truth.\nI never hated my brother. I waited for him at the door every evening.\nDon't let money divide you from the people you love.\nA home is not walls and a roof... a home is us.\n\n— Your father",
+  "息子ギデオンへ\n\nこの言葉を読んでいるなら、お前は真実を知ったのだろう。\n私は一度も弟を憎んだことはない。毎晩、扉のそばで弟を待っていた。\n金のために愛する人たちと離れてはいけない。\n家とは壁と屋根ではない……家とは、私たちのことだ。\n\n— 父より"
+ ],
+ "تحت سقف واحد": [
+  "Under One Roof",
+  "ひとつ屋根の下"
+ ],
+ "قصة عن عائلة، وثروة، وحقيقة مدفونة.": [
+  "A story of family, fortune and a buried truth.",
+  "家族と財産と、埋もれた真実の物語。"
+ ],
+ "هرافنفيك، آيسلندا — 1887": [
+  "Hrafnvik, Iceland — 1887",
+  "フラフンヴィーク、アイスランド — 1887年"
+ ],
+ "«الثروة غيّرت حياة غيديون.»": [
+  "\"The fortune changed Gideon's life.\"",
+  "「財産はギデオンの人生を変えた。」"
+ ],
+ "«والحقيقة غيّرت مستقبله.»": [
+  "\"The truth changed his future.\"",
+  "「真実は彼の未来を変えた。」"
+ ],
+ "شكرًا لأنك لعبت.": [
+  "Thank you for playing.",
+  "遊んでくれてありがとう。"
+ ],
+ "(اضغط للعودة إلى القائمة الرئيسية)": [
+  "(Tap to return to the main menu)",
+  "（タップしてメインメニューに戻る）"
+ ],
+ "اقطف الأعشاب": [
+  "Pick herbs",
+  "薬草を摘む"
+ ],
+ "التقط": [
+  "Pick up",
+  "拾う"
+ ],
+ "افحص الشيء اللامع": [
+  "Examine the glint",
+  "光るものを調べる"
+ ],
+ "ادخل": [
+  "Enter",
+  "入る"
+ ],
+ "تأمّل المنظر": [
+  "Admire the view",
+  "景色を眺める"
+ ],
+ "افحص": [
+  "Examine",
+  "調べる"
+ ],
+ "القرية": [
+  "Village",
+  "村"
+ ],
+ "لحن دافئ للحياة اليومية والميناء": [
+  "A warm tune for daily life and the harbour",
+  "日々の暮らしと港のための温かな旋律"
+ ],
+ "الغموض": [
+  "Mystery",
+  "謎"
+ ],
+ "توتر خفيف للتحقيق واكتشاف الأسرار": [
+  "Light tension for investigation and uncovering secrets",
+  "調査と秘密の発見のための、ほのかな緊張感"
+ ],
+ "الحنين": [
+  "Melancholy",
+  "郷愁"
+ ],
+ "لحن هادئ لمشاهد العائلة والماضي": [
+  "A quiet melody for family moments and the past",
+  "家族の場面と過去のための静かな旋律"
+ ],
+ "اللغة": [
+  "Language",
+  "言語"
+ ],
+ "صوت الموسيقى": [
+  "Music volume",
+  "音楽の音量"
+ ],
+ "المؤثرات الصوتية": [
+  "Sound effects",
+  "効果音"
+ ],
+ "سرعة النصوص": [
+  "Text speed",
+  "文字の速さ"
+ ],
+ "بطيئة": [
+  "Slow",
+  "遅い"
+ ],
+ "عادية": [
+  "Normal",
+  "普通"
+ ],
+ "سريعة": [
+  "Fast",
+  "速い"
+ ],
+ "فورية": [
+  "Instant",
+  "瞬時"
+ ],
+ "الاهتزاز": [
+  "Vibration",
+  "振動"
+ ],
+ "إبقاء الشاشة مضاءة": [
+  "Keep screen on",
+  "画面を点灯したままにする"
+ ],
+ "ملء الشاشة": [
+  "Fullscreen",
+  "全画面"
+ ],
+ "الاهتزاز (للهاتف)": [
+  "Vibration (phone)",
+  "振動（スマホ）"
+ ],
+ "إظهار أزرار اللمس": [
+  "Show touch controls",
+  "タッチ操作ボタンを表示"
+ ],
+ "استعادة الإعدادات الافتراضية": [
+  "Restore default settings",
+  "初期設定に戻す"
+ ],
+ "الموسيقى": [
+  "Music",
+  "音楽"
+ ],
+ "مستوى الصوت": [
+  "Volume",
+  "音量"
+ ],
+ "مقطوعات أصلية مولّدة لهذه اللعبة.": [
+  "Original pieces generated for this game.",
+  "このゲームのために生成されたオリジナル曲です。"
+ ],
+ "تخطي الحوار": [
+  "Skip dialogue",
+  "会話をスキップ"
+ ],
+ "هرافنفيك": [
+  "Hrafnvik",
+  "フラフンヴィーク"
+ ],
+ "ربيع — 1887": [
+  "Spring — 1887",
+  "春 — 1887年"
+ ],
+ "دليل جديد في الدفتر": [
+  "New clue in the notebook",
+  "手帳に新しい手がかり"
+ ],
+ "(اضغط مرة أخرى للقراءة)": [
+  "(Tap again to read)",
+  "（もう一度タップで読む）"
+ ],
+ "إغلاق": [
+  "Close",
+  "閉じる"
+ ],
+ "معك %d كرونة": [
+  "You have %d krónur",
+  "所持金 %d クローナ"
+ ],
+ "مُشترى": [
+  "Bought",
+  "購入済み"
+ ],
+ "%d ك": [
+  "%d kr",
+  "%d クローナ"
+ ],
+ "الصيد": [
+  "Fishing",
+  "釣り"
+ ],
+ "اضغط عندما يكون المؤشر في المنطقة الذهبية لتسحب السمكة": [
+  "Tap when the marker is in the golden zone to reel in the fish",
+  "目印が金色の範囲に入ったらタップして魚を釣り上げよう"
+ ],
+ "إصلاح": [
+  "Repair",
+  "修理"
+ ],
+ "اطرق المسمار في اللحظة المناسبة": [
+  "Strike the nail at the right moment",
+  "ちょうどいい瞬間に釘を打とう"
+ ],
+ "تقطيع الحطب": [
+  "Chopping wood",
+  "薪割り"
+ ],
+ "اضرب بالفأس عندما يمر المؤشر بالمنطقة الذهبية": [
+  "Swing the axe when the marker passes the golden zone",
+  "目印が金色の範囲を通る時に斧を振ろう"
+ ],
+ "تجهيز القارب": [
+  "Readying the boat",
+  "船の準備"
+ ],
+ "شُدّ الحبال في التوقيت الصحيح": [
+  "Pull the ropes with good timing",
+  "タイミングよくロープを引こう"
+ ],
+ "الآن!": [
+  "Now!",
+  "今だ！"
+ ],
+ "المحاولة %d من %d": [
+  "Attempt %d of %d",
+  "%d回目／%d回"
+ ],
+ "أحسنت!": [
+  "Well done!",
+  "お見事！"
+ ],
+ "لم تنجح هذه المرة...": [
+  "Not this time...",
+  "今回はうまくいかなかった……"
+ ],
+ "هرافنفيك · آيسلندا · 1887": [
+  "Hrafnvik · Iceland · 1887",
+  "フラフンヴィーク · アイスランド · 1887"
+ ],
+ "ابدأ اللعب": [
+  "Play",
+  "プレイ"
+ ],
+ "الإعدادات": [
+  "Settings",
+  "設定"
+ ],
+ "خروج": [
+  "Quit",
+  "終了"
+ ],
+ "رجوع": [
+  "Back",
+  "戻る"
+ ],
+ "متابعة الرحلة": [
+  "Continue the journey",
+  "旅を続ける"
+ ],
+ "لعبة جديدة": [
+  "New game",
+  "ニューゲーム"
+ ],
+ "سيُستبدل الحفظ الحالي برحلة جديدة. هل أنت متأكد؟": [
+  "Your current save will be replaced by a new journey. Are you sure?",
+  "現在のセーブは新しい旅で上書きされます。よろしいですか？"
+ ],
+ "نعم، ابدأ من جديد": [
+  "Yes, start again",
+  "はい、最初から始める"
+ ],
+ "لا": [
+  "No",
+  "いいえ"
+ ],
+ "المهام": [
+  "Quests",
+  "目標"
+ ],
+ "الأدلة": [
+  "Clues",
+  "手がかり"
+ ],
+ "الحقيبة": [
+  "Bag",
+  "持ち物"
+ ],
+ "المقتنيات": [
+  "Collection",
+  "収集品"
+ ],
+ "دفتر غيديون": [
+  "Gideon's Notebook",
+  "ギデオンの手帳"
+ ],
+ "متابعة اللعب": [
+  "Resume",
+  "ゲームに戻る"
+ ],
+ "حفظ": [
+  "Save",
+  "セーブ"
+ ],
+ "القائمة الرئيسية": [
+  "Main menu",
+  "メインメニュー"
+ ],
+ "مهام جانبية": [
+  "Side quests",
+  "サイドクエスト"
+ ],
+ "لا توجد مهام جانبية بعد. تحدّث إلى أهل القرية.": [
+  "No side quests yet. Talk to the villagers.",
+  "サイドクエストはまだありません。村人と話してみよう。"
+ ],
+ "مكانتك في القرية: %s": [
+  "Your standing in the village: %s",
+  "村での評判：%s"
+ ],
+ "لم تدوّن أي دليل بعد.": [
+  "You haven't noted any clues yet.",
+  "まだ手がかりを書き留めていない。"
+ ],
+ "الحقيبة فارغة.": [
+  "The bag is empty.",
+  "持ち物は空っぽだ。"
+ ],
+ "اقرأ": [
+  "Read",
+  "読む"
+ ],
+ "التحكم: الأسهم أو WASD للحركة، Shift للركض، E أو المسافة للتفاعل، J أو Esc لفتح الدفتر.": [
+  "Controls: arrow keys or WASD to move, Shift to run, E or Space to interact, J or Esc for the notebook.",
+  "操作：矢印キーかWASDで移動、Shiftで走る、EかSpaceで調べる・話す、JかEscで手帳。"
+ ],
+ "على الهاتف: عصا التحكم يسارًا، وزر اليد للتفاعل، وزر الجري، وزر الدفتر.": [
+  "On a phone: joystick on the left, the hand button to interact, the run button, and the notebook button.",
+  "スマホ：左のジョイスティックで移動、手のボタンで調べる・話す、走るボタン、手帳ボタン。"
+ ],
+ "ستظهر اللغة الجديدة كاملة بعد هذا المشهد": [
+  "The new language will appear in full after this scene",
+  "新しい言語はこの場面の後に完全に反映されます"
+ ],
+ "متابعة ◂": [
+  "Continue ◂",
+  "つづける ◂"
+ ],
+ "تخطي المقدمة": [
+  "Skip intro",
+  "導入をスキップ"
+ ],
+ "العربية": [
+  "العربية",
+  "العربية"
+ ],
+ "تحدّث: ": [
+  "Talk: ",
+  "話す："
+ ],
+ "حصلت على: %s%s": [
+  "Received: %s%s",
+  "入手：%s%s"
+ ],
+ "بعت %d مقابل %d كرونة": [
+  "Sold %d for %d krónur",
+  "%d個を%dクローナで売った"
+ ],
+ "+%d كرونة": [
+  "+%d krónur",
+  "+%dクローナ"
+ ],
+ "ازدادت مكانتك في القرية": [
+  "Your standing in the village has grown",
+  "村での評判が上がった"
+ ],
+ "عربة هنريك — بضائع من وراء البحار": [
+  "Henrik's cart — goods from across the sea",
+  "ヘンリクの荷車 — 海の向こうの品物"
+ ],
+ "أعشاب": [
+  "Herbs",
+  "薬草"
+ ],
+ "الأغنام": [
+  "Sheep",
+  "羊"
+ ],
+ "محبوب ومحترم": [
+  "Loved and respected",
+  "愛され、尊敬されている"
+ ],
+ "يثق بك الناس": [
+  "People trust you",
+  "人々に信頼されている"
+ ],
+ "يعرفك الناس بالخير": [
+  "Known for kindness",
+  "親切で知られている"
+ ],
+ "ابن عائلة فقيرة": [
+  "Son of a poor family",
+  "貧しい家の息子"
+ ],
+ "اشتريت: ": [
+  "Bought: ",
+  "購入："
+ ],
+ "لا يمكن الحفظ الآن": [
+  "You can't save right now",
+  "今はセーブできない"
+ ],
+ "صباح يوم جديد...": [
+  "A new morning...",
+  "新しい朝……"
+ ],
+ "أنهك التعب غيديون فغلبه النوم... حمله جيرانه إلى البيت.": [
+  "Exhausted, Gideon fell asleep... the neighbours carried him home.",
+  "疲れ果てたギデオンは眠り込んでしまった……隣人たちが家まで運んでくれた。"
+ ],
+ "هرافنفيك، قرية صيد صغيرة على الساحل الغربي لآيسلندا.\nربيع عام 1887.": [
+  "Hrafnvik, a small fishing village on the west coast of Iceland.\nSpring, 1887.",
+  "フラフンヴィーク、アイスランド西海岸の小さな漁村。\n1887年、春。"
+ ],
+ "في تلك الليلة، لم يستطع غيديون النوم.\nرأى إلياس يتسلّل خارج الضيعة حاملًا فانوسًا...": [
+  "That night, Gideon couldn't sleep.\nHe saw Elias slip out of the estate carrying a lantern...",
+  "その夜、ギデオンは眠れなかった。\nランタンを手に屋敷を抜け出すエリアスの姿が見えた……"
+ ],
+ "اتبع إلياس من مسافة آمنة": [
+  "Follow Elias at a safe distance",
+  "安全な距離を保ってエリアスを追おう"
+ ],
+ "اقتربتَ كثيرًا! ابقَ خلفه": [
+  "Too close! Stay behind him",
+  "近すぎる！後ろに離れていろ"
+ ],
+ "الخاتمة": [
+  "Epilogue",
+  "エピローグ"
+ ],
+ "«الثروة قد تبني بيتًا... لكنّ الذين يعيشون فيه وحدهم يجعلونه وطنًا.»": [
+  "\"A fortune can build a house... but only the people inside can make it a home.\"",
+  "「財産は家を建てられる……だが、そこを我が家にできるのは、中に住む人々だけだ。」"
+ ],
+ "رسالة من أبي": [
+  "A letter from Father",
+  "父からの手紙"
+ ],
+ "السبت": [
+  "Saturday",
+  "土曜日"
+ ],
+ "الأحد": [
+  "Sunday",
+  "日曜日"
+ ],
+ "الاثنين": [
+  "Monday",
+  "月曜日"
+ ],
+ "الثلاثاء": [
+  "Tuesday",
+  "火曜日"
+ ],
+ "الأربعاء": [
+  "Wednesday",
+  "水曜日"
+ ],
+ "الخميس": [
+  "Thursday",
+  "木曜日"
+ ],
+ "الجمعة": [
+  "Friday",
+  "金曜日"
+ ],
+ "تم حفظ التقدّم": [
+  "Progress saved",
+  "進行状況をセーブしました"
+ ],
+ "صباحًا": [
+  "AM",
+  "午前"
+ ],
+ "مساءً": [
+  "PM",
+  "午後"
+ ],
+ "منزل آل آشفورد": [
+  "The Ashford home",
+  "アシュフォード家"
+ ],
+ "نُزل سيغريد": [
+  "Sigrid's Inn",
+  "シグリッドの宿"
+ ],
+ "مكتب إلياس": [
+  "Elias's study",
+  "エリアスの書斎"
+ ],
+ "بيت المزرعة المهجور": [
+  "The abandoned farmhouse",
+  "廃農家"
+ ],
+ "الحظيرة": [
+  "The barn",
+  "納屋"
+ ],
+ "الميناء": [
+  "The harbour",
+  "港"
+ ],
+ "الكنيسة": [
+  "The church",
+  "教会"
+ ],
+ "ساحة القرية": [
+  "Village square",
+  "村の広場"
+ ],
+ "ضيعة إلياس": [
+  "Elias's estate",
+  "エリアスの屋敷"
+ ],
+ "منزل غيديون": [
+  "Gideon's home",
+  "ギデオンの家"
+ ],
+ "المزرعة المهجورة": [
+  "The abandoned farm",
+  "廃農場"
+ ],
+ "التلال الشرقية": [
+  "The eastern hills",
+  "東の丘"
+ ],
+ "الشلال": [
+  "The waterfall",
+  "滝"
+ ],
+ "المرتفعات الشمالية": [
+  "The northern heights",
+  "北の高台"
+ ],
+ "الحقول الغربية": [
+  "The western fields",
+  "西の畑"
+ ],
+ "الشاطئ": [
+  "The beach",
+  "浜辺"
+ ]
+}

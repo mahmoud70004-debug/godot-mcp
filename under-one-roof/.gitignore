@@ -5,3 +5,4 @@
 *.translation
 export_credentials.cfg
 __pycache__/
+tools/fonts_src/

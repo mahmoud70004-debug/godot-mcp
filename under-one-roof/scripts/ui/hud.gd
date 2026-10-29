@@ -212,13 +212,13 @@ func _is_tap(e: InputEvent) -> bool:
 
 
 func set_location(text: String) -> void:
-	if _loc.text != text and text != "":
-		_loc.text = text
+	if text != "":
+		_loc.text = Loc.t(text)
 
 
 func set_prompt(text: String) -> void:
 	_prompt.visible = text != ""
-	_prompt_label.text = text
+	_prompt_label.text = Loc.t(text)
 
 
 func set_gameplay_visible(on: bool) -> void:
@@ -234,14 +234,14 @@ func _refresh_money(delta: int) -> void:
 
 
 func _refresh_time() -> void:
-	_day.text = "%s %d" % [Game.weekday(), Game.day]
+	_day.text = "%s %d" % [Loc.t(Game.weekday()), Game.day]
 	_time.text = Game.clock_text()
 	_sun.queue_redraw()
 
 
 func refresh_quest() -> void:
 	var q: Dictionary = Director.current_quest()
-	_quest_title.text = q.get("title", "")
+	_quest_title.text = Loc.t(q.get("title", ""))
 	_quest_text.text = q.get("short", "")
 	_quest_title.get_parent().get_parent().visible = q.get("title", "") != ""
 
@@ -272,9 +272,9 @@ func _slot_tapped(i: int) -> void:
 	Game.selected_slot = i
 	_refresh_hotbar()
 	var def: Dictionary = Story.ITEMS.get(item, {})
-	_tooltip_label.text = "%s\n%s" % [def.get("name", item), def.get("desc", "")]
+	_tooltip_label.text = "%s\n%s" % [Loc.t(def.get("name", item)), Loc.t(def.get("desc", ""))]
 	if def.has("read"):
-		_tooltip_label.text += "\n(اضغط مرة أخرى للقراءة)"
+		_tooltip_label.text += "\n" + Loc.t("(اضغط مرة أخرى للقراءة)")
 	_tooltip.visible = true
 	var my := Time.get_ticks_msec()
 	_last_tap["shown"] = my
@@ -288,6 +288,7 @@ func show_toast(text: String) -> void:
 	p.add_theme_stylebox_override("panel", UI.panel_style(Color(0.18, 0.12, 0.08, 0.88), UI.GOLD, 1, 6))
 	var l := UI.label(text, 13, UI.PAPER, HORIZONTAL_ALIGNMENT_CENTER)
 	p.add_child(l)
+	Audio.buzz(25)
 	p.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_toasts.add_child(p)
 	p.modulate.a = 0.0

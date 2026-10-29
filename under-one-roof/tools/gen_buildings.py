@@ -584,6 +584,100 @@ def harbour_props():
     reg("railing", s, oy=10)
 
 
+def shop():
+    """Henrik's store on the square: big display window, hanging sign, awning."""
+    w, h = 84, 80
+    s = Spr(w, h, 71)
+    roof_h = 36
+    chimney(s, w - 22, 0, 12)
+    shingles(s, [(0, roof_h + 2), (w - 1, roof_h + 2), (w - 8, 6), (7, 6)], c("3f5a46"), c("2c4232"), c("587a60"))
+    wall = c("3f6a5a")
+    planks(s, 4, roof_h, w - 8, h - roof_h - 4, wall)
+    # display window with goods
+    s.r(8, roof_h + 12, 30, 22, TRIM)
+    s.r(10, roof_h + 14, 26, 18, GLASS)
+    for k, col in enumerate((c("e0c060"), c("c05a3a"), c("7ab0d0"), c("e8e0d0"), c("9a6a3a"))):
+        s.r(12 + k * 5, roof_h + 24, 4, 6, col)
+    s.r(10, roof_h + 14, 12, 8, mix(GLASS, GLASS_L, 0.35))
+    # striped awning
+    for i in range(0, 34, 6):
+        s.r(6 + i, roof_h + 6, 6, 6, c("c0403a") if (i // 6) % 2 == 0 else TRIM)
+    door(s, w - 30, h - 24, 12, 19, c("5a3a22"), lamp=True)
+    # hanging sign: a coin and a parcel
+    s.hl(w - 40, roof_h + 4, 14, c("2a2a2a"))
+    s.r(w - 38, roof_h + 6, 12, 9, c("d0a060"))
+    s.ell(w - 36, roof_h + 8, 5, 5, c("e8c040"))
+    s.r(w - 31, roof_h + 9, 4, 4, c("8a5a32"))
+    for xx in range(4, w - 4, 5):
+        s.r(xx, h - 6, 4, 2, STONE if (xx // 5) % 2 else STONE_L)
+    sel_outline(s)
+    s.shadow(2, h - 7, w - 2, 8)
+    reg("shop", s, base=[4, roof_h + 8, w - 8, h - roof_h - 11], oy=h - 3, door=[w - 24, h - 3], extra={"smoke": [w - 18, 0]})
+
+
+def boathouse():
+    """Fishing-gear store by the water: tarred planks, net hung on the wall, oars."""
+    w, h = 72, 60
+    s = Spr(w, h, 72)
+    shingles(s, [(0, 26), (w - 1, 26), (w - 7, 4), (6, 4)], c("4a4038"), c("342c26"), c("5e544a"))
+    planks(s, 3, 24, w - 6, h - 28, c("4a3a30"))
+    s.r(w // 2 - 14, h - 28, 28, 24, c("2a1e18"))
+    s.vl(w // 2, h - 28, 24, c("6a5040"))
+    for x in range(6, 24):
+        for y in range(30, 46):
+            if (x + y) % 4 == 0 or (x - y) % 4 == 0:
+                s.p(x, y, c("9aa894"))
+    s.line(w - 12, 30, w - 6, 52, WOOD_L, 2)
+    s.line(w - 8, 30, w - 14, 52, WOOD_L, 2)
+    s.r(w - 16, 50, 6, 3, c("e05030"))
+    sel_outline(s)
+    s.shadow(2, h - 6, w - 2, 7)
+    reg("boathouse", s, base=[3, 30, w - 6, h - 33], oy=h - 3)
+
+
+def stable():
+    """Elias' stable and carriage house: neat, painted, with a weather vane."""
+    w, h = 96, 72
+    s = Spr(w, h, 73)
+    shingles(s, [(0, 32), (w - 1, 32), (w - 8, 6), (7, 6)], c("3a4260"), c("283048"), c("56607e"))
+    s.r(w // 2 - 1, 0, 2, 8, c("2a2a2a"))
+    s.poly([(w // 2, 0), (w // 2 + 8, 2), (w // 2, 4)], c("d0a848"))
+    planks(s, 4, 30, w - 8, h - 34, c("efe2c4"))
+    for dx in (10, w - 34):
+        s.r(dx, h - 30, 24, 26, c("7a3a2a"))
+        s.line(dx, h - 30, dx + 23, h - 5, c("efe2c4"))
+        s.line(dx + 23, h - 30, dx, h - 5, c("efe2c4"))
+    s.r(w // 2 - 5, 38, 10, 8, GLASS)
+    s.ell(w // 2 - 8, 6 + 14, 16, 10, c("efe2c4"))
+    s.ell(w // 2 - 4, 6 + 16, 8, 6, c("3a2a20"))
+    for xx in range(4, w - 4, 6):
+        s.r(xx, h - 6, 5, 2, STONE_L)
+    sel_outline(s)
+    s.shadow(2, h - 7, w - 2, 8)
+    reg("stable", s, base=[4, 36, w - 8, h - 39], oy=h - 3)
+
+
+def estate_gate():
+    """Two stone pillars with lanterns and a wrought-iron arch (walk-through)."""
+    w, h = 56, 52
+    s = Spr(w, h, 74)
+    for px in (0, w - 10):
+        s.r(px, 14, 10, 36, STONE_L)
+        s.r(px, 14, 10, 3, STONE)
+        for y in range(18, 50, 6):
+            s.hl(px, y, 10, STONE)
+        s.r(px + 2, 6, 6, 8, c("2a2a2a"))
+        s.r(px + 3, 8, 4, 4, c("f6d878"))
+    for x in range(10, w - 10):
+        y = 14 - int(8 * (1 - ((x - w / 2) / (w / 2 - 10)) ** 2))
+        s.p(x, y, c("2a2a30"))
+        s.p(x, y + 1, c("2a2a30"))
+    for x in range(14, w - 12, 6):
+        s.vl(x, 12, 4, c("2a2a30"))
+    sel_outline(s)
+    reg("estate_gate", s, oy=h - 2, extra={"posts": True})
+
+
 def build(register):
     global reg
     reg = register
@@ -602,10 +696,13 @@ def build(register):
     house_gable("house_white_gable", 68, 88, WALLS["white"], shutters=c("2c4e80"))
     house_long("house_gideon", 70, 72, c("7a6a5a"), shabby=True, door_col=c("5a4a3a"))
     house_long("house_gideon_fixed", 70, 72, c("7a8aa0"), flowers=[c("e05050"), c("f0d040")], shutters=c("4f8a54"), lit=True)
+    # after Elias pays the debts: new roof and door, walls still worn and unpainted
+    house_long("house_gideon_repaired", 70, 72, c("8a7a66"), roof=(c("5a4a44"), c("40342e"), c("7a6656")), door_col=c("7a4a2a"), shutters=c("6a5a48"))
     house_long("farmhouse", 84, 76, c("8a8a80"), shabby=True, broken=True)
     turf_house("turf_house", 72, 64, c("6a4a32"))
     turf_house("turf_house_b", 76, 66, c("8a3a30"))
     church(); manor(); inn(); warehouse(); smithy(); barn()
     shed("shed", c("7a5a3a")); shed("shed_red", c("9a3a30"))
     mine_entrance()
+    shop(); boathouse(); stable(); estate_gate()
     harbour_props()

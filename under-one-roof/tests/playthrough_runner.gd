@@ -115,6 +115,10 @@ func _validate_data() -> void:
 						expect(Story.ITEMS.has(a[1]), "item defined: " + a[1])
 			for line in e.get("lines", []):
 				expect(Story.NAMES.has(line[0]) or line[0] == "", "speaker known: " + str(line[0]))
+	# every displayable string has an English and a Japanese translation
+	var strings = JSON.parse_string(FileAccess.get_file_as_string("res://data/i18n/strings.json"))
+	for src in strings:
+		expect(Loc.has(src, "en") and Loc.has(src, "ja"), "translated: " + str(src).substr(0, 40))
 	for it in Story.SHOP:
 		expect(Story.ITEMS.has(it["id"]), "shop item defined " + it["id"])
 	# every sprite referenced exists

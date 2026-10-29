@@ -37,19 +37,26 @@ static func panel(bg := PAPER) -> PanelContainer:
 	return p
 
 
+## align RIGHT means "start of the reading direction", LEFT means "end" (mirrored for LTR languages).
 static func label(text := "", size := 14, color := INK, align := HORIZONTAL_ALIGNMENT_RIGHT) -> Label:
 	var l := Label.new()
-	l.text = text
+	l.text = Loc.t(text)
 	l.add_theme_font_size_override("font_size", size)
 	l.add_theme_color_override("font_color", color)
-	l.horizontal_alignment = align
-	l.text_direction = Control.TEXT_DIRECTION_RTL
+	l.horizontal_alignment = flow(align)
+	l.text_direction = Loc.dir()
 	return l
+
+
+static func flow(align: HorizontalAlignment) -> HorizontalAlignment:
+	if Loc.rtl() or align == HORIZONTAL_ALIGNMENT_CENTER or align == HORIZONTAL_ALIGNMENT_FILL:
+		return align
+	return HORIZONTAL_ALIGNMENT_LEFT if align == HORIZONTAL_ALIGNMENT_RIGHT else HORIZONTAL_ALIGNMENT_RIGHT
 
 
 static func button(text: String, size := 14) -> Button:
 	var b := Button.new()
-	b.text = text
+	b.text = Loc.t(text)
 	b.focus_mode = Control.FOCUS_NONE
 	b.add_theme_font_size_override("font_size", size)
 	b.add_theme_color_override("font_color", INK)

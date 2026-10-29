@@ -14,9 +14,9 @@ func _ready() -> void:
 	get_tree().change_scene_to_file("res://scenes/main.tscn")
 	await _wait(1.6)
 	await _shot("02_intro_card")
-	for i in 3:
+	for i in 4:
 		Director.main.fader._tap()
-		await _wait(2.6)
+		await _wait(2.0)
 	await _wait(1.0)
 	await _shot("03_intro_dialogue")
 	await _skip_dialogue()

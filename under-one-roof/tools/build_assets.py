@@ -14,6 +14,7 @@ import gen_characters
 import gen_sprites
 import gen_world
 import gen_audio
+import gen_menu
 
 
 def make_icons(a):
@@ -52,6 +53,11 @@ def main():
     world = gen_world.build(sprites, ROOT)
     gen_audio.build(os.path.join(a, "audio"))
     make_icons(a)
+    gen_menu.build(ROOT)
+    # translations + Japanese font subsets (Arabic text -> English / Japanese)
+    import subprocess
+    for script in ("i18n_extract.py", "i18n_build.py", "subset_fonts.py"):
+        subprocess.run([sys.executable, os.path.join(HERE, script)], check=True)
     print(f"chars={len(chars)} sprites={len(sprites)} icons={len(icons)} objects={len(world['objects'])}")
 
 

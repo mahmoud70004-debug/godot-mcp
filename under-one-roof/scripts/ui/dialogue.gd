@@ -19,6 +19,7 @@ var _typing := false
 var _waiting := false
 var _choosing := false
 var _skip := false
+var _skip_btn: Button
 
 
 func _ready() -> void:
@@ -42,7 +43,7 @@ func _ready() -> void:
 
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 10)
-	row.layout_direction = Control.LAYOUT_DIRECTION_RTL
+	row.layout_direction = Loc.layout()
 	row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_box.add_child(row)
 
@@ -99,7 +100,33 @@ func _ready() -> void:
 	_choices.alignment = BoxContainer.ALIGNMENT_END
 	_choices.add_theme_constant_override("separation", 6)
 	_root.add_child(_choices)
+	_skip_btn = UI.button("تخطي الحوار", 11)
+	_skip_btn.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
+	_skip_btn.anchor_left = 0.5
+	_skip_btn.anchor_right = 0.5
+	_skip_btn.offset_top = -124
+	_skip_btn.offset_bottom = -100
+	_skip_btn.pressed.connect(func():
+		Director.skip_lines = true
+		_skip = true
+		_advance())
+	_root.add_child(_skip_btn)
 	visible = false
+
+
+func _apply_layout() -> void:
+	var rtl := Loc.rtl()
+	_name_plate.offset_left = 70 if rtl else -196
+	_name_plate.offset_right = 196 if rtl else -70
+	_more.offset_left = -282 if rtl else 262
+	_more.offset_right = -262 if rtl else 282
+	_skip_btn.offset_left = -290 if rtl else 200
+	_skip_btn.offset_right = -200 if rtl else 290
+	_skip_btn.text = Loc.t("تخطي الحوار")
+	_text.horizontal_alignment = UI.flow(HORIZONTAL_ALIGNMENT_RIGHT)
+	_text.text_direction = Loc.dir()
+	_name.horizontal_alignment = UI.flow(HORIZONTAL_ALIGNMENT_RIGHT)
+	_box.get_child(0).layout_direction = Loc.layout()
 
 
 func _process(delta: float) -> void:
@@ -144,9 +171,10 @@ func say(speaker: String, text: String) -> void:
 		await get_tree().process_frame
 		return
 	visible = true
+	_apply_layout()
 	_box.visible = true
 	_choices.visible = false
-	var name: String = Story.speaker_name(speaker)
+	var name: String = Loc.t(Story.speaker_name(speaker))
 	_name_plate.visible = name != ""
 	_name.text = name
 	var tex := UI.portrait(Story.portrait_of(speaker))
@@ -160,17 +188,23 @@ func say(speaker: String, text: String) -> void:
 	_skip = false
 	var total := text.length()
 	var shown := 0
+	var delay := Game.text_delay()
+	if delay <= 0.0:
+		_skip = true
 	while shown < total and not _skip:
 		shown += 1
 		_text.visible_characters = shown
 		if shown % 3 == 0 and text[shown - 1] != " ":
 			Audio.sfx("blip", 0.9 + 0.2 * float(Story.voice_pitch(speaker)))
-		await get_tree().create_timer(0.022).timeout
+		await get_tree().create_timer(delay).timeout
 	_text.visible_characters = -1
 	_typing = false
 	_more.visible = true
 	_waiting = true
-	await advanced
+	if Director.skip_lines:
+		_waiting = false
+	else:
+		await advanced
 	Audio.sfx("select")
 
 

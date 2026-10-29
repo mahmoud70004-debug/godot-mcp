@@ -14,4 +14,6 @@ func _ready() -> void:
 	var runner := Node.new()
 	runner.set_script(load("res://tests/shots_runner.gd"))
 	runner.set("out_dir", out_dir)
+	if args.size() > 1:
+		Loc.set_lang(args[1])
 	get_tree().root.call_deferred("add_child", runner)

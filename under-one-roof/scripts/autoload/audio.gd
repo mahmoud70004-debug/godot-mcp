@@ -54,7 +54,19 @@ func sfx(name: String, pitch := 1.0) -> void:
 			return
 
 
+func current_music() -> String:
+	return _current_music
+
+
+## Short vibration on phones (when enabled in the settings).
+func buzz(ms := 30) -> void:
+	if Game.settings.get("vibrate", true) and (OS.has_feature("mobile") or OS.has_feature("android")):
+		Input.vibrate_handheld(ms)
+
+
 func music(name: String) -> void:
+	if not Game.settings.get("music_on", true):
+		name = ""
 	if name == _current_music:
 		return
 	_current_music = name

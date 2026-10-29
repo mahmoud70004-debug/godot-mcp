@@ -29,7 +29,12 @@ var touch_run := false
 var pending_load := false           # main scene restores the saved position when true
 var player_spot := "game_start"
 var player_pos := Vector2.ZERO
-var settings := {"music": 0.7, "sfx": 0.8}
+const DEFAULT_SETTINGS := {
+	"music": 0.7, "sfx": 0.8, "music_on": true, "menu_track": "village", "lang": "",
+	"text_speed": 1, "vibrate": true, "keep_on": true, "fullscreen": true, "touch": true,
+}
+const TEXT_DELAYS := [0.045, 0.022, 0.01, 0.0]   # slow, normal, fast, instant
+var settings := DEFAULT_SETTINGS.duplicate()
 var fast := false                   # automated tests: no waiting, mini-games always succeed
 var auto_choices: Array = []        # automated tests: answers for dialogue choices
 var completed_runs := 0
@@ -118,6 +123,30 @@ func _load_settings() -> void:
 		var d = JSON.parse_string(FileAccess.get_file_as_string("user://settings.json"))
 		if typeof(d) == TYPE_DICTIONARY:
 			settings.merge(d, true)
+	if settings["lang"] == "":
+		var sys := OS.get_locale_language()
+		settings["lang"] = sys if sys in ["ar", "en", "ja"] else "ar"
+	Loc.lang = settings["lang"]
+	apply_display()
+
+
+func reset_settings() -> void:
+	var lang: String = settings["lang"]
+	settings = DEFAULT_SETTINGS.duplicate()
+	settings["lang"] = lang
+	save_settings()
+	apply_display()
+
+
+## Screen options that actually exist on the platform.
+func apply_display() -> void:
+	DisplayServer.screen_set_keep_on(bool(settings.get("keep_on", true)))
+	if OS.has_feature("pc") and not OS.has_feature("editor") and DisplayServer.get_name() != "headless":
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if settings.get("fullscreen", true) else DisplayServer.WINDOW_MODE_WINDOWED)
+
+
+func text_delay() -> float:
+	return TEXT_DELAYS[clampi(int(settings.get("text_speed", 1)), 0, 3)]
 
 
 # ---------------------------------------------------------------- flags & conditions
@@ -239,7 +268,7 @@ func clock_text() -> String:
 	var m := int(minutes) % (24 * 60)
 	var h := m / 60
 	var mm := (m % 60) / 10 * 10
-	var suffix := "صباحًا" if h < 12 else "مساءً"
+	var suffix := Loc.t("صباحًا") if h < 12 else Loc.t("مساءً")
 	var h12 := h % 12
 	if h12 == 0:
 		h12 = 12

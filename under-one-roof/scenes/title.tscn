@@ -1,14 +1,10 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene load_steps=2 format=3]
 
 [ext_resource type="Script" path="res://scripts/ui/title.gd" id="1_title"]
-[ext_resource type="Script" path="res://scripts/world/world.gd" id="2_world"]
 
-[node name="Title" type="Node2D"]
+[node name="Title" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
 script = ExtResource("1_title")
-
-[node name="World" type="Node2D" parent="."]
-script = ExtResource("2_world")
-
-[node name="Camera" type="Camera2D" parent="."]
-position = Vector2(1000, 700)
-zoom = Vector2(1.5, 1.5)

@@ -32,7 +32,7 @@ func _ready() -> void:
 	var title := UI.label("دفتر غيديون", 18, UI.WOOD, HORIZONTAL_ALIGNMENT_CENTER)
 	v.add_child(title)
 	_tabs = HBoxContainer.new()
-	_tabs.layout_direction = Control.LAYOUT_DIRECTION_RTL
+	_tabs.layout_direction = Loc.layout()
 	_tabs.alignment = BoxContainer.ALIGNMENT_CENTER
 	_tabs.add_theme_constant_override("separation", 4)
 	v.add_child(_tabs)
@@ -51,7 +51,7 @@ func _ready() -> void:
 	scroll.add_child(_content)
 	var bottom := HBoxContainer.new()
 	bottom.alignment = BoxContainer.ALIGNMENT_CENTER
-	bottom.layout_direction = Control.LAYOUT_DIRECTION_RTL
+	bottom.layout_direction = Loc.layout()
 	bottom.add_theme_constant_override("separation", 8)
 	v.add_child(bottom)
 	var resume := UI.button("متابعة اللعب")
@@ -120,7 +120,7 @@ func _show(i: int) -> void:
 
 func _quests() -> void:
 	var q: Dictionary = Director.current_quest()
-	_line("%s — %s" % [Director.chapter_number_text(), Director.chapter_title()], 15, UI.WOOD)
+	_line("%s — %s" % [Loc.t(Director.chapter_number_text()), Loc.t(Director.chapter_title())], 15, UI.WOOD)
 	if q.get("title", "") != "":
 		_line("◆ " + q["title"], 14)
 		_line(q.get("text", ""), 13, UI.INK_SOFT)
@@ -131,20 +131,20 @@ func _quests() -> void:
 		if Game.check(s["show"]):
 			any = true
 			var done := Game.check(s["done"])
-			_line(("✓ " if done else "○ ") + s["title"], 14, UI.INK_SOFT if done else UI.INK)
+			_line(("✓ " if done else "○ ") + Loc.t(s["title"]), 14, UI.INK_SOFT if done else UI.INK)
 			if not done:
 				_line(s["text"], 12, UI.INK_SOFT)
 	if not any:
 		_line("لا توجد مهام جانبية بعد. تحدّث إلى أهل القرية.", 12, UI.INK_SOFT)
 	_line("")
-	_line("مكانتك في القرية: %s" % Director.reputation_text(), 13, UI.WOOD)
+	_line(Loc.t("مكانتك في القرية: %s") % Loc.t(Director.reputation_text()), 13, UI.WOOD)
 
 
 func _clues() -> void:
 	if Game.clues.is_empty():
 		_line("لم تدوّن أي دليل بعد.", 13, UI.INK_SOFT)
 	for c in Game.clues:
-		_line("• " + str(c), 13)
+		_line("• " + Loc.t(str(c)), 13)
 
 
 func _bag() -> void:
@@ -153,7 +153,7 @@ func _bag() -> void:
 	for it in Game.inventory:
 		var def: Dictionary = Story.ITEMS.get(it["id"], {})
 		var row := HBoxContainer.new()
-		row.layout_direction = Control.LAYOUT_DIRECTION_RTL
+		row.layout_direction = Loc.layout()
 		row.add_theme_constant_override("separation", 8)
 		var ic := TextureRect.new()
 		ic.texture = UI.icon(it["id"])
@@ -161,7 +161,7 @@ func _bag() -> void:
 		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		ic.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		row.add_child(ic)
-		var l := UI.label("%s ×%d — %s" % [def.get("name", it["id"]), it["n"], def.get("desc", "")], 12)
+		var l := UI.label("%s ×%d — %s" % [Loc.t(def.get("name", it["id"])), it["n"], Loc.t(def.get("desc", ""))], 12)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(l)
@@ -178,38 +178,23 @@ func _bag() -> void:
 func _collect() -> void:
 	for group in Story.COLLECTION_GROUPS:
 		var have := Game.counter(group["counter"])
-		_line("%s: %d / %d" % [group["name"], have, group["total"]], 14, UI.INK if have < group["total"] else UI.WOOD)
+		_line("%s: %d / %d" % [Loc.t(group["name"]), have, group["total"]], 14, UI.INK if have < group["total"] else UI.WOOD)
 		_line(group["desc"], 12, UI.INK_SOFT)
 
 
 func _settings() -> void:
-	for key in ["music", "sfx"]:
-		var row := HBoxContainer.new()
-		row.layout_direction = Control.LAYOUT_DIRECTION_RTL
-		row.add_child(UI.label("الموسيقى" if key == "music" else "المؤثرات الصوتية", 13))
-		var s := HSlider.new()
-		s.min_value = 0.0
-		s.max_value = 1.0
-		s.step = 0.05
-		s.value = Game.settings[key]
-		s.custom_minimum_size = Vector2(200, 20)
-		s.layout_direction = Control.LAYOUT_DIRECTION_LTR
-		var k: String = key
-		s.value_changed.connect(func(v):
-			Game.settings[k] = v
-			Audio.refresh_volumes()
-			Game.save_settings())
-		row.add_child(s)
-		_content.add_child(row)
-	var touch := CheckButton.new()
-	touch.text = "إظهار أزرار اللمس"
-	touch.add_theme_color_override("font_color", UI.INK)
-	touch.button_pressed = Game.settings.get("touch", true)
-	touch.toggled.connect(func(on):
-		Game.settings["touch"] = on
-		Game.save_settings()
-		Director.refresh_touch())
-	_content.add_child(touch)
+	SettingsUI.build_settings(_content, func(): call_deferred("_language_changed"))
 	_line("")
 	_line("التحكم: الأسهم أو WASD للحركة، Shift للركض، E أو المسافة للتفاعل، J أو Esc لفتح الدفتر.", 12, UI.INK_SOFT)
 	_line("على الهاتف: عصا التحكم يسارًا، وزر اليد للتفاعل، وزر الجري، وزر الدفتر.", 12, UI.INK_SOFT)
+
+
+## Rebuild the whole game screen in the new language (state is kept through a quick save).
+func _language_changed() -> void:
+	close()
+	if Game.has("follow_active"):
+		Game.toast.emit("ستظهر اللغة الجديدة كاملة بعد هذا المشهد")
+		return
+	Game.save_game(Director.player().global_position)
+	if Game.load_game():
+		get_tree().change_scene_to_file("res://scenes/main.tscn")

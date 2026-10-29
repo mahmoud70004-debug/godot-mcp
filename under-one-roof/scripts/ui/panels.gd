@@ -46,6 +46,7 @@ func read(title: String, body: String) -> void:
 	v.add_theme_constant_override("separation", 8)
 	p.add_child(v)
 	var t := UI.label(title, 18, UI.WOOD, HORIZONTAL_ALIGNMENT_CENTER)
+	body = Loc.t(body)
 	v.add_child(t)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -90,16 +91,16 @@ func shop(items: Array, title: String) -> void:
 	scroll.add_child(list)
 	var rows := []
 	var refresh := func():
-		money.text = "معك %d كرونة" % Game.money
+		money.text = Loc.t("معك %d كرونة") % Game.money
 		for r in rows:
 			var it: Dictionary = r["item"]
 			var owned: bool = it.get("unique", false) and (Game.count(it["id"]) > 0 or Game.has("bought_" + it["id"]))
 			var price: int = Director.price(it)
-			r["btn"].text = "مُشترى" if owned else "%d ك" % price
+			r["btn"].text = Loc.t("مُشترى") if owned else Loc.t("%d ك") % price
 			r["btn"].disabled = owned or Game.money < price or not Game.check(it.get("if", null))
 	for it in items:
 		var row := HBoxContainer.new()
-		row.layout_direction = Control.LAYOUT_DIRECTION_RTL
+		row.layout_direction = Loc.layout()
 		row.add_theme_constant_override("separation", 8)
 		var ic := TextureRect.new()
 		ic.texture = UI.icon(it["id"])
@@ -108,7 +109,7 @@ func shop(items: Array, title: String) -> void:
 		ic.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		row.add_child(ic)
 		var def: Dictionary = Story.ITEMS.get(it["id"], {})
-		var info := UI.label("%s — %s" % [def.get("name", it["id"]), it.get("blurb", def.get("desc", ""))], 12)
+		var info := UI.label("%s — %s" % [Loc.t(def.get("name", it["id"])), Loc.t(it.get("blurb", def.get("desc", "")))], 12)
 		info.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(info)
@@ -179,7 +180,7 @@ func minigame(kind: String) -> bool:
 	while running:
 		state["zone_at"] = randf_range(0.2, 0.8)
 		pressed[0] = false
-		status.text = "المحاولة %d من %d" % [state["hits"] + 1, rounds]
+		status.text = Loc.t("المحاولة %d من %d") % [state["hits"] + 1, rounds]
 		while not pressed[0]:
 			var dt := get_process_delta_time()
 			state["pos"] += state["dir"] * dt * cfg["speed"]
@@ -203,7 +204,7 @@ func minigame(kind: String) -> bool:
 			running = false
 	_mg_press.disconnect(on_press)
 	var ok: bool = state["hits"] >= rounds
-	status.text = "أحسنت!" if ok else "لم تنجح هذه المرة..."
+	status.text = Loc.t("أحسنت!") if ok else Loc.t("لم تنجح هذه المرة...")
 	await get_tree().create_timer(0.8).timeout
 	visible = false
 	return ok

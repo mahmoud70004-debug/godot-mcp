@@ -6,6 +6,7 @@ config_version=5
 [application]
 
 config/name="Under One Roof"
+config/version="2.0"
 config/description="A narrative pixel-art adventure set in Hrafnvik, Iceland, 1887."
 run/main_scene="res://scenes/title.tscn"
 config/features=PackedStringArray("4.3", "GL Compatibility")
@@ -15,6 +16,7 @@ config/icon="res://icon.png"
 
 [autoload]
 
+Loc="*res://scripts/autoload/loc.gd"
 Game="*res://scripts/autoload/game.gd"
 Audio="*res://scripts/autoload/audio.gd"
 Director="*res://scripts/autoload/director.gd"

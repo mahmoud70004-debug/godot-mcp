@@ -4,6 +4,7 @@ extends Node
 
 var main: Node = null          # set by main.gd
 var busy := false
+var skip_lines := false        # set by the dialogue "skip" button for the current conversation
 var _zone_id := ""
 var _zone_t := 0.0
 var _following := false
@@ -61,7 +62,7 @@ func prompt_for(area: Area2D) -> String:
 		return ""
 	var iid: String = area.get_meta("iid")
 	if area.has_meta("npc"):
-		return "تحدّث: " + Story.speaker_name(iid)
+		return Loc.t("تحدّث: ") + Loc.t(Story.speaker_name(iid))
 	if area.has_meta("label"):
 		return area.get_meta("label")
 	return Story.label_for(iid)
@@ -107,6 +108,10 @@ func run_event(id: String, npc = null) -> void:
 			busy = true
 			_lock(true)
 			await _play_entry(e, ctx, npc)
+			skip_lines = false
+			if main == null:
+				busy = false
+				return
 			_lock(false)
 			busy = false
 			main.hud.refresh_quest()
@@ -147,8 +152,10 @@ func _play_entry(e: Dictionary, ctx: String, npc) -> void:
 
 
 func _say_line(line, ctx: String) -> void:
+	if skip_lines and not Game.fast:
+		return
 	var speaker: String = str(line[0])
-	var text: String = str(line[1]).replace("$money", str(Game.money)).replace("$views", str(Game.counter("views")))
+	var text: String = Loc.t(str(line[1])).replace("$money", str(Game.money)).replace("$views", str(Game.counter("views")))
 	var npc = world().npcs.get(speaker, null)
 	if npc and npc.visible and speaker != "gideon":
 		npc.face_towards(player().global_position)
@@ -166,7 +173,7 @@ func do_actions(actions: Array, ctx := "") -> void:
 			"give":
 				var n: int = a[2] if a.size() > 2 else 1
 				Game.give(a[1], n)
-				Game.toast.emit("حصلت على: %s%s" % [Story.ITEMS.get(a[1], {}).get("name", a[1]), (" ×%d" % n) if n > 1 else ""])
+				Game.toast.emit(Loc.t("حصلت على: %s%s") % [Loc.t(Story.ITEMS.get(a[1], {}).get("name", a[1])), (" ×%d" % n) if n > 1 else ""])
 				Audio.sfx("pickup")
 			"take": Game.take(a[1], a[2] if a.size() > 2 else 1)
 			"take_all":
@@ -179,12 +186,12 @@ func do_actions(actions: Array, ctx := "") -> void:
 					Game.take(a[1], n)
 					Game.add_money(n * int(a[2]))
 					Audio.sfx("coin")
-					Game.toast.emit("بعت %d مقابل %d كرونة" % [n, n * int(a[2])])
+					Game.toast.emit(Loc.t("بعت %d مقابل %d كرونة") % [n, n * int(a[2])])
 			"money":
 				Game.add_money(int(a[1]))
 				if int(a[1]) > 0:
 					Audio.sfx("coin")
-					Game.toast.emit("+%d كرونة" % int(a[1]))
+					Game.toast.emit(Loc.t("+%d كرونة") % int(a[1]))
 			"pay": Game.add_money(-int(a[1]))
 			"rep":
 				Game.add_counter("rep", int(a[1]))
@@ -371,7 +378,7 @@ func current_quest() -> Dictionary:
 		if active and q.has("done") and Game.check(q["done"]):
 			active = false
 		if active:
-			var text: String = q.get("text", "")
+			var text: String = Loc.t(q.get("text", ""))
 			var short := text
 			var target = q.get("target", null)
 			if q.has("steps"):
@@ -380,11 +387,11 @@ func current_quest() -> Dictionary:
 				short = ""
 				for s in q["steps"]:
 					var done := Game.has(s[0])
-					lines.append(("✓ " if done else "○ ") + s[1])
+					lines.append(("✓ " if done else "○ ") + Loc.t(s[1]))
 					if done:
 						done_n += 1
 					elif short == "":
-						short = s[1]
+						short = Loc.t(s[1])
 					if not done and target == null and s.size() > 2:
 						target = _step_target(s)
 				text = "\n".join(lines)
@@ -392,7 +399,7 @@ func current_quest() -> Dictionary:
 			if q.has("counter"):
 				text = text % Game.counter(q["counter"])
 				short = text
-			return {"title": q["title"], "text": text, "short": short, "target": target}
+			return {"title": Loc.t(q["title"]), "text": text, "short": short, "target": target}
 	return {}
 
 
@@ -476,7 +483,7 @@ func buy(it: Dictionary) -> void:
 		Game.set_flag("bought_" + it["id"])
 	if not it.get("no_item", false):
 		Game.give(it["id"], it.get("n", 1))
-	Game.toast.emit("اشتريت: " + Story.ITEMS.get(it["id"], {}).get("name", it["id"]))
+	Game.toast.emit(Loc.t("اشتريت: ") + Loc.t(Story.ITEMS.get(it["id"], {}).get("name", it["id"])))
 	if it.has("do"):
 		await do_actions(it["do"])
 
@@ -574,12 +581,17 @@ func _pass_out() -> void:
 
 
 # ---------------------------------------------------------------- cutscenes
+## Opening scene of a new game: two short story cards over the dimmed Ashford home
+## (Continue / Skip), the chapter title, then the family dialogue inside the house.
 func intro() -> void:
 	busy = true
 	_lock(true)
-	await main.fader.narrate("هرافنفيك، قرية صيد صغيرة على الساحل الغربي لآيسلندا.\nربيع عام 1887.", true, "تحت سقف واحد", "Under One Roof")
-	await main.fader.chapter_card(Story.CHAPTERS[0][0], Story.CHAPTERS[0][1])
-	await main.fader.fade_in(1.2)
+	main.fader.skipped = false
+	await main.fader.narrate("هرافنفيك، قرية صيد صغيرة على الساحل الغربي لآيسلندا.\nربيع عام 1887.", true, "تحت سقف واحد", "Under One Roof", true, 0.86)
+	await main.fader.narrate(Story.INTRO_FAMILY, true, "", "", true, 0.86)
+	if not main.fader.skipped:
+		await main.fader.chapter_card(Story.CHAPTERS[0][0], Story.CHAPTERS[0][1])
+	await main.fader.fade_in(0.8)
 	_lock(false)
 	busy = false
 	await run_event("intro")
