@@ -7,6 +7,9 @@ extends Node
 ## group "full_resolution_ui" (the 2D title screen, which costs nothing to draw) always keep
 ## the full 640x360 content scale, so its composition never has to fit 480x270.
 ## Web: ?quality=0|1|2 forces a level for this session (tests).
+## After the first probe a watchdog keeps checking during play: if the frame rate
+## stays under SUSTAINED_FPS for two windows in a row, quality steps down one level
+## (never up, and never once the player picked a level themselves).
 
 const LOW := 0
 const MEDIUM := 1
@@ -14,9 +17,18 @@ const HIGH := 2
 const WARMUP_SECONDS := 3.0
 const SAMPLE_SECONDS := 8.0
 const FPS_THRESHOLD := 40.0
+const SUSTAINED_FPS := 26.0
+const WATCH_WINDOW := 8.0
+## Seconds ignored after a scene change (loading and pre-warm hitches).
+const WATCH_GRACE := 6.0
 
 var _pending := false
 var _probing := false
+var _locked := false
+var _watch_time := 0.0
+var _watch_frames := 0
+var _watch_grace := WATCH_GRACE
+var _slow_windows := 0
 
 
 func _ready() -> void:
@@ -47,6 +59,34 @@ func apply(level: int) -> void:
 func _on_node_added(node: Node) -> void:
 	if node.get_parent() == get_tree().root and node != self and not node.is_in_group(&"quality_ignore"):
 		_schedule_apply()
+		_watch_grace = WATCH_GRACE
+		_watch_time = 0.0
+		_watch_frames = 0
+		_slow_windows = 0
+
+
+func _process(delta: float) -> void:
+	if _locked or _probing or Settings.quality_manual or Settings.quality <= LOW or get_tree().paused:
+		return
+	if get_tree().get_first_node_in_group(&"player") == null:
+		return
+	if _watch_grace > 0.0:
+		_watch_grace -= delta
+		return
+	_watch_time += delta
+	_watch_frames += 1
+	if _watch_time < WATCH_WINDOW:
+		return
+	var fps := _watch_frames / _watch_time
+	_watch_time = 0.0
+	_watch_frames = 0
+	_slow_windows = _slow_windows + 1 if fps < SUSTAINED_FPS else 0
+	if _slow_windows >= 2:
+		_slow_windows = 0
+		Settings.quality -= 1
+		Settings.save_settings()
+		Events.quality_changed.emit(Settings.quality)
+		Events.show_message("Graphics lowered for smoother play (Pause > Quality).")
 
 
 func _schedule_apply() -> void:
@@ -131,3 +171,4 @@ func _apply_url_override() -> void:
 		return
 	Settings.quality = clampi(str(q).to_int(), LOW, HIGH)
 	Settings.quality_auto_checked = true  # session only: not saved
+	_locked = true

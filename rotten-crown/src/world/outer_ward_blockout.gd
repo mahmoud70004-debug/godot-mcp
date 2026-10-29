@@ -165,8 +165,11 @@ func _build_walls() -> void:
 	for corner in [Vector3(-40, 0, 10), Vector3(40, 0, 10), Vector3(-40, 0, -40), Vector3(40, 0, -40)]:
 		_round_tower(walls, corner, 2.6, 11.0)
 	# The face the knight wakes up to: Gothic dressing on the outer front wall.
-	_castle.dress_front(walls, -40.0, -x_in)
-	_castle.dress_front(walls, x_in, 40.0)
+	# The feast night (prologue) sees it only from above and far away: skip the
+	# fine dressing there, it cost the cutscene ~20% of its frame rate on the web.
+	if not festive:
+		_castle.dress_front(walls, -40.0, -x_in)
+		_castle.dress_front(walls, x_in, 40.0)
 	for side in [-1.0, 1.0]:
 		_castle.wall_tower(walls, Vector3(side * CastleProps.WALL_TOWER_X, 0.0, 10.0))
 

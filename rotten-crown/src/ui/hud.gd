@@ -115,6 +115,7 @@ func _hide_region_card() -> void:
 
 
 func _on_quality_selected(index: int) -> void:
+	Settings.quality_manual = true
 	Settings.quality = index
 	Settings.save_settings()
 	Events.quality_changed.emit(index)

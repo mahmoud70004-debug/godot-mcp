@@ -20,6 +20,8 @@ var ambience_volume := 0.9
 var quality := 1
 ## The one-time FPS probe has run on this install.
 var quality_auto_checked := false
+## The player picked a quality in the pause menu: automatic downgrades stop.
+var quality_manual := false
 
 
 func _ready() -> void:
@@ -50,6 +52,7 @@ func save_settings() -> void:
 	cfg.set_value("audio", "ambience", ambience_volume)
 	cfg.set_value("graphics", "quality", quality)
 	cfg.set_value("graphics", "quality_auto_checked", quality_auto_checked)
+	cfg.set_value("graphics", "quality_manual", quality_manual)
 	cfg.save(SETTINGS_PATH)
 
 
@@ -67,6 +70,7 @@ func load_settings() -> void:
 	ambience_volume = cfg.get_value("audio", "ambience", ambience_volume)
 	quality = clampi(int(cfg.get_value("graphics", "quality", quality)), 0, 2)
 	quality_auto_checked = cfg.get_value("graphics", "quality_auto_checked", quality_auto_checked)
+	quality_manual = cfg.get_value("graphics", "quality_manual", quality_manual)
 
 
 func _set_bus_volume(bus_name: StringName, linear: float) -> void:
