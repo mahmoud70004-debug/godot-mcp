@@ -1,0 +1,61 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://scripts/actors/player.gd" id="1_player"]
+[ext_resource type="Texture2D" path="res://assets/chars/gideon.png" id="2_sheet"]
+[ext_resource type="Texture2D" path="res://assets/sprites/char_shadow.png" id="3_shadow"]
+
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_body"]
+radius = 5.0
+height = 12.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_reach"]
+radius = 10.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_feet"]
+radius = 3.0
+
+[node name="Player" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 5
+motion_mode = 1
+script = ExtResource("1_player")
+
+[node name="Shadow" type="Sprite2D" parent="."]
+texture = ExtResource("3_shadow")
+centered = false
+offset = Vector2(-7, -3)
+
+[node name="Sprite" type="Sprite2D" parent="."]
+texture = ExtResource("2_sheet")
+centered = false
+offset = Vector2(-8, -26)
+hframes = 4
+vframes = 4
+
+[node name="Body" type="CollisionShape2D" parent="."]
+position = Vector2(0, -2)
+rotation = 1.5708
+shape = SubResource("CapsuleShape2D_body")
+
+[node name="Reach" type="Area2D" parent="."]
+position = Vector2(0, 10)
+collision_layer = 0
+collision_mask = 8
+monitorable = false
+
+[node name="Shape" type="CollisionShape2D" parent="Reach"]
+shape = SubResource("CircleShape2D_reach")
+
+[node name="Feet" type="Area2D" parent="."]
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+
+[node name="Shape" type="CollisionShape2D" parent="Feet"]
+shape = SubResource("CircleShape2D_feet")
+
+[node name="Camera" type="Camera2D" parent="."]
+position = Vector2(0, -10)
+zoom = Vector2(2, 2)
+position_smoothing_enabled = true
+position_smoothing_speed = 7.0
