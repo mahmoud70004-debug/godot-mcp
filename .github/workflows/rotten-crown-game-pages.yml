@@ -1,0 +1,43 @@
+name: Publish Rotten Crown game
+
+# Deploys the exported web build in docs/ (made by rotten-crown/tools/publish_web.sh)
+# to GitHub Pages: https://mahmoud70004-debug.github.io/godot-mcp/
+on:
+  push:
+    branches:
+      - claude/graphify-skill-load-cukwli
+    paths:
+      - docs/**
+      - .github/workflows/rotten-crown-game-pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: rotten-crown-pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the export is complete
+        run: |
+          for f in index.html index.js index.wasm index.pck build.txt; do test -s "docs/$f" || { echo "missing docs/$f"; exit 1; }; done
+          cat docs/build.txt
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
