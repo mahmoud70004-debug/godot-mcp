@@ -24,6 +24,10 @@ var _joystick_finger := -1
 var _look_finger := -1
 var _button_fingers: Dictionary = {}
 var _last_positions: Dictionary = {}
+## Fingers whose stored position predates a change of the UI coordinate space
+## (Quality switches content_scale_size): their next drag re-anchors instead of
+## producing a delta, otherwise a resting thumb would fling the camera.
+var _reanchor: Dictionary = {}
 
 
 func _ready() -> void:
@@ -32,6 +36,8 @@ func _ready() -> void:
 	for node in find_children("*", "TouchActionButton", true, false):
 		_buttons.append(node as TouchActionButton)
 	visible = Settings.uses_touch_controls()
+	get_viewport().size_changed.connect(_on_view_rescaled)
+	Events.quality_changed.connect(func(_level: int) -> void: _on_view_rescaled())
 	DebugBridge.register("touch", func() -> Dictionary:
 		return {"joystick": _joystick_finger, "look": _look_finger, "buttons": _button_fingers.size(), "fingers": _last_positions.size()})
 
@@ -52,6 +58,7 @@ func release_all() -> void:
 		(_button_fingers[finger] as TouchActionButton).release()
 	_button_fingers.clear()
 	_last_positions.clear()
+	_reanchor.clear()
 	if joystick:
 		joystick.end_touch()
 	_joystick_finger = -1
@@ -94,6 +101,10 @@ func _on_touch_down(finger: int, pos: Vector2) -> void:
 func _on_drag(finger: int, pos: Vector2) -> void:
 	if not _last_positions.has(finger):
 		return
+	if _reanchor.has(finger):
+		_reanchor.erase(finger)
+		_last_positions[finger] = pos
+		return
 	var delta: Vector2 = pos - (_last_positions[finger] as Vector2)
 	_last_positions[finger] = pos
 	if finger == _joystick_finger:
@@ -102,12 +113,18 @@ func _on_drag(finger: int, pos: Vector2) -> void:
 		Events.look_input.emit(delta.limit_length(MAX_LOOK_STEP) * Settings.look_sensitivity_touch)
 
 
+func _on_view_rescaled() -> void:
+	for finger in _last_positions:
+		_reanchor[finger] = true
+
+
 func _on_touch_up(finger: int) -> void:
 	_forget(finger)
 
 
 func _forget(finger: int) -> void:
 	_last_positions.erase(finger)
+	_reanchor.erase(finger)
 	if _button_fingers.has(finger):
 		(_button_fingers[finger] as TouchActionButton).release()
 		_button_fingers.erase(finger)

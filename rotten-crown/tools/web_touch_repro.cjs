@@ -19,7 +19,7 @@ const WAKE_UP = { x: 60, y: 230 };
   const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, isMobile: true, hasTouch: true });
   const page = await ctx.newPage();
   const cdp = await ctx.newCDPSession(page);
-  await page.goto(base + (base.includes('?') ? '&' : '?') + 'debug=1');
+  await page.goto(base + (base.includes('?') ? '&' : '?') + 'debug=1' + (process.env.RC_TOUCH_QUERY || ''));
   await tapBegin(page);
   await page.waitForFunction(() => window.rcState, null, { timeout: 90000 });
   await page.waitForTimeout(5000); // let the menu settle before tapping
