@@ -45,6 +45,8 @@ extends Resource
 
 @export_group("Visual")
 @export var sprite_sheet: SpriteSheetData
+## Colour multiplier for the sprite (the baked sheets are lit for daylight review).
+@export var sprite_tint := Color(0.72, 0.72, 0.7)
 
 @export_group("Loot")
 @export var drop_item: ItemData

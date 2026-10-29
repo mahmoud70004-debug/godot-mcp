@@ -41,6 +41,7 @@ func setup(data: EnemyData) -> void:
 	if _missing_sheet:
 		push_error("SpriteCreatureVisual: no sprite_sheet in %s" % data.resource_path)
 	sprite.sheet = data.sprite_sheet
+	sprite.tint = data.sprite_tint
 	_twitch_intensity = data.twitch_intensity
 	_walk_ref_speed = maxf(data.chase_speed, 0.5)
 	sprite.play(&"idle", true)

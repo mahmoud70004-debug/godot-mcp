@@ -21,6 +21,11 @@ static var _material_cache := {}
 		anim = value
 		_refresh_anim_info()
 @export var speed_scale := 1.0
+## Resting colour multiplier (flash() returns to it), e.g. to sink a pale sprite into the night.
+@export var tint := Color.WHITE:
+	set(value):
+		tint = value
+		modulate = value
 ## >= 0 always shows that baked direction (e.g. a pose that must not flip as the camera moves).
 @export var fixed_direction := -1
 ## Palette row of a v2 sheet (colour variant).
@@ -97,7 +102,7 @@ func flash(color := Color(1, 0.2, 0.15), time := 0.15) -> void:
 		_flash_tween.kill()
 	modulate = color
 	_flash_tween = create_tween()
-	_flash_tween.tween_property(self, "modulate", Color.WHITE, time)
+	_flash_tween.tween_property(self, "modulate", tint, time)
 
 
 func _apply_sheet() -> void:
