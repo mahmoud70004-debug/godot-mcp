@@ -255,3 +255,31 @@ Runtime: PixelSprite3D keeps its API (+ `variant: int`), uses one cached ShaderM
 index lookup with nearest sampling -> palette colour * vertex COLOR (modulate/flash), discard index 0, FIXED_Y
 billboard in the vertex shader, shaded. Per frame it sets region_rect and offset from `frames`.
 | U14 | UI pass with taste-skill principles: main menu, pause/quality, inventory, HUD, region title cards, and the web launch page that wraps the game (the skill's "page" run) | H | U11 |
+
+---
+
+# PLAN — Phase 3c: performance on weak/mid phones + loading fix (user report after Phase 3b)
+
+## Report
+1. Low performance on weak and mid phones; noticeable frame drops when turning the camera; weak phones struggle to move around. Goal: smoother and faster with no loss of graphics quality.
+2. Redmi Note 11 / Chrome: loading stops at 17%.
+
+## Diagnosis (H)
+- (2) The test link was the raw.githack fallback (GitHub Pages now serves another branch's preview, deployed by a GitHub
+  Actions workflow from arena/9d0420eb-godot-mcp). githack now answers index.wasm with an HTML page and index.pck with 403:
+  large files are blocked, so the download stalls. Not a phone bug. Fix = real hosting (Pages) + a test on the public URL.
+- (1) Drops while turning = first-sight shader/material compilation in the Compatibility renderer (each new material in view
+  compiles on the main thread), plus many draw calls (kit models keep one material each) and per-light passes.
+
+## Tasks
+| id | title | tier |
+|---|---|---|
+| P0 | Hosting: deploy docs/ to GitHub Pages again (Actions workflow on this branch, or the user switches Pages back to branch /docs) + smoke test on the public URL | H |
+| P1 | Measurement: web_perf turn test (360 deg yaw sweep at spawn / Hollowmere / wood: avg fps, p95 and max frame ms, hitches > 100 ms) + CPU-throttled run (Chrome CPU x4, weak-phone proxy) + DebugBridge draw calls / primitives / process time | N |
+| P2 | Shader pre-warm: at level load (behind the fade) draw every unique material once (overworld, prologue) so nothing compiles mid-game; same for sprites/post/sky | H |
+| P3 | Draw calls: share/merge kit-model materials (atlas or per-texture dedupe), merge across bigger cells for far props, cull small props earlier with fade | N |
+| P4 | Light/shadow budget: omni lights only touch nearby merged chunks; shadow casters limited to near hero meshes; directional shadow distance per quality | N |
+| P5 | Prologue regression: festive castle front lighter (it is mostly seen from above) | E |
+| P6 | Weak-phone path: auto quality re-check after the first minute and on sustained drops (not only once), keep UI crisp | N |
+| P7 | Verify all, publish, report | H |
+Gate: no visible quality change at Medium/High (side-by-side renders), turn test hitches eliminated, avg fps up.
