@@ -8,6 +8,10 @@ enum State { IDLE, CHASE, WINDUP, ATTACK, RECOVER, STAGGER, DEAD }
 
 const PICKUP_SCENE := preload("res://src/interaction/item_pickup.tscn")
 const OOZE_SHADER := preload("res://assets/shaders/ooze.gdshader")
+const STAB_THRUST_FRACTION := 0.4
+const SLAM_MAX_REACH_BONUS := 0.5
+const SKITTER_JITTER := 0.3
+const SLAM_HEIGHT := 2.0
 
 @export var data: EnemyData
 ## Starts motionless (back turned, mid-feast...) until the player is close or attacks.
@@ -17,6 +21,7 @@ const OOZE_SHADER := preload("res://assets/shaders/ooze.gdshader")
 @onready var hurtbox: HurtboxComponent = $Hurtbox
 @onready var attack_hitbox: HitboxComponent = $AttackHitbox
 @onready var rig: SpriteCreatureVisual = $Visual
+@onready var _attack_shape: CollisionShape3D = $AttackHitbox/CollisionShape3D
 
 var state: State = State.IDLE
 var _state_time := 0.0
@@ -26,6 +31,11 @@ var _dormant := false
 var _knockback := Vector3.ZERO
 var _los_timer := 0.0
 var _has_los := false
+var _skitter_moving := true
+var _skitter_left := 0.0
+var _slam_point := Vector3.ZERO
+var _telegraph: SlamTelegraph
+var _melee_shape: Shape3D
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 
@@ -37,6 +47,7 @@ func _ready() -> void:
 	health.damaged.connect(_on_damaged)
 	health.died.connect(_on_died)
 	rig.setup(data)
+	_setup_attack_shape()
 
 
 func _physics_process(delta: float) -> void:
@@ -61,15 +72,18 @@ func _physics_process(delta: float) -> void:
 			elif dist <= data.attack_range and _cooldown <= 0.0:
 				_change_state(State.WINDUP)
 			else:
+				_update_skitter(delta)
 				if not (data.freezes_when_watched and _is_watched()):
-					desired = to_target.normalized() * data.chase_speed
 					_face(to_target, delta, data.turn_speed)
+					if _skitter_moving:
+						desired = to_target.normalized() * data.chase_speed
 		State.WINDUP:
 			_face(to_target, delta, data.turn_speed * 0.4)
+			_tremble()
 			if _state_time >= data.attack_windup:
 				_change_state(State.ATTACK)
 		State.ATTACK:
-			desired = -global_basis.z * data.lunge_speed
+			desired = _attack_velocity()
 			if _state_time >= data.attack_active_time:
 				_change_state(State.RECOVER)
 		State.RECOVER:
@@ -90,6 +104,11 @@ func _physics_process(delta: float) -> void:
 func _change_state(new_state: State) -> void:
 	if state == State.ATTACK:
 		attack_hitbox.deactivate()
+		_restore_attack_shape()
+	elif state == State.WINDUP:
+		rig.position = Vector3.ZERO
+		if new_state != State.ATTACK:
+			_clear_telegraph()
 	state = new_state
 	_state_time = 0.0
 	match new_state:
@@ -98,9 +117,13 @@ func _change_state(new_state: State) -> void:
 		State.CHASE:
 			_dormant = false
 			rig.set_look_target(_target)
+			_start_skitter_cycle(true)
 		State.WINDUP:
 			rig.play_windup(data.attack_windup)
+			if data.attack_style == EnemyData.AttackStyle.SLAM:
+				_begin_slam_telegraph()
 		State.ATTACK:
+			_begin_attack_style()
 			attack_hitbox.activate(data.damage, data.knockback, self)
 			rig.play_strike()
 		State.RECOVER:
@@ -108,6 +131,103 @@ func _change_state(new_state: State) -> void:
 			rig.play_recover()
 		State.STAGGER:
 			rig.play_stagger()
+
+
+# --- Attack styles -----------------------------------------------------------
+
+func _setup_attack_shape() -> void:
+	var box := _attack_shape.shape as BoxShape3D
+	if box != null:
+		box = box.duplicate() as BoxShape3D
+		box.size = data.hit_box_size
+		_attack_shape.shape = box
+	_attack_shape.position = data.hit_box_offset
+	_melee_shape = _attack_shape.shape
+
+
+## Forward speed wanted during ATTACK for the current style.
+func _attack_velocity() -> Vector3:
+	var forward := -global_basis.z * data.lunge_speed
+	match data.attack_style:
+		EnemyData.AttackStyle.SLAM:
+			return Vector3.ZERO
+		EnemyData.AttackStyle.STAB:
+			if _state_time > data.attack_active_time * STAB_THRUST_FRACTION:
+				return Vector3.ZERO
+	return forward
+
+
+func _begin_attack_style() -> void:
+	match data.attack_style:
+		EnemyData.AttackStyle.LEAP:
+			velocity.y = data.leap_up_speed
+		EnemyData.AttackStyle.SLAM:
+			_move_hitbox_to_slam_point()
+			if _telegraph:
+				_telegraph.fade_and_free()
+				_telegraph = null
+
+
+func _begin_slam_telegraph() -> void:
+	var offset := _flat_to_target()
+	offset = offset.limit_length(data.attack_range + SLAM_MAX_REACH_BONUS)
+	_slam_point = _find_ground(global_position + offset)
+	_telegraph = SlamTelegraph.new()
+	get_parent().add_child(_telegraph)
+	_telegraph.global_position = _slam_point + Vector3.UP * 0.03
+	_telegraph.grow(data.slam_radius, data.attack_windup)
+
+
+func _find_ground(point: Vector3) -> Vector3:
+	var query := PhysicsRayQueryParameters3D.create(point + Vector3.UP * 1.5, point + Vector3.DOWN * 3.0, 1)
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return Vector3(point.x, global_position.y, point.z)
+	return hit["position"]
+
+
+func _move_hitbox_to_slam_point() -> void:
+	var cylinder := CylinderShape3D.new()
+	cylinder.radius = data.slam_radius
+	cylinder.height = SLAM_HEIGHT
+	_attack_shape.shape = cylinder
+	_attack_shape.global_position = _slam_point + Vector3.UP * SLAM_HEIGHT * 0.5
+
+
+func _restore_attack_shape() -> void:
+	if _attack_shape.shape != _melee_shape:
+		_attack_shape.shape = _melee_shape
+		_attack_shape.position = data.hit_box_offset
+
+
+func _clear_telegraph() -> void:
+	if _telegraph:
+		_telegraph.fade_and_free()
+		_telegraph = null
+
+
+func _tremble() -> void:
+	if data.windup_tremble <= 0.0:
+		return
+	var amount := data.windup_tremble * clampf(_state_time / maxf(data.attack_windup, 0.01), 0.0, 1.0)
+	rig.position = Vector3(randf_range(-amount, amount), 0.0, randf_range(-amount, amount))
+
+
+func _start_skitter_cycle(moving: bool) -> void:
+	_skitter_moving = moving
+	if data.skitter_burst <= 0.0:
+		_skitter_moving = true
+		return
+	var base := data.skitter_burst if moving else data.skitter_pause
+	_skitter_left = base * randf_range(1.0 - SKITTER_JITTER, 1.0 + SKITTER_JITTER)
+
+
+func _update_skitter(delta: float) -> void:
+	if data.skitter_burst <= 0.0:
+		return
+	_skitter_left -= delta
+	if _skitter_left <= 0.0:
+		_start_skitter_cycle(not _skitter_moving)
 
 
 # --- Senses ----------------------------------------------------------------

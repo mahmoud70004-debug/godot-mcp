@@ -2,6 +2,8 @@ class_name EnemyData
 extends Resource
 ## Stats and behaviour flags for one kind of transformed creature.
 
+enum AttackStyle { LUNGE, STAB, LEAP, SLAM }
+
 @export var id := ""
 @export var display_name := ""
 @export_multiline var bestiary_entry := ""
@@ -37,6 +39,21 @@ extends Resource
 @export var attack_recovery := 0.9
 @export var attack_cooldown := 1.0
 @export var lunge_speed := 2.8
+
+@export_group("Attack style")
+@export var attack_style: AttackStyle = AttackStyle.LUNGE
+## Size and position (local to the creature) of the attack hitbox.
+@export var hit_box_size := Vector3(1.1, 1.3, 1.3)
+@export var hit_box_offset := Vector3(0.0, 1.2, -0.85)
+## Metres of visual shake during the windup (0 = none).
+@export var windup_tremble := 0.0
+## Chase in bursts: move for skitter_burst seconds, stand still for skitter_pause (0 = steady).
+@export var skitter_burst := 0.0
+@export var skitter_pause := 0.0
+## LEAP: upward speed given at the start of the attack.
+@export var leap_up_speed := 0.0
+## SLAM: radius of the ground blow, also the size of its telegraph.
+@export var slam_radius := 0.0
 
 @export_group("Uncanny")
 @export var twitch_intensity := 1.0
