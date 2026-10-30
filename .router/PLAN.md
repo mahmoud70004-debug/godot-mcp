@@ -332,3 +332,31 @@ Witnesses (harmless, weirdcore; static + garbled speech + a line in a dialogue w
   bottom subtitle, 1 ENTITY glitch window), hold: float seconds}; `Events.dialogue_requested(lines: Array)`;
   `Events.dialogue_finished`; UI = autoload scene `Dialogue` (CanvasLayer), anchored to the bottom with safe margins.
 - C14 audio: assets/audio/sfx/static_burst.wav, static_loop.wav (loop), assets/audio/voices/garble_1..4.wav.
+
+---
+# Phase 3e — Engine and performance (target: steady 60 fps on most phones, same look)
+
+## Goal / acceptance
+- Same picture: before/after render_shots at fixed poses (spawn, Hollowmere, wood, Thornfield, prologue) look the same.
+- Draw calls in typical views <= 150 (now 490-620), objects drawn <= 400 (now 1200-1400), per-object light passes cut.
+- No hitches: turn test max frame within 2x median (software GL proxy).
+- Real phones: an in-game FPS / 1%-low overlay so the user can report true numbers (we have no phone GPU here).
+- Native Android APK (Mobile renderer, Vulkan, GLES3 fallback) downloadable from the Pages site; the web build stays for quick tests.
+- Honest limit: in a browser (WebGL2, one thread) a locked 60 on weak phones cannot be promised; the APK is the real 60 fps path.
+
+## Decisions
+- Upgrade Godot 4.4.1 -> 4.7.1-stable (latest stable here): WASM SIMD on web, newer Compatibility/Mobile renderers. Re-import and re-bake everything.
+- Static lights baked into vertex colour at bake time (keeps the look, removes per-light draw passes); only moving lights stay dynamic.
+- Bigger merge cells + far-region HLOD meshes; visibility ranges everywhere.
+- Physics interpolation on, physics 30 Hz; far enemies/sprites stop processing.
+
+## Tasks
+| id | tier | depends | what | done_check |
+|---|---|---|---|---|
+| E1 | H | - | Godot 4.7.1 upgrade: setup script, templates, convert project, fix API breaks, re-bake, web smoke | headless runs clean, smoke PASS, shots match |
+| E2 | N | E1 | FPS overlay (avg, 1% low, frame ms) toggled in pause menu and ?fps=1 | visible in smoke screenshot |
+| E3 | H | E1 | draw-call diet: bigger merge cells, HLOD for far regions, grass chunking, visibility ranges | rcState.render draw_calls <= 150 at spawn/Hollowmere/wood |
+| E4 | H | E1 | bake static lights into vertex colour; cap dynamic lights | same shots, fewer draw passes |
+| E5 | N | E1 | CPU: physics interpolation + 30 Hz, process culling for far enemies/Witnesses/sprites | process ms down, gameplay tests PASS |
+| E6 | H | E1 | Android APK export (SDK+JDK in container, debug keystore), APK in docs/ + link on launch page | APK builds, installs config valid (aapt dump), size noted |
+| E7 | H | all | verify (shots, turn/perf/touch/fit tests), router-reviewer, publish, push | public build.txt matches, smoke on public URL |
