@@ -1,2 +1,3 @@
-gh-pages commit a216ff1e977cede25d3c275a0fb9a00a94f2361e
-Godot 4.3 web export, single-threaded, v2.4
+Web build published at https://mahmoud70004-debug.github.io/godot-mcp/under-one-roof/
+from docs/under-one-roof/ on branch claude/graphify-skill-load-cukwli (commit fcc0c78),
+whose Pages workflow is the one allowed to deploy. Godot 4.3 single-threaded web export, v2.4.
