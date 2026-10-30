@@ -7,8 +7,12 @@ extends CanvasLayer
 
 const CHARS_PER_SECOND := 30.0
 const FADE := 0.35
-## Space kept free under the subtitle for the HUD's prompt line (640x360 units).
-const BOTTOM_GAP := 46.0
+## The subtitle sits under the HUD's prompt line, between the joystick and the
+## buttons; the Witness window sits above the prompt (UI units, 360 high).
+const THOUGHT_GAP := 8.0
+const THOUGHT_HEIGHT := 40.0
+const PANEL_GAP := 88.0
+const PANEL_HEIGHT := 70.0
 const GLITCH_CHARS := "#%&@$*?!/\\|<>~^"
 const THOUGHT_COLOR := Color(0.84, 0.8, 0.68)
 const ENTITY_COLOR := Color(0.88, 0.9, 0.86)
@@ -35,7 +39,19 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_PAUSABLE
 	_rng.randomize()
 	_build()
+	_place()
+	get_viewport().size_changed.connect(_place)
 	Events.dialogue_requested.connect(_on_requested)
+
+
+## Keep clear of notches and the browser bar (UiSafeArea) whenever the screen changes.
+func _place() -> void:
+	var bottom := UiSafeArea.bottom_margin()
+	_thought.offset_bottom = -bottom - THOUGHT_GAP
+	_thought.offset_top = _thought.offset_bottom - THOUGHT_HEIGHT
+	_panel.offset_bottom = -bottom - PANEL_GAP
+	_panel.offset_top = _panel.offset_bottom - PANEL_HEIGHT
+	_panel.remove_meta(&"home")
 
 
 func _on_requested(lines: Array) -> void:
@@ -143,12 +159,10 @@ func _build() -> void:
 	add_child(_root)
 	_thought = Label.new()
 	_thought.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	_thought.anchor_left = 0.12
-	_thought.anchor_right = 0.88
+	_thought.anchor_left = 0.22
+	_thought.anchor_right = 0.74
 	_thought.offset_left = 0.0
 	_thought.offset_right = 0.0
-	_thought.offset_top = -BOTTOM_GAP - 40.0
-	_thought.offset_bottom = -BOTTOM_GAP
 	_thought.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	_thought.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_thought.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
@@ -167,8 +181,6 @@ func _build() -> void:
 	_panel.anchor_right = 0.8
 	_panel.offset_left = 0.0
 	_panel.offset_right = 0.0
-	_panel.offset_top = -BOTTOM_GAP - 70.0
-	_panel.offset_bottom = -BOTTOM_GAP
 	_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	var box := StyleBoxFlat.new()
 	box.bg_color = Color(0.02, 0.025, 0.02, 0.88)
