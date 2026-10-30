@@ -7,6 +7,7 @@ Loops carry a RIFF 'smpl' chunk so Godot's importer loops them automatically.
 Replace these with recorded/composed audio in the art & audio phase.
 """
 import struct
+import sys
 import wave
 from pathlib import Path
 
@@ -21,10 +22,10 @@ def midi(n):
     return 440.0 * 2 ** ((n - 69) / 12)
 
 
-def save(path, data, loop=False):
+def save(path, data, loop=False, level=0.89):
     data = np.asarray(data, dtype=np.float64)
     peak = np.max(np.abs(data)) or 1.0
-    pcm = (np.clip(data / peak * 0.89, -1, 1) * 32767).astype("<i2")
+    pcm = (np.clip(data / peak * level, -1, 1) * 32767).astype("<i2")
     path.parent.mkdir(parents=True, exist_ok=True)
     with wave.open(str(path), "wb") as w:
         w.setnchannels(1)
@@ -223,7 +224,166 @@ def firework():
     return np.concatenate([whistle, boom + sparkle])
 
 
+# --- Witness static and garbled voices (own RNG: existing outputs unchanged) ----
+WRNG = np.random.default_rng(11)
+PEAK_MINUS6 = 10 ** (-6 / 20)  # -6 dBFS peak
+
+
+def lowpass_var(x, alpha):
+    """One-pole lowpass with a per-sample coefficient alpha (array)."""
+    y = np.empty_like(x)
+    acc = 0.0
+    for i in range(len(x)):
+        acc += alpha[i] * (x[i] - acc)
+        y[i] = acc
+    return y
+
+
+def clicks(n, count, decay_ms=(0.4, 2.5), amp=(0.3, 1.0), weights=None):
+    """Random crackle impulses (short decaying ticks), optionally weighted in time."""
+    out = np.zeros(n)
+    if weights is None:
+        pos = WRNG.integers(0, n - 200, count)
+    else:
+        pos = WRNG.choice(n - 200, count, p=weights)
+    for i in pos:
+        k = int(WRNG.uniform(*decay_ms) * 0.001 * SR * 4) + 8
+        tt = np.arange(k) / SR
+        tau = WRNG.uniform(*decay_ms) * 0.001
+        out[i:i + k] += WRNG.normal(0, 1) * np.exp(-tt / tau) * WRNG.uniform(*amp)
+    return out
+
+
+def static_burst(seconds=0.6):
+    n = int(seconds * SR)
+    t = np.arange(n) / SR
+    white = WRNG.normal(0, 1, n)
+    # Falling filter: bright hiss at the hit, dark tail at the end.
+    alpha = 0.03 + 0.6 * np.exp(-t * 9)
+    body = lowpass_var(white, alpha) * 1.2 + 0.35 * white * np.exp(-t * 14)
+    crack = clicks(n, 70, decay_ms=(0.3, 1.5), amp=(0.4, 1.0),
+                   weights=(np.exp(-np.arange(n - 200) / SR * 6) / np.sum(np.exp(-np.arange(n - 200) / SR * 6))))
+    env = np.minimum(t / 0.002, 1) * np.exp(-t * 5.0) * np.clip((seconds - t) / 0.01, 0, 1)
+    return (body * 0.8 + crack * 0.6) * env
+
+
+def static_loop(seconds=2.0):
+    fade = int(0.05 * SR)
+    n = int(seconds * SR) + fade
+    t = np.arange(n) / SR
+    white = WRNG.normal(0, 1, n)
+    hiss = lowpass_var(white, np.full(n, 0.35)) * 0.6 + (white - lowpass_var(white, np.full(n, 0.35))) * 0.25
+    # Three integer cycles over the loop length keep the wobble seamless.
+    wobble = 0.75 + 0.25 * np.sin(2 * np.pi * 3 * t / seconds + 0.4)
+    # Two drop-outs away from the seam.
+    dropout = np.ones(n)
+    for start, length in ((0.35, 0.04), (1.42, 0.025)):
+        i0, i1 = int(start * SR), int((start + length) * SR)
+        dropout[i0:i1] = 0.05
+        dropout[i0:i0 + 66] = np.linspace(1, 0.05, 66)
+        dropout[i1 - 66:i1] = np.linspace(0.05, 1, 66)
+    crack = clicks(n, 30, decay_ms=(0.5, 2.0), amp=(0.3, 1.0))
+    out = (hiss * 0.5 + crack * 0.6) * wobble * dropout
+    # Equal-power crossfade of the tail into the head, then trim to length.
+    theta = np.linspace(0, np.pi / 2, fade)
+    head, tail = out[:fade], out[-fade:]
+    out[:fade] = head * np.sin(theta) + tail * np.cos(theta)
+    return out[:-fade]
+
+
+def _formant_env(f, formants):
+    """Vocal-tract style envelope: sum of gaussian formant peaks plus a floor."""
+    env = np.full(np.shape(f), 0.02)
+    for fc, bw, amp in formants:
+        env = env + amp * np.exp(-0.5 * ((f - fc) / bw) ** 2)
+    return env
+
+
+def syllable(dur, f0, glide, formants, noise_amt):
+    n = int(dur * SR)
+    t = np.arange(n) / SR
+    f = f0 * (1 + glide * t / dur)
+    phase = 2 * np.pi * np.cumsum(f) / SR
+    voiced = np.zeros(n)
+    k = 1
+    while k * f0 < 3800:
+        voiced += _formant_env(k * f0, formants) / k ** 0.7 * np.sin(k * phase)
+        k += 1
+    voiced /= np.max(np.abs(voiced)) or 1.0
+    # Formant-shaped aspiration noise (spectral filtering via FFT).
+    spec = np.fft.rfft(WRNG.normal(0, 1, n))
+    spec *= _formant_env(np.fft.rfftfreq(n, 1 / SR), formants)
+    hiss = np.fft.irfft(spec, n)
+    hiss /= np.max(np.abs(hiss)) or 1.0
+    body = voiced * (1 - noise_amt) + hiss * noise_amt
+    return body * np.minimum(t / 0.02, 1) * np.sin(np.pi * t / dur) ** 0.7
+
+
+def random_vowel():
+    f1 = WRNG.uniform(300, 800)
+    f2 = WRNG.uniform(max(900, f1 + 300), 2500)
+    f3 = WRNG.uniform(2500, 3300)
+    return [(f1, 70, 1.0), (f2, 110, 0.6), (f3, 160, 0.25)]
+
+
+def garble(seconds, f0=(100, 160), glide=(-0.3, 0.1), syll=(0.12, 0.25),
+           gap=(0.04, 0.3), noise=0.4, pause_chance=0.1, reverse=False,
+           drop=None, ring=None, ring_mix=0.0, static=0.0):
+    total = int(seconds * SR)
+    out = np.zeros(total * 2)
+    pos = 0.05
+    while pos < seconds * 1.4:
+        dur = WRNG.uniform(*syll)
+        s = syllable(dur, WRNG.uniform(*f0), WRNG.uniform(*glide), random_vowel(), noise)
+        i = int(pos * SR)
+        out[i:i + len(s)] += s * WRNG.uniform(0.6, 1.0)
+        pos += dur + WRNG.uniform(*gap)
+        if WRNG.random() < pause_chance:
+            pos += WRNG.uniform(0.25, 0.6)
+    y = out[:int(seconds * 1.4 * SR)]
+    if drop:  # pitch drop by resampling (ratio < 1 is lower and slower)
+        idx = np.arange(int(len(y) / drop)) * drop
+        y = np.interp(idx, np.arange(len(y)), y)
+    if ring:
+        t = np.arange(len(y)) / SR
+        y = y * (1 - ring_mix) + y * np.sin(2 * np.pi * ring * t) * ring_mix
+    if reverse:
+        y = y[::-1]
+    y = y[:total]
+    if len(y) < total:
+        y = np.concatenate([y, np.zeros(total - len(y))])
+    fade = int(0.01 * SR)
+    y[:fade] *= np.linspace(0, 1, fade)
+    y[-fade:] *= np.linspace(1, 0, fade)
+    if static:
+        y = y + clicks(total, int(seconds * 40), amp=(0.2, 0.8)) * static
+        y = y + lowpass_var(WRNG.normal(0, 1, total), np.full(total, 0.2)) * static * 0.5
+    return y
+
+
+VOICE_SPECS = [
+    dict(seconds=2.6, f0=(90, 120), glide=(-0.35, -0.15), syll=(0.18, 0.3), gap=(0.05, 0.3),
+         noise=0.3, reverse=True),
+    dict(seconds=1.8, f0=(200, 260), glide=(0.15, 0.3), syll=(0.08, 0.16), gap=(0.02, 0.12),
+         noise=0.5, ring=47, ring_mix=0.5),
+    dict(seconds=2.9, f0=(130, 170), glide=(-0.2, 0.0), syll=(0.15, 0.25), gap=(0.1, 0.45),
+         noise=0.35, pause_chance=0.35, drop=0.6, static=0.05),
+    dict(seconds=2.2, f0=(110, 150), glide=(-0.1, 0.1), syll=(0.12, 0.25), gap=(0.02, 0.5),
+         noise=0.85, reverse=True, ring=130, ring_mix=0.3, static=0.08),
+]
+
+
+def make_witness():
+    save(ROOT / "sfx" / "static_burst.wav", static_burst(), level=PEAK_MINUS6)
+    save(ROOT / "sfx" / "static_loop.wav", static_loop(), loop=True, level=PEAK_MINUS6)
+    for i, spec in enumerate(VOICE_SPECS, 1):
+        save(ROOT / "voices" / f"garble_{i}.wav", garble(**spec), level=PEAK_MINUS6)
+
+
 if __name__ == "__main__":
+    if sys.argv[1:] == ["witness"]:
+        make_witness()
+        sys.exit(0)
     save(ROOT / "music" / "festive_jig.wav", jig(), loop=True)
     save(ROOT / "ambience" / "night_wind.wav", wind(), loop=True)
     save(ROOT / "ambience" / "bonfire.wav", fire(), loop=True)
