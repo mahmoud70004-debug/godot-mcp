@@ -6,7 +6,7 @@ Design docs: rotten-crown/docs/GAME_DESIGN.md, ARCHITECTURE.md (Arabic), ROADMAP
 
 ## 1. Stack
 - Godot 4.7.1 (project features "4.4", "Mobile"), GDScript only, Android landscape + HTML5 web.
-- Renderer: `mobile` for native/Android; `gl_compatibility` for web (renderer/rendering_method.web).
+- Renderer: `gl_compatibility` everywhere (web, Android, desktop).
 - Viewport: 640x360 internal (window/size/viewport_width/height).
 - Autoloads (load order, project.godot [autoload]):
   1. Events (src/autoload/events.gd) - signal bus
