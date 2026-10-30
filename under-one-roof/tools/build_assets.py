@@ -130,6 +130,22 @@ def main():
         sprites[name] = meta
     ref_assets.register(reg, os.path.join(a, "sprites"))
 
+    # houses modelled in Blender (tools/blender/houses.py, renders kept in tools/blender_out)
+    # replace the cut-out cabins: twice the pixel density, real shading, exact footprints
+    import blender_pixel
+    houses_json = os.path.join(HERE, "blender_out", "houses.json")
+    if os.path.exists(houses_json):
+        for name, hm in json.load(open(houses_json)).items():
+            img = blender_pixel.pixelize(os.path.join(HERE, "blender_out", f"{name}.png"))
+            w, h = img.width // RES, img.height // RES
+            gx, gy, gw, gh = hm["ground"]
+            meta = {"w": w, "h": h, "res": RES, "oy": h - 3,
+                    "bases": [[int(gx), int(gy), int(gw), int(round(hm["front_y"] - gy))]],
+                    "shadow": [w * 0.5, h - 6, w * 0.95, 26]}
+            if "door" in hm:
+                meta["door"] = [int(round(hm["door"][0])), h - 3]
+            reg("ref_" + name, img, meta)
+
     # racks and lines stand on two posts: only the posts block, not the empty ground between
     import numpy as np
     for name in ("laundry", "net_rack", "net_posts"):

@@ -451,24 +451,24 @@
 },
 {
 "sprite": "ref_longhouse",
-"x": 1526,
-"y": 286
+"x": 1520,
+"y": 284
 },
 {
 "sprite": "ref_longhouse_f",
-"x": 1406,
-"y": 638
+"x": 1400,
+"y": 636
 },
 {
 "sprite": "ref_cabin_d",
-"x": 1541,
-"y": 608
+"x": 1544,
+"y": 600
 },
 {
 "type": "door",
 "id": "door_runa",
 "to": "runa_closed",
-"x": 1593,
+"x": 1594,
 "y": 730,
 "w": 16,
 "h": 14
@@ -693,14 +693,14 @@
 },
 {
 "sprite": "ref_cabin_c",
-"x": 975,
-"y": 848
+"x": 976,
+"y": 846
 },
 {
 "type": "door",
 "id": "door_bjorn",
 "to": "bjorn_closed",
-"x": 1010,
+"x": 1008,
 "y": 970,
 "w": 16,
 "h": 14
@@ -708,7 +708,7 @@
 {
 "sprite": "ref_cabin_b_f",
 "x": 1169,
-"y": 830
+"y": 827
 },
 {
 "sprite": "boathouse",
@@ -731,13 +731,13 @@
 },
 {
 "sprite": "ref_cabin_d_f",
-"x": 837,
-"y": 704
+"x": 839,
+"y": 695
 },
 {
 "sprite": "ref_thatch_f",
-"x": 974,
-"y": 674
+"x": 971,
+"y": 688
 },
 {
 "sprite": "net_rack",
@@ -977,7 +977,7 @@
 {
 "sprite": "ref_cabin_a",
 "x": 1714,
-"y": 672,
+"y": 671,
 "show_if": [
 "!roof_fixed"
 ]
@@ -986,15 +986,15 @@
 "type": "door",
 "id": "door_home",
 "to": "spawn_home_in",
-"x": 1742,
+"x": 1744,
 "y": 794,
 "w": 16,
 "h": 14
 },
 {
 "sprite": "ref_cabin_warm",
-"x": 1711,
-"y": 672,
+"x": 1712,
+"y": 670,
 "show_if": [
 "roof_fixed",
 "!ending"
@@ -1002,8 +1002,8 @@
 },
 {
 "sprite": "ref_cabin_c_f",
-"x": 1711,
-"y": 672,
+"x": 1712,
+"y": 670,
 "show_if": [
 "ending"
 ]
@@ -1012,7 +1012,7 @@
 "type": "door",
 "id": "door_home_fixed",
 "to": "spawn_home_in",
-"x": 1756,
+"x": 1762,
 "y": 794,
 "w": 16,
 "h": 14,
@@ -1304,8 +1304,8 @@
 },
 {
 "sprite": "ref_thatch",
-"x": 190,
-"y": 642
+"x": 187,
+"y": 656
 },
 {
 "type": "door",
@@ -1324,7 +1324,7 @@
 {
 "sprite": "ref_cabin_b",
 "x": 433,
-"y": 446
+"y": 443
 },
 {
 "sprite": "shed",
@@ -1392,14 +1392,14 @@
 },
 {
 "sprite": "ref_cabin_old",
-"x": 2017,
-"y": 302
+"x": 2018,
+"y": 300
 },
 {
 "type": "door",
 "id": "door_farmhouse",
 "to": "spawn_farmhouse_in",
-"x": 2057,
+"x": 2056,
 "y": 426,
 "w": 16,
 "h": 14
@@ -7405,9 +7405,9 @@
 "y": 147
 },
 {
-"sprite": "wildflowers_0",
-"x": 1877,
-"y": 62
+"sprite": "grass_tuft_0",
+"x": 86,
+"y": 78
 },
 {
 "sprite": "wildflowers_2",
@@ -7448,11 +7448,6 @@
 "sprite": "grass_tuft_1",
 "x": 844,
 "y": 912
-},
-{
-"sprite": "wildflowers_2",
-"x": 864,
-"y": 681
 },
 {
 "sprite": "wildflowers_0",
@@ -7620,14 +7615,9 @@
 "y": 453
 },
 {
-"sprite": "wildflowers_0",
-"x": 1805,
-"y": 596
-},
-{
 "sprite": "snow_2",
-"x": 331,
-"y": 109
+"x": 2016,
+"y": 271
 },
 {
 "sprite": "wildflowers_1",
@@ -7760,14 +7750,9 @@
 "y": 803
 },
 {
-"sprite": "snow_0",
-"x": 831,
-"y": 689
-},
-{
 "sprite": "grass_tuft_2",
-"x": 630,
-"y": 418
+"x": 1326,
+"y": 856
 },
 {
 "sprite": "grass_tuft_0",
@@ -7928,6 +7913,11 @@
 "sprite": "grass_tuft_0",
 "x": 1336,
 "y": 733
+},
+{
+"sprite": "grass_tuft_2",
+"x": 1699,
+"y": 796
 },
 {
 "sprite": "snow_1",
@@ -8135,11 +8125,6 @@
 "y": 271
 },
 {
-"sprite": "grass_tuft_2",
-"x": 2046,
-"y": 929
-},
-{
 "sprite": "grass_tuft_0",
 "x": 1549,
 "y": 176
@@ -8303,16 +8288,6 @@
 "sprite": "grass_tuft_1",
 "x": 1624,
 "y": 131
-},
-{
-"sprite": "grass_tuft_2",
-"x": 856,
-"y": 453
-},
-{
-"sprite": "grass_tuft_1",
-"x": 1800,
-"y": 148
 }
 ],
 "spots": {
@@ -8382,7 +8357,7 @@
 "dir": "down"
 },
 "spawn_runa_out": {
-"x": 1601,
+"x": 1602,
 "y": 756,
 "dir": "down"
 },
@@ -8392,7 +8367,7 @@
 "dir": "down"
 },
 "spawn_bjorn_out": {
-"x": 1018,
+"x": 1016,
 "y": 996,
 "dir": "down"
 },
@@ -8402,7 +8377,7 @@
 "dir": "down"
 },
 "spawn_home_out": {
-"x": 1750,
+"x": 1752,
 "y": 820,
 "dir": "down"
 },
@@ -8412,7 +8387,7 @@
 "dir": "down"
 },
 "spawn_farmhouse_out": {
-"x": 2065,
+"x": 2064,
 "y": 452,
 "dir": "down"
 },
@@ -8477,7 +8452,7 @@
 "dir": "down"
 },
 "bjorn_harbor": {
-"x": 1336,
+"x": 1304,
 "y": 1016,
 "dir": "left"
 },
