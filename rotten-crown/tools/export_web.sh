@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Export the Web (HTML5) build to build/web/.
 #   GODOT=/path/to/godot tools/export_web.sh [release|debug]
-# Requires Godot 4.4.1 + its web export templates (web_nothreads_*.zip) in
-# ~/.local/share/godot/export_templates/4.4.1.stable/
+# Requires Godot 4.7.1 + its web export templates (web_nothreads_*.zip) in
+# ~/.local/share/godot/export_templates/4.7.1.stable/
 set -euo pipefail
 cd "$(dirname "$0")/.."
 GODOT="${GODOT:-godot}"

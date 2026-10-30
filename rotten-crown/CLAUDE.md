@@ -1,6 +1,6 @@
 # Rotten Crown — notes for Claude
 
-Godot 4.4 (Mobile renderer) first-person retro dark-fantasy horror game for Android, landscape.
+Godot 4.7 (Mobile renderer) first-person retro dark-fantasy horror game for Android, landscape.
 Design: docs/GAME_DESIGN.md. Architecture: docs/ARCHITECTURE.md. Phases: docs/ROADMAP.md (update the checklist when finishing work).
 
 ## Conventions
@@ -22,7 +22,7 @@ Design: docs/GAME_DESIGN.md. Architecture: docs/ARCHITECTURE.md. Phases: docs/RO
 ## Before committing
 - `python3 tools/validate_project.py` must pass.
 - `gdparse` every changed .gd (pip install "gdtoolkit==4.*"); `gdlint src` uses ./gdlintrc.
-- Godot: `export GODOT=$(tools/setup_godot.sh)` (downloads 4.4.1 + web templates only). Then
+- Godot: `export GODOT=$(tools/setup_godot.sh)` (downloads 4.7.1 + web templates only). Then
   `$GODOT --headless --path . --import` and `$GODOT --headless --path . --quit-after 120 src/levels/test/visual_test.tscn` - no errors.
 
 ## Every phase / feature: publish a phone-testable web build

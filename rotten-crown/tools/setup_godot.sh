@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Download Godot 4.4.1 (Linux) and ONLY its web export templates.
+# Download Godot 4.7.1 (Linux) and ONLY its web export templates.
 #   tools/setup_godot.sh [install_dir]     -> prints the path to the godot binary
 set -euo pipefail
-VERSION="4.4.1"
+VERSION="4.7.1"
 DIR="${1:-$HOME/.cache/godot-$VERSION}"
 BASE="https://github.com/godotengine/godot/releases/download/${VERSION}-stable"
 BIN="$DIR/Godot_v${VERSION}-stable_linux.x86_64"
