@@ -162,6 +162,8 @@ func open() -> void:
 
 
 func close() -> void:
+	if visible:
+		Audio.duck(false)
 	visible = false
 
 
@@ -170,6 +172,9 @@ func say(speaker: String, text: String) -> void:
 		print("  [%s] %s" % [speaker, text])
 		await get_tree().process_frame
 		return
+	if not visible:
+		Audio.duck(true)
+		Audio.sfx("page", randf_range(0.95, 1.05))
 	visible = true
 	_apply_layout()
 	_box.visible = true
@@ -191,12 +196,23 @@ func say(speaker: String, text: String) -> void:
 	var delay := Game.text_delay()
 	if delay <= 0.0:
 		_skip = true
+	var kind := Story.voice_of(speaker)
+	var pitch := 1.0 + 0.25 * float(Story.voice_pitch(speaker))
+	var letters := 0
 	while shown < total and not _skip:
 		shown += 1
 		_text.visible_characters = shown
-		if shown % 3 == 0 and text[shown - 1] != " ":
-			Audio.sfx("blip", 0.9 + 0.2 * float(Story.voice_pitch(speaker)))
-		await get_tree().create_timer(delay).timeout
+		var ch := text[shown - 1]
+		var wait := delay
+		if ch in ".!?…؟":
+			wait += delay * 9.0        # a breath between sentences
+		elif ch in ",،;:—":
+			wait += delay * 4.0
+		elif ch != " ":
+			letters += 1
+			if kind != "" and letters % 3 == 1:
+				Audio.voice(kind, ch, pitch)
+		await get_tree().create_timer(wait).timeout
 	_text.visible_characters = -1
 	_typing = false
 	_more.visible = true

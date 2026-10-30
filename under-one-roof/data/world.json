@@ -2329,12 +2329,24 @@
 {
 "sprite": "glint",
 "x": 2978,
-"y": 178,
+"y": 130,
 "id": "collect_photo_inn",
 "show_if": [
 "!collect_photo_inn_taken"
 ],
 "interact": "collect_photo_inn",
+"glint": true
+},
+{
+"sprite": "glint",
+"x": 1122,
+"y": 1026,
+"id": "collect_nameboard_b",
+"show_if": [
+"!collect_nameboard_b_taken",
+"got_nameboard_a"
+],
+"interact": "collect_nameboard_b",
 "glint": true
 },
 {

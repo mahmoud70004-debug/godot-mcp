@@ -271,6 +271,47 @@ func _world_features() -> void:
 			break
 		await _wait(0.5)
 	_expect(f.position.distance_to(target) < 2.0, "he arrived at the inn (%.0f px away)" % f.position.distance_to(target))
+	# talking works next to someone even when Gideon looks the other way
+	Game.set_time(10, 0)
+	await _wait(0.3)
+	var sig = w.npcs["sigrid"]
+	await Director.teleport("spawn_inn_in", false)
+	await _wait(0.5)
+	p.global_position = sig.global_position + Vector2(16, 6)
+	p.face("right")      # back turned to Sigrid
+	await _wait(0.4)
+	_expect(p.target != null and p.target.has_meta("npc"), "a person beside Gideon is targeted even with his back to her")
+	_press("interact")
+	await _wait(0.6)
+	_expect(Director.main.dialogue.visible, "the action opens the conversation (faced: %s)" % p.facing)
+	_expect(p.facing == "left", "Gideon turns to face the person he talks to")
+	# voices and music ducking while the line types
+	var voiced := false
+	for i in 30:
+		if Audio._voice.playing:
+			voiced = true
+			break
+		await get_tree().process_frame
+	_expect(voiced, "the speaker's voice plays while the line types")
+	await _wait(0.6)
+	_expect(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Music")) < -3.0, "music is ducked under the dialogue")
+	for i in 40:
+		if not Director.main.dialogue.visible:
+			break
+		Director.main.dialogue._advance()
+		await _wait(0.15)
+	await _wait(1.2)
+	_expect(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Music")) > -1.0, "music comes back after the dialogue")
+	await Director.teleport("spawn_inn_out", false)
+	await _wait(0.4)
+	# stopping after a walk settles on the standing frame of that direction
+	await _hold("move_right", 0.6)
+	await _wait(0.15)
+	_expect(p.sprite.frame == 2 * 4, "after walking right Gideon stands (frame %d)" % p.sprite.frame)
+	await _hold("move_left", 0.6)
+	await _wait(0.15)
+	_expect(p.sprite.frame == 1 * 4, "after walking left Gideon stands (frame %d)" % p.sprite.frame)
+
 	# family members from the reference sheet walk with their own animation
 	for id in ["clara", "margaret", "jonas", "leif", "edmund"]:
 		var n = w.npcs[id]

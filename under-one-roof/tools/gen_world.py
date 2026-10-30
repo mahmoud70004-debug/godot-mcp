@@ -789,9 +789,12 @@ def hidden_collectibles():
     for gid, (x, y) in {"lost_compass": (72, 64), "collect_letter_church": (66, 46),
                         "collect_journal_1": (145, 30), "collect_journal_2": (138, 76),
                         "collect_carving": (28, 30), "collect_fishing_gear": (40, 68),
-                        "collect_property_farm": (152 + IX, 24), "collect_photo_inn": (154 + IX, 12)}.items():
+                        "collect_property_farm": (150 + IX, 24), "collect_photo_inn": (151 + IX, 8),
+                        "collect_nameboard_b": (69, 64)}.items():
         x, y = nearest_walkable(x, y)
         cond = [f"!{gid}_taken"] + (["got_detector"] if gid in ("collect_carving", "collect_fishing_gear") else [])
+        if gid == "collect_nameboard_b":
+            cond.append("got_nameboard_a")
         place("glint", x, y, oid=gid, interact=gid, show_if=cond, reserve=False, px=2, py=2, extra={"glint": True})
 
 

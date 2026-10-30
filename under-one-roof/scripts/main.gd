@@ -38,6 +38,7 @@ func _ready() -> void:
 		player.call_deferred("_pick_target")
 		hud.call_deferred("set_prompt", Director.prompt_for(player.target)))
 
+	_make_atmosphere()
 	_lantern = _make_lantern()
 	player.add_child(_lantern)
 	Game.inventory_changed.connect(_refresh_outfit)
@@ -63,8 +64,75 @@ func _ready() -> void:
 		Director.intro()
 
 
+var _snow: CPUParticles2D
+var _dust: CPUParticles2D
+
+
 func set_indoor(on: bool) -> void:
 	_indoor = on
+	if _snow:
+		_snow.emitting = not on
+		_snow.visible = not on
+		_dust.emitting = on
+		_dust.visible = on
+
+
+## Atmosphere over the world, under the HUD: light snow outdoors, dust motes drifting in
+## the warm light indoors, and a soft vignette that gives the frame depth.
+func _make_atmosphere() -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 4
+	add_child(layer)
+	var vp := get_viewport().get_visible_rect().size
+	_snow = CPUParticles2D.new()
+	_snow.amount = 70
+	_snow.lifetime = 9.0
+	_snow.preprocess = 9.0
+	_snow.position = Vector2(vp.x * 0.5, -10)
+	_snow.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	_snow.emission_rect_extents = Vector2(vp.x * 0.75, 4)
+	_snow.direction = Vector2(-0.25, 1)
+	_snow.spread = 12.0
+	_snow.gravity = Vector2(-2, 9)
+	_snow.initial_velocity_min = 12.0
+	_snow.initial_velocity_max = 26.0
+	_snow.scale_amount_min = 1.0
+	_snow.scale_amount_max = 2.2
+	_snow.color = Color(1, 1, 1, 0.75)
+	_snow.orbit_velocity_min = 0.0
+	layer.add_child(_snow)
+	_dust = CPUParticles2D.new()
+	_dust.amount = 26
+	_dust.lifetime = 7.0
+	_dust.preprocess = 7.0
+	_dust.position = vp * 0.5
+	_dust.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	_dust.emission_rect_extents = vp * 0.45
+	_dust.direction = Vector2(0.3, -1)
+	_dust.spread = 180.0
+	_dust.gravity = Vector2(0, -1.5)
+	_dust.initial_velocity_min = 1.0
+	_dust.initial_velocity_max = 4.0
+	_dust.scale_amount_min = 0.8
+	_dust.scale_amount_max = 1.6
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(1.0, 0.9, 0.7, 0.0))
+	ramp.add_point(0.5, Color(1.0, 0.88, 0.65, 0.55))
+	ramp.set_color(ramp.get_point_count() - 1, Color(1.0, 0.9, 0.7, 0.0))
+	_dust.color_ramp = ramp
+	var add := CanvasItemMaterial.new()
+	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_dust.material = add
+	_dust.emitting = false
+	_dust.visible = false
+	layer.add_child(_dust)
+	var vig := ColorRect.new()
+	UI.full_rect(vig)
+	vig.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var mat := ShaderMaterial.new()
+	mat.shader = load("res://assets/shaders/vignette.gdshader")
+	vig.material = mat
+	layer.add_child(vig)
 
 
 func _process(_delta: float) -> void:

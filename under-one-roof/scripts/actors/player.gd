@@ -21,6 +21,7 @@ var _action_frames: Array = []
 var _action_t := 0.0
 var _anim_t := 0.0
 var _step_t := 0.0
+var _idle_t := 0.0
 var room_rect := Rect2()        # set indoors: the camera never zooms out past the room
 var _touches := {}              # pinch-zoom: index -> position (touches the HUD did not take)
 var _pinch_d := 0.0
@@ -63,10 +64,26 @@ func _process(delta: float) -> void:
 		camera.zoom = Vector2(cur, cur)
 
 
+var _near: Area2D               # everything within arm's length, whichever way Gideon faces
+
+
 func _ready() -> void:
 	camera.zoom = Vector2.ONE * zoom_level()
 	reach.area_entered.connect(func(_a): _pick_target())
 	reach.area_exited.connect(func(_a): _pick_target())
+	_near = Area2D.new()
+	_near.collision_layer = 0
+	_near.collision_mask = 8
+	_near.monitorable = false
+	var cs := CollisionShape2D.new()
+	var circle := CircleShape2D.new()
+	circle.radius = 22.0
+	cs.shape = circle
+	cs.position = Vector2(0, -6)
+	_near.add_child(cs)
+	add_child(_near)
+	_near.area_entered.connect(func(_a): _pick_target())
+	_near.area_exited.connect(func(_a): _pick_target())
 
 
 func face(dir: String) -> void:
@@ -118,15 +135,30 @@ func _physics_process(delta: float) -> void:
 			Audio.sfx("step", randf_range(0.85, 1.15))
 		_pick_target()
 	else:
+		# standing still: settle on the calm standing frame and breathe gently
 		_anim_t = 0.0
 		sprite.frame = DIRS[facing] * 4
+		_idle_t += delta
+		sprite.scale.y = 0.5 * (1.0 + 0.014 * sin(_idle_t * 2.2))
+		return
+	_idle_t = 0.0
+	sprite.scale.y = 0.5
 
 
 func _pick_target() -> void:
+	var best := _best_in(reach.get_overlapping_areas(), global_position + reach.position)
+	if best == null and _near:
+		# nothing in front: take the closest person or thing around Gideon
+		best = _best_in(_near.get_overlapping_areas(), global_position + Vector2(0, -6))
+	if best != target:
+		target = best
+		target_changed.emit(target)
+
+
+func _best_in(areas: Array, origin: Vector2) -> Area2D:
 	var best: Area2D = null
 	var best_d := INF
-	var origin := global_position + reach.position
-	for a in reach.get_overlapping_areas():
+	for a in areas:
 		if not a.is_visible_in_tree() and not a.has_meta("npc"):
 			continue
 		if a.has_meta("npc") and not a.get_meta("npc").visible:
@@ -139,9 +171,7 @@ func _pick_target() -> void:
 		if d < best_d:
 			best_d = d
 			best = a
-	if best != target:
-		target = best
-		target_changed.emit(target)
+	return best
 
 
 func _area_center(a: Area2D) -> Vector2:
@@ -163,7 +193,16 @@ func _unhandled_input(event: InputEvent) -> void:
 func interact() -> void:
 	_pick_target()
 	if target and not Game.input_locked:
+		_face_point(_area_center(target))
 		Director.interact(target)
+
+
+func _face_point(p: Vector2) -> void:
+	var d := p - global_position
+	if abs(d.x) > abs(d.y):
+		face("right" if d.x > 0 else "left")
+	else:
+		face("down" if d.y > 0 else "up")
 
 
 ## Mouse wheel, trackpad pinch, two-finger pinch on the world, +/- keys.

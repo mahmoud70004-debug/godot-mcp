@@ -8,6 +8,10 @@ var _sfx: Array[AudioStreamPlayer] = []
 var _current_music := ""
 var _current_amb := ""
 var _cache := {}
+var _voice: AudioStreamPlayer      # dialogue voices: one syllable at a time, never cut by sfx
+var _music_bus := 0
+var _duck_tween: Tween
+const VOWELS := ["a", "e", "i", "o", "u"]
 
 
 func _ready() -> void:
@@ -17,6 +21,20 @@ func _ready() -> void:
 	_amb = _player()
 	for i in 6:
 		_sfx.append(_player())
+	_voice = _player()
+	# music and ambience go through their own bus so dialogue can duck them smoothly
+	AudioServer.add_bus()
+	_music_bus = AudioServer.bus_count - 1
+	AudioServer.set_bus_name(_music_bus, "Music")
+	AudioServer.set_bus_send(_music_bus, "Master")
+	for p in [_music_a, _music_b, _amb]:
+		p.bus = "Music"
+	# preload the small sounds so the first line of dialogue never stutters (web)
+	for v in ["man", "deep", "woman", "child", "old", "oldwoman"]:
+		for vw in VOWELS:
+			_stream("voice_%s_%s" % [v, vw], false)
+	for n in ["blip", "select", "page", "discover", "reveal", "clue", "pickup"]:
+		_stream(n, false)
 
 
 func _player() -> AudioStreamPlayer:
@@ -52,6 +70,27 @@ func sfx(name: String, pitch := 1.0) -> void:
 			p.volume_db = linear_to_db(max(0.001, Game.settings["sfx"]))
 			p.play()
 			return
+
+
+## One spoken syllable of a character's voice (see Story.voice_of).
+func voice(kind: String, letter: String, pitch := 1.0) -> void:
+	var vw: String = VOWELS[absi(letter.unicode_at(0)) % VOWELS.size()] if letter != "" else "a"
+	var s := _stream("voice_%s_%s" % [kind, vw], false)
+	if s == null:
+		return
+	_voice.stream = s
+	_voice.pitch_scale = pitch * randf_range(0.96, 1.05)
+	_voice.volume_db = linear_to_db(max(0.001, Game.settings["sfx"] * 0.75))
+	_voice.play()
+
+
+## Lowers music and ambience while people talk, and brings them back after.
+func duck(on: bool) -> void:
+	if _duck_tween:
+		_duck_tween.kill()
+	_duck_tween = create_tween()
+	_duck_tween.tween_method(func(v): AudioServer.set_bus_volume_db(_music_bus, v),
+		AudioServer.get_bus_volume_db(_music_bus), -7.0 if on else 0.0, 0.45 if on else 0.9)
 
 
 func current_music() -> String:

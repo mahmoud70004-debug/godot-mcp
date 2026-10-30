@@ -26,7 +26,7 @@ FAMILY = {
     # the eldest son -> Gideon
     "son": dict(height=30, front="son_00",
                 down=["son_00", "son_21", "son_10", "son_22"],
-                right=["son_15", "son_12", "son_15", "son_13"],
+                right=["son_15:stand", "son_12", "son_15:stand", "son_15"],
                 up=["son_20:back", "son_20:back:A", "son_20:back", "son_20:back:B"],
                 action=["son_24", "son_24:low", "son_25", "son_23"]),
     # the mother -> Margaret
@@ -56,7 +56,7 @@ FAMILY = {
     # the teenage brother -> Jonas
     "teen": dict(height=29, front="teen_10",
                  down=["teen_10", "teen_01", "teen_00", "teen_02"],
-                 right=["teen_11", "teen_11:A", "teen_11", "teen_11:B"],
+                 right=["teen_11:stand", "teen_11", "teen_11:stand", "teen_11:B"],
                  up=["teen_10:back", "teen_10:back:A", "teen_10:back", "teen_10:back:B"],
                  action=["teen_12", "teen_12", "teen_12", "teen_12"]),
     # the aunt in the yellow oilskin -> the fisherwoman on the beach
@@ -168,10 +168,31 @@ def outline(img):
 
 
 # ---------------------------------------------------------------- sheets
-def _pose(cells, spec, k, beard):
+def stand(side, front):
+    """A calm standing side view: the side pose's upper body over closed legs taken from
+    the front standing pose (narrowed), so stopping never freezes mid-stride."""
+    s, f = np.array(side), np.array(front)
+    hs, hf = int(side.height * 0.6), int(front.height * 0.6)
+    legs = Image.fromarray(f[hf:]).resize((max(1, int(front.width * 0.62)), front.height - hf), Image.NEAREST)
+    top = s[:hs]
+    cols = np.where(top[..., 3].max(axis=0) > 0)[0]
+    lower_cols = np.where(top[-4:, :, 3].max(axis=0) > 0)[0]
+    cx = int((lower_cols.min() + lower_cols.max()) / 2) if len(lower_cols) else side.width // 2
+    h = hs + legs.height
+    w = max(side.width, legs.width + 2)
+    out = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    out.paste(legs, (int(cx - legs.width / 2), hs), legs)
+    out.alpha_composite(Image.fromarray(top), (0, 0))
+    return out
+
+
+def _pose(cells, spec, k, beard, front=None):
     parts = spec.split(":")
     img = to_world(cells[parts[0]], k)
     for p in parts[1:]:
+        if p == "stand" and front:
+            img = stand(img, to_world(cells[front], k))
+            continue
         if p == "flip":
             img = ImageOps.mirror(img)
         elif p == "back":
@@ -215,7 +236,7 @@ def build_sheets():
                 spec["right"], spec["up"], spec["action"]]
         for r, row in enumerate(rows):
             for c, s in enumerate(row):
-                sheet.alpha_composite(_place(_pose(cells, s, k, beard)), (c * FRAME_W, r * FRAME_H))
+                sheet.alpha_composite(_place(_pose(cells, s, k, beard, spec["front"])), (c * FRAME_W, r * FRAME_H))
         sheets[name] = sheet.resize((sheet.width * RES, sheet.height * RES), Image.NEAREST)
         x0, y0, x1, y1 = PORTRAITS[name]
         p = Image.fromarray(im[y0:y1, x0:x1]).convert("RGBA")

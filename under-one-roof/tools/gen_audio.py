@@ -128,8 +128,62 @@ def music(melody, bass, bpm, kind="piano", vol=0.28, pad_notes=None, chords=None
     return loop / peak * 0.8
 
 
+# ---------------------------------------------------------------- voices
+VOICE_TYPES = {          # base pitch (Hz), breathiness, tremolo depth
+    "man": (118, 0.05, 0.0), "deep": (86, 0.07, 0.0), "woman": (205, 0.06, 0.0),
+    "child": (295, 0.04, 0.0), "old": (104, 0.12, 0.05), "oldwoman": (182, 0.12, 0.04),
+}
+VOWELS = {"a": (760, 1180, 2500), "e": (480, 1880, 2550), "i": (310, 2250, 2950), "o": (520, 860, 2450), "u": (360, 760, 2300)}
+
+
+def _resonator(x, f, bw):
+    """Two-pole resonator (formant filter)."""
+    r = np.exp(-np.pi * bw / SR)
+    c1, c2 = 2 * r * np.cos(2 * np.pi * f / SR), -r * r
+    y = np.zeros_like(x)
+    y1 = y2 = 0.0
+    g = 1 - r
+    for i in range(len(x)):
+        v = g * x[i] + c1 * y1 + c2 * y2
+        y[i] = v
+        y2, y1 = y1, v
+    return y
+
+
+def syllable(f0, vowel, breath, trem, seed):
+    """A short sung-spoken syllable: glottal pulses through three vowel formants."""
+    rng = np.random.default_rng(seed)
+    dur = 0.11
+    n = int(SR * dur)
+    tt = np.arange(n) / SR
+    glide = 1.0 + 0.06 * np.sin(np.pi * tt / dur) - 0.05 * tt / dur
+    f = f0 * glide * (1 + trem * np.sin(2 * np.pi * 6 * tt))
+    phase = np.cumsum(f / SR)
+    pulse = (phase % 1.0) ** 3 - 0.25
+    src = pulse + breath * rng.normal(0, 1, n)
+    out = np.zeros(n)
+    for fm, gain in zip(VOWELS[vowel], (1.0, 0.6, 0.25)):
+        out += gain * _resonator(src, fm, 90 + fm * 0.06)
+    e = np.minimum(1, tt / 0.012) * np.exp(-((tt - 0.03).clip(0)) * 22)
+    out *= e
+    out /= max(1e-6, np.abs(out).max())
+    return out * 0.32
+
+
 def build(out):
     save(f"{out}/blip.wav", tone(880, 0.04, "square", decay=30, vol=0.18))
+    for vt, (f0, br, tr) in VOICE_TYPES.items():
+        for k, v in enumerate(VOWELS):
+            save(f"{out}/voice_{vt}_{v}.wav", syllable(f0, v, br, tr, seed=k * 7 + len(vt)))
+    # cinematic cues: a discovery sting, a deep reveal swell, a soft page turn for dialogue
+    swell_t = t(2.2)
+    swell = (np.sin(2 * np.pi * 73.4 * swell_t) * 0.5 + np.sin(2 * np.pi * 110 * swell_t) * 0.35 + np.sin(2 * np.pi * 146.8 * swell_t) * 0.25)
+    swell *= np.minimum(1, swell_t / 0.9) * np.exp(-np.clip(swell_t - 1.2, 0, None) * 2.5) * 0.45
+    save(f"{out}/reveal.wav", reverb(swell, 0.35))
+    sting = cat(tone(note(57), 0.22, "pluck", 3, 0.45), tone(note(64), 0.22, "pluck", 3, 0.45), tone(note(69), 0.9, "pluck", 2, 0.5))
+    save(f"{out}/discover.wav", reverb(sting, 0.3))
+    page = lowpass(noise(0.18, 0.35, 11), 3) * np.exp(-14 * t(0.18))
+    save(f"{out}/page.wav", page)
     save(f"{out}/select.wav", cat(tone(660, 0.05, "square", 20, 0.2), tone(990, 0.07, "square", 20, 0.2)))
     save(f"{out}/pickup.wav", cat(tone(784, 0.07, "pluck", 12, 0.5), tone(1175, 0.15, "pluck", 10, 0.5)))
     save(f"{out}/coin.wav", cat(tone(1319, 0.05, "square", 18, 0.25), tone(1760, 0.18, "square", 14, 0.25)))

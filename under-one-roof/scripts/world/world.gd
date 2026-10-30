@@ -239,6 +239,10 @@ func _build_object(o: Dictionary) -> void:
 		entry["nodes"].append(root)
 		if m.has("shadow"):
 			entry["nodes"].append(_add_shadow(root, m["shadow"], oy))
+		if (m.get("tree", false) or m.has("bases")) and int(m["h"]) > 40 and not m.get("flat", false):
+			entry["nodes"].append(_add_cast_shadow(root, spr, m, oy))
+		if m.has("door") and int(m["h"]) > 60:
+			_add_glow(root, Vector2(float(m["door"][0]), -6.0))
 		var bases: Array = []
 		if o.has("block"):
 			var b: Array = o["block"]
@@ -298,6 +302,24 @@ func _add_reflection(o: Dictionary, m: Dictionary, spr: Sprite2D) -> void:
 	var tw := create_tween().set_loops()
 	tw.tween_property(r, "skew", 0.05, 1.6).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(r, "skew", -0.05, 1.6).set_trans(Tween.TRANS_SINE)
+
+
+## Long shadow cast by the low northern sun: the sprite's own silhouette, flipped
+## under its base line and sheared to the side, dark and translucent.
+func _add_cast_shadow(root: Node2D, spr: Sprite2D, m: Dictionary, oy: int) -> Sprite2D:
+	var res := float(m.get("res", 1))
+	var squash := 0.46
+	var s := Sprite2D.new()
+	s.texture = spr.texture
+	s.hframes = spr.hframes
+	s.centered = false
+	s.flip_v = true
+	s.scale = Vector2(1.0, squash) / res
+	s.skew = 0.75
+	s.position = root.position + Vector2(0, -(float(m["h"]) - oy) * squash)
+	s.modulate = Color(0.02, 0.04, 0.08, 0.36)
+	decals.add_child(s)
+	return s
 
 
 ## Soft elliptical contact shadow under buildings, trees and large props.
