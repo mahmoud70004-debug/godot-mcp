@@ -5,7 +5,7 @@ Game root: /home/user/godot-mcp/rotten-crown. Web build is served from /home/use
 Design docs: rotten-crown/docs/GAME_DESIGN.md, ARCHITECTURE.md (Arabic), ROADMAP.md (update checklist when done).
 
 ## 1. Stack
-- Godot 4.4.1 (project features "4.4", "Mobile"), GDScript only, Android landscape + HTML5 web.
+- Godot 4.7.1 (project features "4.4", "Mobile"), GDScript only, Android landscape + HTML5 web.
 - Renderer: `mobile` for native/Android; `gl_compatibility` for web (renderer/rendering_method.web).
 - Viewport: 640x360 internal (window/size/viewport_width/height).
 - Autoloads (load order, project.godot [autoload]):
@@ -21,7 +21,7 @@ Design docs: rotten-crown/docs/GAME_DESIGN.md, ARCHITECTURE.md (Arabic), ROADMAP
 
 ## 2. Commands (verbatim)
 Paths outside the repo (verified to exist):
-- Godot binary: /tmp/claude-0/-home-user-godot-mcp/bbd3ba3c-e2c7-5ce1-b8e0-8b1a5b7ac4eb/scratchpad/godot/Godot_v4.4.1-stable_linux.x86_64
+- Godot binary: /tmp/claude-0/-home-user-godot-mcp/bbd3ba3c-e2c7-5ce1-b8e0-8b1a5b7ac4eb/scratchpad/godot/Godot_v4.7.1-stable_linux.x86_64
 - Env helper: `source /tmp/claude-0/-home-user-godot-mcp/bbd3ba3c-e2c7-5ce1-b8e0-8b1a5b7ac4eb/scratchpad/env.sh` (exports GODOT)
 - gdtoolkit venv: /tmp/claude-0/-home-user-godot-mcp/bbd3ba3c-e2c7-5ce1-b8e0-8b1a5b7ac4eb/scratchpad/gdvenv/bin/ (gdparse, gdlint, gdformat)
 
@@ -41,7 +41,7 @@ Run from /home/user/godot-mcp/rotten-crown:
   - Touch regression: `node tools/web_touch_repro.cjs http://localhost:8766/index.html`
   - Perf: `node tools/web_perf.cjs http://localhost:8766/index.html` (compare with previous build; `?perf=` toggles features)
 - Node scripts MUST be `.cjs` (repo-root package.json is "type": "module").
-- Godot setup: `export GODOT=$(tools/setup_godot.sh)` (downloads 4.4.1 + web templates only).
+- Godot setup: `export GODOT=$(tools/setup_godot.sh)` (downloads 4.7.1 + web templates only).
 
 Pre-commit (CLAUDE.md): validate_project.py passes; gdparse each changed .gd; import + headless run clean; for web-facing work publish + smoke + touch repro + perf, then commit ../docs with the change.
 
@@ -90,7 +90,7 @@ Only the Phase 3 areas. `class_name` in brackets.
 - validate_project.py - static check of res:// refs and paths (must pass).
 - export_web.sh - Web export to build/web/ (Compatibility, no threads, PWA).
 - publish_web.sh - export + copy to ../docs.
-- setup_godot.sh - downloads Godot 4.4.1 + web templates, prints binary path.
+- setup_godot.sh - downloads Godot 4.7.1 + web templates, prints binary path.
 - render_shots.sh - screenshot frames via xvfb + opengl3.
 - web_smoke_test.cjs, web_touch_repro.cjs, web_perf.cjs - browser tests (Chromium, need URL).
 - gen_audio.py - generates placeholder WAV music/SFX with loop points.
@@ -100,7 +100,7 @@ Only the Phase 3 areas. `class_name` in brackets.
 - src/player/player.gd [Player], player_weapon.gd [PlayerWeapon] - player controller; weapon uses Tween wind-up and HitboxComponent.
 - src/components/{health,hurtbox,hitbox}_component.gd [HealthComponent, HurtboxComponent, HitboxComponent]
 - src/combat/damage_info.gd [DamageInfo]
-- src/ui/touch_controls.gd [TouchControls], virtual_joystick.gd [VirtualJoystick], touch_action_button.gd [TouchActionButton]
+- src/ui/touch_controls.gd [TouchControls], touch_joystick.gd [TouchJoystick], touch_action_button.gd [TouchActionButton]
 - src/items/item_data.gd [ItemData] (+ weapon_data, consumable_data, relic_data, lore_data), inventory.gd [Inventory], weapon_model_builder.gd [WeaponModelBuilder]
 - src/interaction/interactable.gd [Interactable], item_pickup.gd [ItemPickup]
 - src/autoload/events.gd, src/autoload/debug_bridge.gd
@@ -147,3 +147,4 @@ Known cost centres: per-object re-draw under many omni lights (lanterns in Outer
 - Godot binary on web: Compatibility renderer only; keep shaders working there.
 - docs/ at repo root is the built web output, not source; never hand-edit it.
 - Each publish commits the engine .wasm once; only .pck changes per build.
+- Phase 3e: Godot 4.7.1 (binary ~/.cache/godot-4.7.1/Godot_v4.7.1-stable_linux.x86_64). Renderer is gl_compatibility everywhere (web, Android, desktop) - the Mobile renderer changed the look. Android: tools/setup_android.sh + tools/export_android.sh -> build/android/rotten_crown.apk (arm64, ~53 MB, debug-keystore signed for sideloading). Vulkan lavapipe is installed for checks only.

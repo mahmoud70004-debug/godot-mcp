@@ -14,7 +14,7 @@ config/name="Rotten Crown"
 config/description="Retro dark-fantasy first-person horror adventure for Android."
 config/version="0.1.0"
 run/main_scene="res://src/ui/main_menu.tscn"
-config/features=PackedStringArray("4.7", "Mobile")
+config/features=PackedStringArray("4.7", "GL Compatibility")
 boot_splash/bg_color=Color(0.02, 0.02, 0.02, 1)
 boot_splash/show_image=false
 config/icon="res://icon.svg"
@@ -153,8 +153,8 @@ common/physics_ticks_per_second=60
 
 [rendering]
 
-renderer/rendering_method="mobile"
-renderer/rendering_method.mobile="mobile"
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
 renderer/rendering_method.web="gl_compatibility"
 textures/canvas_textures/default_texture_filter=0
 textures/vram_compression/import_etc2_astc=true

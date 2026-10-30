@@ -1,6 +1,6 @@
 # Rotten Crown — notes for Claude
 
-Godot 4.7 (Mobile renderer) first-person retro dark-fantasy horror game for Android, landscape.
+Godot 4.7 (Compatibility renderer everywhere: web, Android APK and desktop share one look) first-person retro dark-fantasy horror game for Android, landscape.
 Design: docs/GAME_DESIGN.md. Architecture: docs/ARCHITECTURE.md. Phases: docs/ROADMAP.md (update the checklist when finishing work).
 
 ## Conventions
