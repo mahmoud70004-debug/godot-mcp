@@ -69,3 +69,15 @@
 | P5 | E->H | done | festive castle front lighter |
 | P6 | H | done | quality watchdog on sustained low fps |
 | P7 | H | done | smoke + touch PASS; turn test Medium: spawn 5.2 fps sweep (max 433 vs 600), Hollowmere 4.4 (max 317 vs 667), wood 2.45 (was 2.11) |
+
+## Phase 3d
+| task | tier | status | note |
+|---|---|---|---|
+| D1 | H (me) | done | DialogueUI autoload (THOUGHT subtitles, ENTITY glitch window), wake_thoughts.tres, Level.wake_dialogue |
+| D2 | N | done | screen fit: visualViewport shell, fullscreen+landscape on Wake up, UiSafeArea, web_fit_test 6 viewports OK |
+| D3 | E | done | static_burst/static_loop + garble_1..4 (gen_audio.py witness) |
+| D4+D6 models | H (rate-limited once, resumed) | done | Blender monsters.py/witnesses.py: steeple, grinner, bent, witness_star/root/chair v2 sheets |
+| D5 | N | done | EnemyData attack styles LUNGE/STAB/LEAP/SLAM, skitter, tremble, SlamTelegraph |
+| D6 runtime | H (me) | done | Witness (src/npc/witness.gd), 3 lines, placed in valdron_overworld.tscn; populator uses the new creatures |
+| review | router-reviewer | done | 12 findings, all fixed (5a55da9) |
+| D7 | H | done | smoke PASS, touch PASS (1 flake on slow software GL), perf ~ previous (spawn 4.0 vs 4.5, Hollowmere 1 vs 1 software) |
