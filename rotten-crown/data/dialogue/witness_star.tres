@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="DialogueLine" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/dialogue/dialogue_line.gd" id="1_line"]
+
+[resource]
+script = ExtResource("1_line")
+speaker = "The Star-Eyed Gentleman"
+text = "Everyone exploded."
+style = 1
+hold = 2.6
