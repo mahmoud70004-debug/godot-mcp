@@ -129,6 +129,7 @@ func _validate_data() -> void:
 		var sheet: String = Story.NPCS[id].get("sheet", id)
 		expect(ResourceLoader.exists("res://assets/chars/%s.png" % sheet), "character sheet " + sheet)
 	_validate_reachability(w)
+	_validate_walk_cycles()
 	# nobody is placed on a door (stepping out would walk straight back in)
 	for o in w.data["objects"]:
 		if o.get("type", "") != "door":
@@ -136,6 +137,27 @@ func _validate_data() -> void:
 		var r := Rect2(o["x"], o["y"], o["w"], o["h"]).grow(3)
 		for k in w.spots:
 			expect(not r.has_point(w.spot_pos(k)), "spot %s is not on door %s" % [k, o["id"]])
+
+
+## Every character sheet (the family from the reference sheet and every villager) has
+## real walking frames in all four directions: the step frames differ from the idle one.
+func _validate_walk_cycles() -> void:
+	var meta = JSON.parse_string(FileAccess.get_file_as_string("res://data/sprites.json"))
+	for name in meta["chars"]:
+		var tex: Texture2D = load("res://assets/chars/%s.png" % name)
+		var img := tex.get_image()
+		if img.is_compressed():
+			img.decompress()
+		var fw := img.get_width() / 4
+		var fh := img.get_height() / 5
+		expect(fw == 64 and fh == 64, "%s frames are 64x64 (got %dx%d)" % [name, fw, fh])
+		for row in 4:
+			var idle := img.get_region(Rect2i(0, row * fh, fw, fh))
+			for col in [1, 3]:
+				var stepf := img.get_region(Rect2i(col * fw, row * fh, fw, fh))
+				expect(idle.get_data() != stepf.get_data(), "%s walks: row %d frame %d differs from idle" % [name, row, col])
+			var used := idle.get_used_rect()
+			expect(used.size.y >= 20, "%s row %d has a visible figure (%s)" % [name, row, used])
 
 
 ## Every outdoor spot, door and interactable can be walked to from Gideon's house

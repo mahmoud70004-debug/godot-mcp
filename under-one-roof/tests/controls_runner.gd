@@ -267,6 +267,23 @@ func _world_features() -> void:
 			break
 		await _wait(0.5)
 	_expect(f.position.distance_to(target) < 2.0, "he arrived at the inn (%.0f px away)" % f.position.distance_to(target))
+	# family members from the reference sheet walk with their own animation
+	for id in ["clara", "margaret", "jonas", "leif", "edmund"]:
+		var n = w.npcs[id]
+		var was_visible: bool = n.visible
+		n.scripted = true
+		n.set_present(true)
+		var start_pos: Vector2 = n.position
+		var frames := {}
+		n.walk_to(start_pos + Vector2(40, 0), 30.0)
+		for k in 20:
+			await _wait(0.05)
+			frames[n._sprite.frame] = true
+		await _wait(1.2)
+		_expect(frames.size() >= 3 and n.facing == "right", "%s walks with an animated cycle (%d frames seen)" % [id, frames.size()])
+		n.teleport(start_pos)
+		n.scripted = false
+		n.set_present(was_visible)
 	var porter = w.npcs["porter"]
 	Game.set_time(9, 0)
 	await _wait(0.5)

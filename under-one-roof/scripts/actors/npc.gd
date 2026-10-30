@@ -34,7 +34,7 @@ func _ready() -> void:
 	_sprite.hframes = 4
 	_sprite.vframes = 5
 	_sprite.centered = false
-	_sprite.position = Vector2(-10, -30)
+	_sprite.position = Vector2(-16, -30)
 	_sprite.scale = Vector2(0.5, 0.5)   # sheets are painted at 2x
 	add_child(_sprite)
 	var shadow := Sprite2D.new()

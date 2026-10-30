@@ -21,6 +21,7 @@ sys.path.insert(0, HERE)
 from PIL import Image
 import gen_characters
 import gen_people
+import family_sheets
 import gen_sprites
 import gen_world
 import gen_audio
@@ -82,9 +83,17 @@ def main():
     # characters: drawn in the reference style at RES x (tools/gen_people.py)
     chars = {}
     for name, p in gen_characters.CHARACTERS.items():
-        gen_people.sheet(p).save(os.path.join(a, "chars", f"{name}.png"))
+        family_sheets.pixel_sheet(gen_people.sheet(p), gen_characters.FW, gen_characters.FH).save(
+            os.path.join(a, "chars", f"{name}.png"))
         portrait(gen_people.bust(p), os.path.join(a, "portraits", f"{name}.png"))
-        chars[name] = {"frame_w": gen_characters.FW, "frame_h": gen_characters.FH, "rows": 5, "res": RES}
+        chars[name] = {"frame_w": family_sheets.FRAME_W, "frame_h": family_sheets.FRAME_H, "rows": 5, "res": RES}
+    # the family: cut from the character reference sheet (tools/family_sheets.py)
+    fam, fam_portraits = family_sheets.build_sheets()
+    for member, names in family_sheets.CAST.items():
+        for name in names:
+            sheet = fam[member] if name != "gideon_outfit" else family_sheets.outfit_variant(fam[member])
+            sheet.save(os.path.join(a, "chars", f"{name}.png"))
+            portrait(fam_portraits[member], os.path.join(a, "portraits", f"{name}.png"))
 
     # props / interiors / icons: procedural -> painted
     sprites, icons = gen_sprites.build(tmp)

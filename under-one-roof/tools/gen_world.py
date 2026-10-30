@@ -623,6 +623,32 @@ def scatter_trees():
     forest(46, 49, 54, 62, 0.5, pines, 4)
 
 
+def vegetable_gardens():
+    """The reference's kitchen garden beside homes and farms (flat, walkable)."""
+    m = SPR["ref_garden"]
+    tw, th = int(np.ceil(m["w"] / TS)), int(np.ceil(m["h"] / TS))
+
+    def fits(x0, y0):
+        if x0 < 1 or y0 < 1 or x0 + tw + 1 >= 150 or y0 + th + 1 >= H:
+            return False
+        sl = (slice(y0 - 1, y0 + th + 1), slice(x0 - 1, x0 + tw + 1))
+        return np.isin(g[sl], list(".hg")).all() and not covered[sl].any() and not occupied[sl].any()
+
+    placed = 0
+    for ax, ay in [(99, 52), (22, 49), (36, 36), (124, 34), (56, 48), (112, 44)]:
+        spots_ = sorted(((dx, dy) for dx in range(-8, 9) for dy in range(-6, 7)), key=lambda d: abs(d[0]) + abs(d[1]))
+        for dx, dy in spots_:
+            x0, y0 = ax + dx - tw // 2, ay + dy - th
+            if fits(x0, y0):
+                at("ref_garden", x0 + tw / 2, y0 + th)
+                occupied[y0:y0 + th, x0:x0 + tw] = True
+                placed += 1
+                break
+        else:
+            print(f"note: no room for a vegetable garden near {ax},{ay}")
+    print(f"vegetable gardens: {placed}")
+
+
 def scatter_decor():
     free = lambda x, y: g[y, x] in ".hg" and not occupied[y, x]
     for _ in range(700):
@@ -677,6 +703,7 @@ def build(sprite_meta, out_root):
     npc_spots()
     build_zones()
     hidden_collectibles()
+    vegetable_gardens()
     scatter_trees()
     scatter_decor()
     for name, s in spots.items():

@@ -8,7 +8,7 @@ Flipped / re-tinted variants give the village variety without new drawing styles
 import os
 import numpy as np
 from PIL import Image, ImageOps, ImageEnhance
-from extract_ref import OBJECTS, POLYS, load_reference, cut, cut_poly
+from extract_ref import OBJECTS, POLYS, FLAT, load_reference, cut, cut_poly
 from stylize import upscale_ref, RES
 
 # kind, door x as a fraction of the width (None = no door), footprint start (fraction of height)
@@ -146,4 +146,13 @@ def register(reg_fn, out_dir):
             meta["oy"] = h - 2
             meta["reflect"] = True
         reg_fn("ref_" + name, upscale_ref(im), meta)
-    return list(base_imgs)
+    # flat pieces: rectangular crops with soft edges, drawn under everything, walkable
+    for name, (x0, y0, x1, y1) in FLAT.items():
+        rgb = cv2.cvtColor(ref[y0:y1, x0:x1], cv2.COLOR_BGR2RGB)
+        h, w = rgb.shape[:2]
+        a = np.full((h, w), 255, np.float32)
+        ramp = np.minimum.outer(np.minimum(np.arange(h), np.arange(h)[::-1]), np.minimum(np.arange(w), np.arange(w)[::-1]))
+        a = np.clip(ramp / 3.0, 0, 1) * 255
+        im = Image.fromarray(np.dstack([rgb, a.astype(np.uint8)]), "RGBA")
+        reg_fn("ref_" + name, upscale_ref(im), {"w": w, "h": h, "res": RES, "oy": h - 2, "flat": True})
+    return list(base_imgs) + list(FLAT)

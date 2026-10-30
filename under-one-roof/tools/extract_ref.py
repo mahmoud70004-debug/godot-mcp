@@ -142,6 +142,9 @@ def cut_poly(img, name, kind, spec, reject_water):
 
 
 # painted people standing in front of buildings: removed (inpainted) before cutting
+# flat ground pieces cut as rectangles (no matting): the vegetable garden by the thatch
+FLAT = {"garden": (522, 181, 652, 238)}
+
 PEOPLE = [(920, 174, 974, 208), (1153, 144, 1175, 186), (1208, 148, 1230, 182), (244, 146, 268, 186)]
 
 
