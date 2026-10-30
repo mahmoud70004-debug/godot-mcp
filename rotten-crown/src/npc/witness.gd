@@ -39,6 +39,7 @@ func _ready() -> void:
 	if id != "" and GameState.get_flag("witness_" + id):
 		queue_free()
 		return
+	add_to_group("witnesses")
 	_rng.randomize()
 	_sprite = PixelSprite3D.new()
 	_sprite.name = "Sprite"
@@ -76,6 +77,15 @@ func _process(delta: float) -> void:
 	_twitch(delta)
 	if _phase == Phase.WAITING and not _waiting_for_wake and _player_close_and_looking():
 		_speak()
+
+
+## Process culling (OverworldPopulator): a far witness neither twitches nor looks for the knight.
+func set_far(far: bool) -> void:
+	if _phase == Phase.GONE or _waiting_for_wake or far == (not is_processing()):
+		return
+	set_process(not far)
+	if _sprite != null:
+		_sprite.set_process(not far)
 
 
 ## The knight's wake-up thoughts are over (then: our own line is over).

@@ -24,13 +24,25 @@ const LORE := {
 	"WhisperingWood": ["res://data/items/lore/hunters_warning.tres"],
 }
 
+## Enemies and witnesses further than this from the player (and idle) stop processing.
+const CULL_DISTANCE := 45.0
+const CULL_HYSTERESIS := 5.0
+const CULL_INTERVAL := 0.5
+
 @export var world: Node3D
 @export var seed := 99
+
+var _cull_timer: Timer
 
 
 func _ready() -> void:
 	if world == null:
 		return
+	_cull_timer = Timer.new()
+	_cull_timer.wait_time = CULL_INTERVAL
+	_cull_timer.timeout.connect(_cull_far_actors)
+	add_child(_cull_timer)
+	_cull_timer.start()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed
 	for region_name in REGIONS.keys():
@@ -57,6 +69,30 @@ func _ready() -> void:
 				_spawn_trigger(marker, load(REGIONS[region_name]) as RegionData)
 
 
+## One cheap distance sweep for every actor; the actors park themselves (Enemy.set_far / Witness.set_far).
+func _cull_far_actors() -> void:
+	var player := get_tree().get_first_node_in_group("player") as Node3D
+	if player == null:
+		return
+	var origin := player.global_position
+	var far_sq := CULL_DISTANCE * CULL_DISTANCE
+	var near_sq := (CULL_DISTANCE - CULL_HYSTERESIS) * (CULL_DISTANCE - CULL_HYSTERESIS)
+	for node in get_tree().get_nodes_in_group("enemies"):
+		var enemy := node as Enemy
+		var d_sq := origin.distance_squared_to(enemy.global_position)
+		if d_sq > far_sq:
+			enemy.set_far(true)
+		elif d_sq < near_sq:
+			enemy.set_far(false)
+	for node in get_tree().get_nodes_in_group("witnesses"):
+		var witness := node as Witness
+		var d_sq := origin.distance_squared_to(witness.global_position)
+		if d_sq > far_sq:
+			witness.set_far(true)
+		elif d_sq < near_sq:
+			witness.set_far(false)
+
+
 func _spawn_enemy(marker: Marker3D, data: EnemyData, rng: RandomNumberGenerator) -> void:
 	var enemy := HOLLOW_SCENE.instantiate() as Enemy
 	enemy.data = data
@@ -64,6 +100,7 @@ func _spawn_enemy(marker: Marker3D, data: EnemyData, rng: RandomNumberGenerator)
 	add_child(enemy)
 	enemy.global_position = marker.global_position + Vector3.UP * 0.1
 	enemy.rotation.y = rng.randf() * TAU
+	enemy.reset_physics_interpolation()
 
 
 func _spawn_pickup(marker: Marker3D, item: ItemData) -> void:

@@ -47,6 +47,12 @@ func setup(data: EnemyData) -> void:
 	sprite.play(&"idle", true)
 
 
+## False while the enemy is parked far away: no twitch, no sprite animation.
+func set_active(active: bool) -> void:
+	set_process(active)
+	sprite.set_process(active)
+
+
 func set_look_target(_target: Node3D) -> void:
 	pass
 

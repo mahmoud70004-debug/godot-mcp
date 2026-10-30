@@ -50,6 +50,17 @@ func _ready() -> void:
 	_setup_attack_shape()
 
 
+## Process culling (OverworldPopulator calls this twice a second). A far, idle enemy stops its
+## physics and sprite animation; true when it is parked.
+func set_far(far: bool) -> bool:
+	far = far and state == State.IDLE
+	if (not far) == is_physics_processing():
+		return far
+	set_physics_process(not far)
+	rig.set_active(not far)
+	return far
+
+
 func _physics_process(delta: float) -> void:
 	if state == State.DEAD:
 		# Killed mid-leap: the body still falls to the ground.
@@ -108,6 +119,10 @@ func _physics_process(delta: float) -> void:
 
 
 func _change_state(new_state: State) -> void:
+	if not is_physics_processing() and new_state != State.IDLE:
+		# Woken (or killed) while parked far away.
+		set_physics_process(true)
+		rig.set_active(true)
 	if state == State.ATTACK:
 		attack_hitbox.deactivate()
 		_restore_attack_shape()
@@ -250,7 +265,11 @@ func _update_target(delta: float) -> void:
 	_los_timer -= delta
 	if _los_timer <= 0.0:
 		_los_timer = 0.25
-		_has_los = _check_line_of_sight()
+		# Nothing outside detection range can wake us: skip the ray.
+		if state == State.IDLE and _target != null and _flat_to_target().length() > data.detection_range:
+			_has_los = false
+		else:
+			_has_los = _check_line_of_sight()
 
 
 func _should_wake(dist: float) -> bool:

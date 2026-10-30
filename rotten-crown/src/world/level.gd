@@ -32,19 +32,28 @@ func _ready() -> void:
 		if announce_on_start and not GameState.get_flag("waking_up"):
 			_announce_region.call_deferred()
 	if player and GameState.pending_player_position is Vector3:
-		player.global_position = GameState.pending_player_position
+		player.teleport_to(GameState.pending_player_position)
 		GameState.pending_player_position = null
 	_apply_dev_shot()
 	_base_region = region
 	Events.region_zone_entered.connect(_on_zone_entered)
 	Events.region_zone_exited.connect(_on_zone_exited)
 	_apply_dev_perf_flags()
+	_exempt_follow_nodes_from_interpolation()
 	if player:
 		prewarming = true
 		_prewarm.call_deferred()
 	if player and GameState.get_flag("waking_up"):
 		GameState.flags.erase("waking_up")
 		_wake_up.call_deferred()
+
+
+## Nodes that glue themselves to the camera in _process must not be physics-interpolated
+## (they would trail it by a tick); the player's own rig handles this itself.
+func _exempt_follow_nodes_from_interpolation() -> void:
+	for type_name in ["SkyBillboard", "HorizonBackdrop"]:
+		for node in find_children("*", type_name, true, false):
+			node.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 
 
 ## Compile every material's shader now, under the black fade, instead of the
@@ -122,7 +131,7 @@ func _apply_dev_shot() -> void:
 		return
 	var v := shot.split_floats(",")
 	if v.size() >= 5:
-		player.global_position = Vector3(v[0], v[1], v[2])
+		player.teleport_to(Vector3(v[0], v[1], v[2]))
 		player.rotation_degrees.y = v[3]
 		player.head.rotation_degrees.x = v[4]
 
