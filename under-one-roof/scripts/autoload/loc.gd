@@ -14,6 +14,7 @@ var _tables := {}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_add_symbol_fallback()
 	for l in ["en", "ja"]:
 		var path := "res://data/i18n/%s.json" % l
 		if FileAccess.file_exists(path):
@@ -70,3 +71,24 @@ func menu_font() -> Font:
 		"en": return load("res://assets/fonts/IMFellEnglish.ttf")
 		"ja": return load("res://assets/fonts/NotoSerifJP-subset.ttf")
 	return load("res://assets/fonts/Lalezar.ttf")
+
+
+## Browsers have no system fonts to fall back on: UI symbols (play/stop, arrows,
+## diamonds, ticks) come from a tiny bundled DejaVu subset on every font.
+var _kept_fonts: Array = []      # keeps the patched fonts cached for the whole session
+
+
+func _add_symbol_fallback() -> void:
+	var sym: Font = load("res://assets/fonts/Symbols-DejaVu-subset.ttf")
+	var fonts: Array = []
+	for p in ["Cairo", "Lalezar", "IMFellEnglish", "IMFellEnglishSC", "NotoSansJP-subset", "NotoSerifJP-subset"]:
+		fonts.append(load("res://assets/fonts/%s.ttf" % p))
+	var theme: Theme = load("res://assets/ui/theme.tres")
+	if theme and theme.default_font:
+		fonts.append(theme.default_font)
+	for f in fonts:
+		if f and not f.fallbacks.has(sym):
+			var fb: Array[Font] = f.fallbacks.duplicate()
+			fb.append(sym)
+			f.fallbacks = fb
+	_kept_fonts = fonts

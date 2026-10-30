@@ -1,0 +1,60 @@
+name: Publish Under One Roof (web)
+
+# Publishes the Godot web build of Under One Roof (branch gh-pages) at
+#   https://mahmoud70004-debug.github.io/godot-mcp/under-one-roof/
+# The repository has a single Pages site, which already serves Rotten Crown
+# (docs/ on claude/graphify-skill-load-cukwli): it is kept at the site root.
+on:
+  push:
+    branches:
+      - claude/new-session-anvihb
+    paths:
+      - .github/workflows/under-one-roof-pages.yml
+      - under-one-roof/releases/web-build.txt
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: rotten-crown-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Under One Roof web build
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: uor
+      - name: Rotten Crown (kept at the site root)
+        uses: actions/checkout@v4
+        with:
+          ref: claude/graphify-skill-load-cukwli
+          path: rc
+          sparse-checkout: docs
+        continue-on-error: true
+      - name: Assemble the site
+        run: |
+          mkdir -p site/under-one-roof
+          if [ -d rc/docs ]; then cp -r rc/docs/. site/; fi
+          cp uor/index.* site/under-one-roof/
+          touch site/.nojekyll
+          for f in index.html index.js index.wasm index.pck; do test -s "site/under-one-roof/$f" || { echo "missing $f"; exit 1; }; done
+          ls -la site site/under-one-roof
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
