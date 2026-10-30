@@ -14,6 +14,8 @@ signal prewarmed
 @export var kill_height := -25.0
 ## Announce the region as soon as the level starts (otherwise use RegionTrigger).
 @export var announce_on_start := false
+## The knight's inner voice after waking up here (DialogueUI subtitles).
+@export var wake_dialogue: DialogueSequence
 
 ## True while shaders are being compiled behind the loading fade (SceneLoader waits).
 var prewarming := false
@@ -62,6 +64,8 @@ func _wake_up() -> void:
 	await player.play_wake_up()
 	if region and announce_on_start:
 		Events.region_entered.emit(region)
+	if wake_dialogue and not wake_dialogue.lines.is_empty():
+		Events.dialogue_requested.emit(wake_dialogue.lines)
 
 
 ## Dev aid for profiling: RC_PERF="nosky,nograss,nohorizon,nopost,nofog".

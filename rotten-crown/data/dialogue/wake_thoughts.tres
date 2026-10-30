@@ -1,0 +1,28 @@
+[gd_resource type="Resource" script_class="DialogueSequence" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://src/dialogue/dialogue_sequence.gd" id="1_seq"]
+[ext_resource type="Script" path="res://src/dialogue/dialogue_line.gd" id="2_line"]
+
+[sub_resource type="Resource" id="Line_1"]
+script = ExtResource("2_line")
+text = "...My head. What happened?"
+hold = 2.2
+
+[sub_resource type="Resource" id="Line_2"]
+script = ExtResource("2_line")
+text = "Where is everyone?"
+hold = 2.0
+
+[sub_resource type="Resource" id="Line_3"]
+script = ExtResource("2_line")
+text = "The music stopped. The fires are out."
+hold = 2.4
+
+[sub_resource type="Resource" id="Line_4"]
+script = ExtResource("2_line")
+text = "We were celebrating. The whole kingdom was singing..."
+hold = 2.6
+
+[resource]
+script = ExtResource("1_seq")
+lines = Array[ExtResource("2_line")]([SubResource("Line_1"), SubResource("Line_2"), SubResource("Line_3"), SubResource("Line_4")])

@@ -27,6 +27,10 @@ signal region_entered(region: RegionData)
 signal region_zone_entered(region: RegionData)
 signal region_zone_exited(region: RegionData)
 
+# Dialogue (C13): Array of DialogueLine; the Dialogue autoload shows them in order.
+signal dialogue_requested(lines: Array)
+signal dialogue_finished
+
 # UI
 signal message_requested(text: String, duration: float)
 signal menu_state_changed(is_open: bool)

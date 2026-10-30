@@ -33,6 +33,7 @@ AudioManager="*res://src/autoload/audio_manager.gd"
 Quality="*res://src/rendering/quality_manager.gd"
 SceneLoader="*res://src/autoload/scene_loader.gd"
 DebugBridge="*res://src/autoload/debug_bridge.gd"
+Dialogue="*res://src/ui/dialogue_ui.gd"
 
 [display]
 
