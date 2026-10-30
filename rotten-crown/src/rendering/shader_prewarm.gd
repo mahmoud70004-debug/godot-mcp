@@ -11,12 +11,23 @@ extends RefCounted
 const DISTANCE := 1.2
 const CELL := 0.03
 const FRAMES := 3
+## While warming, the camera and every light see only the copies (this layer): the
+## world behind the fade is neither drawn nor shadowed, so the black wait is short
+## even on a slow GPU (phones, software GL).
+const WARM_LAYER := 1 << 19
 
 
 ## Await this behind a fade. `root` is scanned for GeometryInstance3D nodes.
 static func warm(root: Node, camera: Camera3D) -> void:
 	if camera == null or not camera.is_inside_tree():
 		return
+	var lights := root.find_children("*", "Light3D", true, false)
+	var light_masks: Array[int] = []
+	for l in lights:
+		light_masks.append((l as Light3D).light_cull_mask)
+		(l as Light3D).light_cull_mask = WARM_LAYER
+	var camera_mask := camera.cull_mask
+	camera.cull_mask = WARM_LAYER
 	var holder := Node3D.new()
 	holder.name = "ShaderPrewarm"
 	camera.add_child(holder)
@@ -42,6 +53,11 @@ static func warm(root: Node, camera: Camera3D) -> void:
 	for _i in FRAMES:
 		await RenderingServer.frame_post_draw
 	holder.queue_free()
+	if is_instance_valid(camera):
+		camera.cull_mask = camera_mask
+	for i in lights.size():
+		if is_instance_valid(lights[i]):
+			(lights[i] as Light3D).light_cull_mask = light_masks[i]
 
 
 ## A tiny stand-in that draws `gi`'s materials with the same vertex format, or
@@ -86,6 +102,7 @@ static func _copy_for(gi: GeometryInstance3D, seen: Dictionary) -> Node3D:
 	if copy == null:
 		return null
 	copy.cast_shadow = gi.cast_shadow
+	copy.layers = WARM_LAYER
 	copy.visibility_range_end = 0.0
 	copy.extra_cull_margin = 16384.0
 	var box := copy.get_aabb()

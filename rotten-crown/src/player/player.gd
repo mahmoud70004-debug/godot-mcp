@@ -40,6 +40,12 @@ var _bob_time := 0.0
 var _regen_cooldown := 0.0
 var _shake := 0.0
 var _current_interactable: Interactable
+var _speed_ratio := 0.0
+var _has_gamepad := false
+## Camera rig. Physics interpolation smooths the body between 30 Hz ticks, but the
+## look (yaw/pitch) must follow the input at once, so the camera, view model and lantern
+## live under this top-level, non-interpolated node that _process places every frame.
+var _view: Node3D
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
 
 
@@ -61,6 +67,9 @@ func _ready() -> void:
 	GameState.equipped_weapon_changed.connect(weapon.equip)
 	GameState.stats_changed.connect(_on_stats_changed)
 	weapon.equip(GameState.equipped_weapon)
+	_setup_view_rig()
+	Input.joy_connection_changed.connect(_on_joy_connection_changed)
+	_has_gamepad = not Input.get_connected_joypads().is_empty()
 	if not Settings.uses_touch_controls():
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 	_emit_initial_stats.call_deferred()
@@ -98,13 +107,6 @@ func _physics_process(delta: float) -> void:
 	var input_dir := Vector2.ZERO
 	if input_enabled:
 		input_dir = Input.get_vector("move_left", "move_right", "move_forward", "move_back")
-		# Right-stick look only with a real gamepad: some phones report phantom
-		# axes, and touch look arrives through Events.look_input instead.
-		var look := Vector2.ZERO
-		if not Input.get_connected_joypads().is_empty():
-			look = Input.get_vector("look_left", "look_right", "look_up", "look_down")
-		if look != Vector2.ZERO:
-			_apply_look(look * Settings.look_speed_gamepad * delta)
 
 	var direction := transform.basis * Vector3(input_dir.x, 0.0, input_dir.y)
 	var speed := walk_speed * (block_speed_multiplier if weapon.is_blocking else 1.0)
@@ -116,15 +118,24 @@ func _physics_process(delta: float) -> void:
 	velocity.z = horizontal.z
 	move_and_slide()
 
-	var speed_ratio := horizontal.length() / walk_speed if is_on_floor() else 0.0
-	_update_head_bob(delta, speed_ratio)
-	weapon.set_motion(speed_ratio)
+	_speed_ratio = horizontal.length() / walk_speed if is_on_floor() else 0.0
+	weapon.set_motion(_speed_ratio)
 	_update_stamina(delta)
 	_update_interaction()
-	_handle_combat_input()
 
 
+## Everything the eye sees runs per rendered frame, not per physics tick.
 func _process(delta: float) -> void:
+	if input_enabled:
+		# Right-stick look only with a real gamepad: some phones report phantom
+		# axes, and touch look arrives through Events.look_input instead.
+		if _has_gamepad:
+			var look := Input.get_vector("look_left", "look_right", "look_up", "look_down")
+			if look != Vector2.ZERO:
+				_apply_look(look * Settings.look_speed_gamepad * delta)
+	_update_head_bob(delta, _speed_ratio)
+	_handle_combat_input()
+	_update_view()
 	if _shake > 0.0:
 		_shake = maxf(_shake - delta * 2.5, 0.0)
 		var s := _shake * _shake
@@ -133,6 +144,40 @@ func _process(delta: float) -> void:
 	else:
 		camera.h_offset = 0.0
 		camera.v_offset = 0.0
+
+
+func _on_joy_connection_changed(_device: int, _connected: bool) -> void:
+	_has_gamepad = not Input.get_connected_joypads().is_empty()
+
+
+func _setup_view_rig() -> void:
+	_view = Node3D.new()
+	_view.name = "View"
+	_view.top_level = true
+	_view.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
+	add_child(_view)
+	var lantern := head.get_node_or_null("Lantern")
+	camera.reparent(_view, false)
+	if lantern:
+		lantern.reparent(_view, false)
+	camera.make_current()
+	_update_view()
+
+
+## Eye = interpolated body position + immediate yaw + the head's own local pose (pitch, bob, wake-up).
+func _update_view() -> void:
+	var origin := get_global_transform_interpolated().origin
+	var yaw := Transform3D(Basis(Vector3.UP, global_rotation.y), origin)
+	_view.global_transform = yaw * head.transform
+
+
+## Moves the body without a smear: interpolation forgets the old pose.
+func teleport_to(pos: Vector3) -> void:
+	global_position = pos
+	reset_physics_interpolation()
+	velocity = Vector3.ZERO
+	if _view:
+		_update_view()
 
 
 # --- Look ------------------------------------------------------------------

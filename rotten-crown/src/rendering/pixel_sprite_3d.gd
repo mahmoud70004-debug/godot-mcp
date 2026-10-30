@@ -53,6 +53,8 @@ var _start := 0
 var _last_region_key := -1
 var _material_billboard := -1
 var _base_offset := Vector2.ZERO
+## Tells us when the sprite is in view: off screen, only the clock runs (no direction lookup, no region update).
+var _notifier: VisibleOnScreenNotifier3D
 
 
 func _ready() -> void:
@@ -69,9 +71,28 @@ func _process(delta: float) -> void:
 			_finished = true
 			_time = (_frames - 1) / maxf(_fps, 0.001)
 			animation_finished.emit(anim)
+	if _notifier != null and not _notifier.is_on_screen():
+		return
 	if sheet.is_v2() and _material_billboard != billboard:
 		_refresh_material()
 	_update_region()
+
+
+func _on_screen_entered() -> void:
+	_update_region()
+
+
+func _update_notifier() -> void:
+	if sheet == null:
+		return
+	if _notifier == null:
+		_notifier = VisibleOnScreenNotifier3D.new()
+		_notifier.name = "ScreenNotifier"
+		add_child(_notifier, false, Node.INTERNAL_MODE_BACK)
+		_notifier.screen_entered.connect(_on_screen_entered)
+	# Generous cube around the frame box (feet at the origin): billboards turn, twitches shift.
+	var h := maxf(sheet.frame_size.x, sheet.frame_size.y) * sheet.pixel_size * 0.75
+	_notifier.aabb = AABB(Vector3(-h, sheet.frame_size.y * sheet.pixel_size * 0.5 - h, -h), Vector3.ONE * h * 2.0)
 
 
 func play(anim_name: StringName, restart := false) -> void:
@@ -110,6 +131,7 @@ func _apply_sheet() -> void:
 		return
 	texture = sheet.texture
 	pixel_size = sheet.pixel_size
+	_update_notifier()
 	region_enabled = true
 	billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
 	texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST

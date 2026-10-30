@@ -18,6 +18,8 @@ func _ready() -> void:
 	_fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_fade_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_fade_rect)
+	# Menus and cutscenes move things in _process; only Level (physics gameplay) is interpolated.
+	_apply_interpolation_policy.call_deferred()
 
 
 func change_scene(path: String, fade_time: float = FADE_TIME) -> void:
@@ -36,6 +38,7 @@ func change_scene(path: String, fade_time: float = FADE_TIME) -> void:
 	else:
 		get_tree().change_scene_to_packed(packed)
 		await get_tree().process_frame
+		_apply_interpolation_policy()
 		var scene := get_tree().current_scene
 		if scene and scene.get("prewarming"):
 			await scene.prewarmed
@@ -43,6 +46,12 @@ func change_scene(path: String, fade_time: float = FADE_TIME) -> void:
 	await _fade_to(0.0, fade_time)
 	_fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_busy = false
+
+
+func _apply_interpolation_policy() -> void:
+	var scene := get_tree().current_scene
+	if scene != null and not scene is Level:
+		scene.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 
 
 func reload_current(fade_time: float = FADE_TIME) -> void:
