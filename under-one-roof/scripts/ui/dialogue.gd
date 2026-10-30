@@ -11,6 +11,8 @@ var _box: PanelContainer
 var _name_plate: PanelContainer
 var _name: Label
 var _text: Label
+const BOX_TOP := -92             # dialogue box top (from the screen bottom); plates sit above it
+
 var _portrait: TextureRect
 var _portrait_frame: PanelContainer
 var _more: Label
@@ -36,8 +38,14 @@ func _ready() -> void:
 	_box.anchor_right = 0.5
 	_box.offset_left = -250
 	_box.offset_right = 250
-	_box.offset_top = -80
+	_box.offset_top = BOX_TOP
 	_box.offset_bottom = -6
+	var st: StyleBox = _box.get_theme_stylebox("panel").duplicate()
+	st.content_margin_top = 9
+	st.content_margin_bottom = 12
+	st.content_margin_left = 10
+	st.content_margin_right = 10
+	_box.add_theme_stylebox_override("panel", st)
 	_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_box)
 
@@ -62,7 +70,7 @@ func _ready() -> void:
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_text.custom_minimum_size = Vector2(280, 50)
+	_text.custom_minimum_size = Vector2(280, 58)
 	row.add_child(_text)
 
 	_name_plate = UI.panel(UI.WOOD)
@@ -72,21 +80,21 @@ func _ready() -> void:
 	_name_plate.anchor_right = 0.5
 	_name_plate.offset_right = 196
 	_name_plate.offset_left = 70
-	_name_plate.offset_top = -98
-	_name_plate.offset_bottom = -76
+	_name_plate.offset_top = BOX_TOP - 24
+	_name_plate.offset_bottom = BOX_TOP - 1
 	_name_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_name_plate)
 	_name = UI.label("", 14, UI.PAPER)
 	_name_plate.add_child(_name)
 
-	_more = UI.label("▼", 12, UI.WOOD, HORIZONTAL_ALIGNMENT_LEFT)
+	_more = UI.label("▼", 12, UI.WOOD, HORIZONTAL_ALIGNMENT_CENTER)
 	_more.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_more.anchor_left = 0.5
 	_more.anchor_right = 0.5
 	_more.offset_left = -282
 	_more.offset_right = -262
-	_more.offset_top = -26
-	_more.offset_bottom = -10
+	_more.offset_top = -17
+	_more.offset_bottom = -1
 	_root.add_child(_more)
 
 	_choices = VBoxContainer.new()
@@ -95,8 +103,8 @@ func _ready() -> void:
 	_choices.anchor_right = 0.5
 	_choices.offset_left = -200
 	_choices.offset_right = 200
-	_choices.offset_top = -206
-	_choices.offset_bottom = -88
+	_choices.offset_top = BOX_TOP - 150
+	_choices.offset_bottom = BOX_TOP - 30
 	_choices.alignment = BoxContainer.ALIGNMENT_END
 	_choices.add_theme_constant_override("separation", 6)
 	_root.add_child(_choices)
@@ -104,8 +112,8 @@ func _ready() -> void:
 	_skip_btn.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_skip_btn.anchor_left = 0.5
 	_skip_btn.anchor_right = 0.5
-	_skip_btn.offset_top = -104
-	_skip_btn.offset_bottom = -82
+	_skip_btn.offset_top = BOX_TOP - 25
+	_skip_btn.offset_bottom = BOX_TOP - 2
 	_skip_btn.pressed.connect(func():
 		Director.skip_lines = true
 		_skip = true
@@ -118,8 +126,8 @@ func _apply_layout() -> void:
 	var rtl := Loc.rtl()
 	_name_plate.offset_left = 40 if rtl else -166
 	_name_plate.offset_right = 166 if rtl else -40
-	_more.offset_left = -242 if rtl else 222
-	_more.offset_right = -222 if rtl else 242
+	_more.offset_left = -8
+	_more.offset_right = 8
 	_skip_btn.offset_left = -250 if rtl else 166
 	_skip_btn.offset_right = -166 if rtl else 250
 	_skip_btn.text = Loc.t("تخطي الحوار")
@@ -161,7 +169,39 @@ func open() -> void:
 	visible = true
 
 
+var _last_speaker := ""
+var _more_tween: Tween
+
+
+## Small, quick motions that make a line feel spoken: the box rises in when the
+## conversation starts, the portrait pops when someone new talks, the skip button fades
+## in, and the "more" arrow bobs while it waits.
+func _animate_line(opening: bool, speaker: String) -> void:
+	if opening:
+		_box.modulate.a = 0.0
+		_box.offset_top = BOX_TOP + 10
+		_box.offset_bottom = -6 + 10
+		var tb := create_tween().set_parallel()
+		tb.tween_property(_box, "modulate:a", 1.0, 0.18)
+		tb.tween_property(_box, "offset_top", float(BOX_TOP), 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tb.tween_property(_box, "offset_bottom", -6.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		_skip_btn.modulate.a = 0.0
+		create_tween().tween_property(_skip_btn, "modulate:a", 1.0, 0.35).set_delay(0.25)
+	if speaker != _last_speaker or opening:
+		_portrait_frame.pivot_offset = _portrait_frame.size / 2.0
+		_portrait_frame.scale = Vector2(0.85, 0.85)
+		create_tween().tween_property(_portrait_frame, "scale", Vector2.ONE, 0.25).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		_name_plate.modulate.a = 0.0
+		create_tween().tween_property(_name_plate, "modulate:a", 1.0, 0.2)
+	_last_speaker = speaker
+	if _more_tween == null or not _more_tween.is_valid():
+		_more_tween = create_tween().set_loops()
+		_more_tween.tween_property(_more, "position:y", _more.position.y + 3, 0.4).set_trans(Tween.TRANS_SINE)
+		_more_tween.tween_property(_more, "position:y", _more.position.y, 0.4).set_trans(Tween.TRANS_SINE)
+
+
 func close() -> void:
+	_last_speaker = ""
 	if visible:
 		Audio.duck(false)
 	visible = false
@@ -172,11 +212,13 @@ func say(speaker: String, text: String) -> void:
 		print("  [%s] %s" % [speaker, text])
 		await get_tree().process_frame
 		return
-	if not visible:
+	var opening := not visible
+	if opening:
 		Audio.duck(true)
 		Audio.sfx("page", randf_range(0.95, 1.05))
 	visible = true
 	_apply_layout()
+	_animate_line(opening, speaker)
 	_box.visible = true
 	_choices.visible = false
 	var name: String = Loc.t(Story.speaker_name(speaker))

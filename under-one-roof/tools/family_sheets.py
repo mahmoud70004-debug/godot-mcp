@@ -238,9 +238,7 @@ def build_sheets():
             for c, s in enumerate(row):
                 sheet.alpha_composite(_place(_pose(cells, s, k, beard, spec["front"])), (c * FRAME_W, r * FRAME_H))
         sheets[name] = sheet.resize((sheet.width * RES, sheet.height * RES), Image.NEAREST)
-        x0, y0, x1, y1 = PORTRAITS[name]
-        p = Image.fromarray(im[y0:y1, x0:x1]).convert("RGBA")
-        portraits[name] = p.resize((72, int(72 * p.height / p.width)), Image.NEAREST)
+        portraits[name] = portrait_from_sprite(cells[spec["front"]])
     return sheets, portraits
 
 
@@ -254,6 +252,24 @@ def pixel_sheet(smooth, fw, fh):
             ox = (FRAME_W - fw) // 2
             out.alpha_composite(f, (c * FRAME_W + ox, r * FRAME_H + (FRAME_H - fh)))
     return out.resize((out.width * RES, out.height * RES), Image.NEAREST)
+
+
+def portrait_from_sprite(cell, size=72):
+    """Dialogue portrait cut from the very figure the sprite is made of (head and
+    shoulders of the front pose, at the reference's full resolution), so the face in
+    the dialogue box is always the face walking around the world."""
+    a = np.array(cell)
+    rows = np.where(a[..., 3].max(axis=1) > 0)[0]
+    top = int(rows.min())
+    h = int((rows.max() - top) * 0.5)
+    band = a[top:top + h]
+    cols = np.where(band[..., 3].max(axis=0) > 0)[0]
+    cx = int((cols.min() + cols.max()) / 2)
+    half = max(h // 2 + 2, (cols.max() - cols.min()) // 2 + 2)
+    crop = Image.fromarray(a).crop((cx - half, top - 2, cx + half, top - 2 + 2 * half))
+    k = max(1, size // crop.width)
+    big = crop.resize((crop.width * k, crop.height * k), Image.NEAREST)
+    return big.resize((size, int(size * big.height / big.width)), Image.LANCZOS)
 
 
 def outfit_variant(sheet):

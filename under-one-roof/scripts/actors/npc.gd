@@ -88,6 +88,15 @@ func teleport(pos: Vector2, dir := "down") -> void:
 	face(dir)
 
 
+## A little hop while saying a line.
+func talk_bounce() -> void:
+	if _sprite == null:
+		return
+	var tw := create_tween()
+	tw.tween_property(_sprite, "position:y", -33.0, 0.09).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(_sprite, "position:y", -30.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+
 func face(dir: String) -> void:
 	facing = dir
 	_update_frame(0)

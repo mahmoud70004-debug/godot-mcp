@@ -130,7 +130,7 @@ func _make_atmosphere() -> void:
 	UI.full_rect(vig)
 	vig.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var mat := ShaderMaterial.new()
-	mat.shader = load("res://assets/shaders/vignette.gdshader")
+	mat.shader = load("res://assets/shaders/grade.gdshader")
 	vig.material = mat
 	layer.add_child(vig)
 

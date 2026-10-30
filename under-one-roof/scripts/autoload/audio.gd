@@ -9,8 +9,10 @@ var _current_music := ""
 var _current_amb := ""
 var _cache := {}
 var _voice: AudioStreamPlayer      # dialogue voices: one syllable at a time, never cut by sfx
-var _music_bus := 0
+var _duck := 1.0                  # 1 = full, lower while people talk (no extra buses: web samples)
 var _duck_tween: Tween
+var _fade := {}                   # player -> 0..1 crossfade level
+var _unlocked := false            # browsers only allow sound after the first touch / click
 const VOWELS := ["a", "e", "i", "o", "u"]
 
 
@@ -22,13 +24,6 @@ func _ready() -> void:
 	for i in 6:
 		_sfx.append(_player())
 	_voice = _player()
-	# music and ambience go through their own bus so dialogue can duck them smoothly
-	AudioServer.add_bus()
-	_music_bus = AudioServer.bus_count - 1
-	AudioServer.set_bus_name(_music_bus, "Music")
-	AudioServer.set_bus_send(_music_bus, "Master")
-	for p in [_music_a, _music_b, _amb]:
-		p.bus = "Music"
 	# preload the small sounds so the first line of dialogue never stutters (web)
 	for v in ["man", "deep", "woman", "child", "old", "oldwoman"]:
 		for vw in VOWELS:
@@ -89,8 +84,38 @@ func duck(on: bool) -> void:
 	if _duck_tween:
 		_duck_tween.kill()
 	_duck_tween = create_tween()
-	_duck_tween.tween_method(func(v): AudioServer.set_bus_volume_db(_music_bus, v),
-		AudioServer.get_bus_volume_db(_music_bus), -7.0 if on else 0.0, 0.45 if on else 0.9)
+	_duck_tween.tween_property(self, "_duck", 0.45 if on else 1.0, 0.45 if on else 0.9)
+
+
+func is_ducked() -> bool:
+	return _duck < 0.9
+
+
+func _process(_delta: float) -> void:
+	var m := float(Game.settings["music"])
+	for p in [_music_a, _music_b]:
+		if p.playing:
+			p.volume_db = linear_to_db(max(0.0001, m * float(_fade.get(p, 1.0)) * _duck))
+	if _amb.playing:
+		_amb.volume_db = linear_to_db(max(0.0001, float(Game.settings["sfx"]) * 0.45 * lerpf(1.0, _duck, 0.6)))
+
+
+## Web: the first touch or click unlocks audio; restart what should already be playing.
+func _input(event: InputEvent) -> void:
+	if _unlocked:
+		return
+	if event is InputEventScreenTouch or event is InputEventMouseButton or event is InputEventKey:
+		_unlocked = true
+		if OS.has_feature("web"):
+			call_deferred("_restart_after_unlock")
+
+
+func _restart_after_unlock() -> void:
+	for p in [_music_a, _music_b, _amb]:
+		if p.playing and p.stream:
+			var at: float = p.get_playback_position()
+			p.stop()
+			p.play(at)
 
 
 func current_music() -> String:
@@ -113,17 +138,18 @@ func music(name: String) -> void:
 	var new := _music_b if old == _music_a else _music_a
 	if old.playing:
 		var tw := create_tween()
-		tw.tween_property(old, "volume_db", -60.0, 1.2)
+		tw.tween_method(func(v): _fade[old] = v, float(_fade.get(old, 1.0)), 0.0, 1.2)
 		tw.tween_callback(old.stop)
 	if name == "":
 		return
 	new.stream = _stream("music_" + name, true)
 	if new.stream == null:
 		return
-	new.volume_db = -60.0
+	_fade[new] = 0.0
+	new.volume_db = -80.0
 	new.play()
 	var tw2 := create_tween()
-	tw2.tween_property(new, "volume_db", linear_to_db(max(0.001, Game.settings["music"])), 1.5)
+	tw2.tween_method(func(v): _fade[new] = v, 0.0, 1.0, 1.5)
 
 
 func ambience(name: String) -> void:
@@ -139,8 +165,5 @@ func ambience(name: String) -> void:
 
 
 func refresh_volumes() -> void:
-	for p in [_music_a, _music_b]:
-		if p.playing:
-			p.volume_db = linear_to_db(max(0.001, Game.settings["music"]))
-	if _amb.playing:
-		_amb.volume_db = linear_to_db(max(0.001, Game.settings["sfx"] * 0.45))
+	pass   # volumes follow the settings every frame (_process)
+

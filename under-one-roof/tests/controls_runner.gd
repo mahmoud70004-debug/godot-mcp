@@ -294,14 +294,14 @@ func _world_features() -> void:
 		await get_tree().process_frame
 	_expect(voiced, "the speaker's voice plays while the line types")
 	await _wait(0.6)
-	_expect(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Music")) < -3.0, "music is ducked under the dialogue")
+	_expect(Audio.is_ducked() and AudioServer.bus_count == 1, "music is ducked under the dialogue (no extra bus: web samples)")
 	for i in 40:
 		if not Director.main.dialogue.visible:
 			break
 		Director.main.dialogue._advance()
 		await _wait(0.15)
 	await _wait(1.2)
-	_expect(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Music")) > -1.0, "music comes back after the dialogue")
+	_expect(not Audio.is_ducked(), "music comes back after the dialogue")
 	await Director.teleport("spawn_inn_out", false)
 	await _wait(0.4)
 	# stopping after a walk settles on the standing frame of that direction

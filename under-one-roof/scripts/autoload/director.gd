@@ -159,6 +159,11 @@ func _say_line(line, ctx: String) -> void:
 	var npc = world().npcs.get(speaker, null)
 	if npc and npc.visible and speaker != "gideon":
 		npc.face_towards(player().global_position)
+	var talker = npc if npc and speaker == npc.npc_id else world().npcs.get(speaker, null) if world() else null
+	if talker and talker.visible:
+		talker.talk_bounce()
+	elif speaker == "gideon" and player():
+		player().talk_bounce()
 	await dialogue().say(speaker, text)
 
 

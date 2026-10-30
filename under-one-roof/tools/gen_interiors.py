@@ -464,11 +464,34 @@ def snow_patches(out):
         reg(out, f"snow_{k}", s, oy=h, flat=True)
 
 
+def pebbles(out):
+    for k in range(3):
+        s = Spr(14, 8, seed=70 + k)
+        for i in range(4 + k):
+            x, y = s.rng.randrange(0, 11), s.rng.randrange(1, 6)
+            w, h = s.rng.randrange(2, 4), s.rng.randrange(2, 3)
+            col = s.rng.choice([c("8a8478"), c("a29a8a"), c("6e6a62"), c("b4ac9a")])
+            s.ell(x, y + 1, w, h, c("3a3630", 90))
+            s.ell(x, y, w, h, col)
+            s.p(x, y, shade(col, 1.25))
+        reg(out, f"pebbles_{k}", s, oy=8, flat=True)
+
+
+def puddles(out):
+    for k, (w, h) in enumerate(((22, 9), (16, 7))):
+        s = Spr(w, h, seed=80 + k)
+        s.ell(0, 0, w, h, c("4a3c2c", 150))
+        s.ell(1, 1, w - 2, h - 2, c("7c9cb8", 210))
+        s.ell(2, 1, w // 2, max(2, h // 3), c("c8dcec", 220))      # sky reflection
+        s.hl(w // 2, h // 2 + 1, w // 4, c("eef4fa", 200))
+        reg(out, f"puddle_{k}", s, oy=h, flat=True)
+
+
 def build(out_dir):
     META.clear()
     for f in (hearth, firepit, iron_stove, bench, stool, cupboard, kitchen_counter, bookshelf, armchair, globe, plant,
               candlestick, lantern_wall, window_curtains, fish_trophy, rugs, barrels, stall_fence, bedroll, cobweb,
-              wood_pile, net_wall, net_posts, grass_tufts, wildflowers, snow_patches):
+              wood_pile, net_wall, net_posts, grass_tufts, wildflowers, snow_patches, pebbles, puddles):
         f(out_dir)
     feast_table(out_dir, "table_feast")
     feast_table(out_dir, "table_inn", items=True, cloth=False)

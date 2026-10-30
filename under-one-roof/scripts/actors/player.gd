@@ -86,6 +86,13 @@ func _ready() -> void:
 	_near.area_exited.connect(func(_a): _pick_target())
 
 
+## A little hop while saying a line.
+func talk_bounce() -> void:
+	var tw := create_tween()
+	tw.tween_property(sprite, "position:y", -3.0, 0.09).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(sprite, "position:y", 0.0, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+
 func face(dir: String) -> void:
 	facing = dir
 	sprite.frame = DIRS[facing] * 4

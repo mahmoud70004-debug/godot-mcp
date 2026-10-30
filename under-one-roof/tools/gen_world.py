@@ -750,6 +750,17 @@ def village_polish():
         if g[int(y), int(x)] in "pk" and clear_of_spots(x, y):
             at(sprite, x, y)
             occupied[int(y), int(x)] = True
+    # wear of the paths: pebbles along the edges, a few puddles reflecting the sky
+    for _ in range(900):
+        x, y = rng.randrange(0, 150), rng.randrange(2, 80)
+        if g[y, x] not in "=k" or occupied[y, x]:
+            continue
+        edge = np.isin(g[max(0, y - 1):y + 2, max(0, x - 1):x + 2], list(".hg")).any()
+        r = rng.random()
+        if edge and r < 0.35:
+            at(f"pebbles_{rng.randrange(3)}", x + rng.random(), y + rng.random(), reserve=False)
+        elif g[y, x] == "=" and r < 0.06:
+            at(f"puddle_{rng.randrange(2)}", x + 0.5, y + 0.8, reserve=False)
     # nature: tufts around trunks and along lanes, wildflowers, a dusting of old snow
     trees = [o for o in objects if SPR.get(o.get("sprite", ""), {}).get("tree")]
     for o in trees:

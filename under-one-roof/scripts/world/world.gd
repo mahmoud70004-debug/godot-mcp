@@ -33,6 +33,8 @@ var reflections: Node2D
 var _conditional: Array = []   # [{cond, nodes:[...], shapes:[...]}]
 var _animated: Array = []      # [Sprite2D, fps, frames]
 var _glows: Array = []
+var _sun_shadows: Array = []   # [Sprite2D, height above the base line] cast shadows following the sun
+var _sun_t := 0.0
 var _flickers: Array = []      # [Sprite2D, base alpha, phase] warm interior lights
 var _time := 0.0
 var _tex_cache := {}
@@ -319,7 +321,27 @@ func _add_cast_shadow(root: Node2D, spr: Sprite2D, m: Dictionary, oy: int) -> Sp
 	s.position = root.position + Vector2(0, -(float(m["h"]) - oy) * squash)
 	s.modulate = Color(0.02, 0.04, 0.08, 0.36)
 	decals.add_child(s)
+	_sun_shadows.append([s, root.position.y, float(m["h"]) - oy])
 	return s
+
+
+## The low northern sun crosses the sky: shadows lean west in the morning, shrink at
+## noon, stretch east in the evening and fade away at night.
+func _update_sun() -> void:
+	var h := fmod(Game.minutes / 60.0, 24.0)
+	var day := clampf((h - 5.0) / 16.0, 0.0, 1.0)            # 05:00 -> 21:00
+	var skew_v := lerpf(-1.05, 1.05, day)
+	var length := 0.3 + 0.32 * absf(day - 0.5) * 2.0
+	var alpha := 0.36 * clampf(1.0 - absf(day - 0.5) * 0.3, 0.0, 1.0)
+	if h < 5.0 or h > 21.0:
+		alpha = 0.08
+	for e in _sun_shadows:
+		var s: Sprite2D = e[0]
+		var res: float = s.scale.x
+		s.skew = skew_v
+		s.scale.y = length * res
+		s.position.y = float(e[1]) - float(e[2]) * length
+		s.modulate.a = alpha
 
 
 ## Soft elliptical contact shadow under buildings, trees and large props.
@@ -473,6 +495,10 @@ func _wander(root: Node2D, spr: Sprite2D, radius: float) -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
+	_sun_t -= delta
+	if _sun_t <= 0.0:
+		_sun_t = 0.5
+		_update_sun()
 	if player_ref != null and is_instance_valid(player_ref):
 		var p := player_ref.global_position
 		for oc in _occluders:

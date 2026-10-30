@@ -99,7 +99,8 @@ def main():
         for name in names:
             sheet = fam[member] if name != "gideon_outfit" else family_sheets.outfit_variant(fam[member])
             sheet.save(os.path.join(a, "chars", f"{name}.png"))
-            portrait(fam_portraits[member], os.path.join(a, "portraits", f"{name}.png"))
+            face = fam_portraits[member] if name != "gideon_outfit" else family_sheets.outfit_variant(fam_portraits[member])
+            portrait(face, os.path.join(a, "portraits", f"{name}.png"))
 
     # props / interiors / icons: procedural -> painted
     sprites, icons = gen_sprites.build(tmp)
@@ -128,6 +129,22 @@ def main():
         img.save(os.path.join(a, "sprites", f"{name}.png"))
         sprites[name] = meta
     ref_assets.register(reg, os.path.join(a, "sprites"))
+
+    # racks and lines stand on two posts: only the posts block, not the empty ground between
+    import numpy as np
+    for name in ("laundry", "net_rack", "net_posts"):
+        m = sprites.get(name)
+        if not m:
+            continue
+        im = Image.open(os.path.join(a, "sprites", f"{name}.png")).convert("RGBA")
+        al = np.array(im.resize((m["w"], m["h"]), Image.NEAREST))[..., 3] > 40
+        band = al[m["h"] - 6:m["h"]]
+        cols = np.where(band.mean(axis=0) > 0.5)[0]
+        groups = np.split(cols, np.where(np.diff(cols) > 1)[0] + 1) if len(cols) else []
+        posts = [[int(gp.min()) - 1, m["h"] - 7, int(gp.max() - gp.min()) + 3, 6] for gp in groups if len(gp)]
+        if len(posts) >= 2:
+            m.pop("base", None)
+            m["bases"] = posts
 
     with open(os.path.join(ROOT, "data", "sprites.json"), "w") as f:
         json.dump({"sprites": sprites, "chars": chars, "icons": icons, "res": RES}, f, indent=0)
