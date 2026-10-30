@@ -316,6 +316,15 @@ popup/item_1/id = 1
 popup/item_2/text = "Quality: High"
 popup/item_2/id = 2
 
+[node name="FpsToggle" type="Button" parent="PauseMenu/PauseColumn"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+toggle_mode = true
+text = "Show FPS"
+script = ExtResource("7_item")
+hint = "off"
+
 [node name="MainMenuButton" type="Button" parent="PauseMenu/PauseColumn"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)

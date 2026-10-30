@@ -54,6 +54,7 @@ func _ready() -> void:
 	inventory_menu.closed.connect(close_menu)
 	%QualityOption.item_selected.connect(_on_quality_selected)
 	Events.quality_changed.connect(_on_quality_changed)
+	%FpsToggle.toggled.connect(_on_fps_toggled)
 	%ResumeButton.pressed.connect(close_menu)
 	%SaveButton.pressed.connect(_on_save_pressed)
 	%MainMenuButton.pressed.connect(_on_main_menu_pressed)
@@ -129,6 +130,7 @@ func open_menu(menu: Control) -> void:
 	else:
 		if menu == pause_menu:
 			%QualityOption.select(Settings.quality)
+			_sync_fps_toggle()
 			%PauseRegion.text = _region_name
 			%SaveButton.hint = "save"
 		menu.show()
@@ -158,6 +160,19 @@ func _on_quality_selected(index: int) -> void:
 	Settings.quality = index
 	Settings.save_settings()
 	Events.quality_changed.emit(index)
+
+
+func _on_fps_toggled(pressed: bool) -> void:
+	Settings.show_fps = pressed
+	Settings.save_settings()
+	FpsOverlay.refresh_enabled()
+	%FpsToggle.hint = "on" if pressed else "off"
+
+
+func _sync_fps_toggle() -> void:
+	var on: bool = Settings.show_fps or FpsOverlay.forced
+	%FpsToggle.set_pressed_no_signal(on)
+	%FpsToggle.hint = "on" if on else "off"
 
 
 func _toggle_menu(menu: Control) -> void:

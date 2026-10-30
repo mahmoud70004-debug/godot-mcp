@@ -22,6 +22,8 @@ var quality := 1
 var quality_auto_checked := false
 ## The player picked a quality in the pause menu: automatic downgrades stop.
 var quality_manual := false
+## Show the FPS / frame time overlay (pause menu toggle; the web page can force it with ?fps=1).
+var show_fps := false
 
 
 func _ready() -> void:
@@ -53,6 +55,7 @@ func save_settings() -> void:
 	cfg.set_value("graphics", "quality", quality)
 	cfg.set_value("graphics", "quality_auto_checked", quality_auto_checked)
 	cfg.set_value("graphics", "quality_manual", quality_manual)
+	cfg.set_value("graphics", "show_fps", show_fps)
 	cfg.save(SETTINGS_PATH)
 
 
@@ -71,6 +74,7 @@ func load_settings() -> void:
 	quality = clampi(int(cfg.get_value("graphics", "quality", quality)), 0, 2)
 	quality_auto_checked = cfg.get_value("graphics", "quality_auto_checked", quality_auto_checked)
 	quality_manual = cfg.get_value("graphics", "quality_manual", quality_manual)
+	show_fps = cfg.get_value("graphics", "show_fps", show_fps)
 
 
 func _set_bus_volume(bus_name: StringName, linear: float) -> void:
