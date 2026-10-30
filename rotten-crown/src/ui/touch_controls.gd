@@ -17,7 +17,7 @@ const MAX_LOOK_STEP := 48.0
 
 @export_range(0.2, 0.8) var look_zone_start := 0.4
 
-@onready var joystick: VirtualJoystick = $Joystick
+@onready var joystick: TouchJoystick = $Joystick
 
 var _buttons: Array[TouchActionButton] = []
 var _joystick_finger := -1

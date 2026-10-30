@@ -1,4 +1,4 @@
-class_name VirtualJoystick
+class_name TouchJoystick
 extends Control
 ## Fixed on-screen stick (bottom-left). TouchControls feeds it touches; it
 ## converts them into the analogue move_* input actions.

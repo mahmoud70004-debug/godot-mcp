@@ -98,7 +98,7 @@ HurtboxComponent
 ## المدخلات (Input)
 كل شيء يمرّ عبر **Input Actions** في `project.godot`، بحيث لا يعرف كود اللعب مصدر المدخل:
 - `TouchControls` تتبع كل إصبع بنفسها، لأن واجهة Godot الافتراضية تتعامل مع مؤشر واحد فقط.
-  - `VirtualJoystick` يحوّل اللمس إلى `Input.action_press("move_*", strength)`، أي حركة تناظرية.
+  - `TouchJoystick` (`touch_joystick.gd`) يحوّل اللمس إلى `Input.action_press("move_*", strength)`، أي حركة تناظرية.
   - `TouchActionButton` يرسل `InputEventAction` حقيقياً (attack / block / interact).
   - السحب في النصف الأيمن يرسل `Events.look_input`.
 - الفأرة لا تُستخدم إلا حين تكون ملتقطة (للاختبار على الحاسوب)، فأحداث الفأرة المحاكاة من اللمس لا تُحدث هجمات وهمية.
