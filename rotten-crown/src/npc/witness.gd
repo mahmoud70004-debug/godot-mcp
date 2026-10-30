@@ -15,13 +15,15 @@ const TWITCH_MAX_WAIT := 3.5
 
 @export var id := ""
 @export var sheet: SpriteSheetData
-@export var tint := Color(0.78, 0.78, 0.76)
+@export var tint := Color(0.9, 0.9, 0.88)
 @export var line: DialogueLine
 ## Speaks right after the knight's wake-up thoughts instead of waiting to be approached.
 @export var speak_after_wake := false
 @export var trigger_radius := 4.5
-## Sprite size multiplier (the Witnesses are a little too tall).
+## Sprite size multiplier.
 @export var height_scale := 1.0
+## Metres it floats above the ground (the Root Saint hangs in the air).
+@export var hover := 0.0
 
 var _phase := Phase.WAITING
 var _sprite: PixelSprite3D
@@ -139,3 +141,4 @@ func _snap_to_ground() -> void:
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
 	if not hit.is_empty():
 		global_position.y = (hit.position as Vector3).y
+	global_position.y += hover

@@ -7,12 +7,12 @@ extends CanvasLayer
 
 const CHARS_PER_SECOND := 30.0
 const FADE := 0.35
-## The subtitle sits under the HUD's prompt line, between the joystick and the
-## buttons; the Witness window sits above the prompt (UI units, 360 high).
+## Both sit low, between the joystick and the buttons: the subtitle under the HUD's
+## prompt line, the Witness window over it, leaving the speaker in view (UI units).
 const THOUGHT_GAP := 8.0
 const THOUGHT_HEIGHT := 40.0
-const PANEL_GAP := 88.0
-const PANEL_HEIGHT := 70.0
+const PANEL_GAP := 10.0
+const PANEL_HEIGHT := 62.0
 const GLITCH_CHARS := "#%&@$*?!/\\|<>~^"
 const THOUGHT_COLOR := Color(0.84, 0.8, 0.68)
 const ENTITY_COLOR := Color(0.88, 0.9, 0.86)
@@ -177,8 +177,8 @@ func _build() -> void:
 
 	_panel = PanelContainer.new()
 	_panel.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
-	_panel.anchor_left = 0.2
-	_panel.anchor_right = 0.8
+	_panel.anchor_left = 0.22
+	_panel.anchor_right = 0.74
 	_panel.offset_left = 0.0
 	_panel.offset_right = 0.0
 	_panel.grow_vertical = Control.GROW_DIRECTION_BEGIN

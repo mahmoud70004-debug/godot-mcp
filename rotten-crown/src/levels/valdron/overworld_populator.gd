@@ -12,9 +12,9 @@ const REGIONS := {
 	"WhisperingWood": "res://data/regions/whispering_wood.tres",
 }
 const ENEMIES := {
-	"Thornfield": ["res://data/enemies/hollow.tres"],
-	"Hollowmere": ["res://data/enemies/hollow.tres", "res://data/enemies/hollow.tres", "res://data/enemies/mourner.tres"],
-	"WhisperingWood": ["res://data/enemies/mourner.tres", "res://data/enemies/hollow.tres"],
+	"Thornfield": ["res://data/enemies/steeple.tres", "res://data/enemies/grinner.tres"],
+	"Hollowmere": ["res://data/enemies/grinner.tres", "res://data/enemies/steeple.tres", "res://data/enemies/bent.tres"],
+	"WhisperingWood": ["res://data/enemies/grinner.tres", "res://data/enemies/steeple.tres", "res://data/enemies/bent.tres"],
 }
 const PICKUPS := ["res://data/items/consumables/grave_moss.tres", "res://data/items/consumables/feast_wine.tres"]
 ## region -> lore items, in marker order (Lore_1, Lore_2...). Missing files are skipped.

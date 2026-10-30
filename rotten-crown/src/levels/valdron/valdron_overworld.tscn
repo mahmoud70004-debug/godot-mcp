@@ -13,7 +13,15 @@
 [ext_resource type="Shader" path="res://assets/shaders/night_sky.gdshader" id="10_moon_shader"]
 [ext_resource type="Resource" path="res://data/regions/moonlit_meadows.tres" id="11_r_meadows"]
 [ext_resource type="Resource" path="res://data/regions/outer_ward.tres" id="12_r_ward"]
-[ext_resource type="Resource" path="res://data/enemies/mourner.tres" id="13_mourner"]
+[ext_resource type="Resource" path="res://data/enemies/steeple.tres" id="13_steeple"]
+[ext_resource type="Resource" path="res://data/enemies/grinner.tres" id="27_grinner"]
+[ext_resource type="Script" path="res://src/npc/witness.gd" id="28_witness"]
+[ext_resource type="Resource" path="res://assets/sprites/witness_star/witness_star.tres" id="29_w_star"]
+[ext_resource type="Resource" path="res://assets/sprites/witness_root/witness_root.tres" id="30_w_root"]
+[ext_resource type="Resource" path="res://assets/sprites/witness_chair/witness_chair.tres" id="31_w_chair"]
+[ext_resource type="Resource" path="res://data/dialogue/witness_star.tres" id="32_l_star"]
+[ext_resource type="Resource" path="res://data/dialogue/witness_root.tres" id="33_l_root"]
+[ext_resource type="Resource" path="res://data/dialogue/witness_chair.tres" id="34_l_chair"]
 [ext_resource type="Resource" path="res://data/items/lore/torn_invitation.tres" id="14_i_invite"]
 [ext_resource type="Resource" path="res://data/items/lore/cooks_note.tres" id="15_i_cook"]
 [ext_resource type="Resource" path="res://data/items/lore/well_scratching.tres" id="16_i_well"]
@@ -157,22 +165,50 @@ item = ExtResource("20_i_eye")
 
 [node name="Enemies" type="Node3D" parent="."]
 
-[node name="FeastHollow" parent="Enemies" instance=ExtResource("5_hollow")]
+[node name="FeastGrinner" parent="Enemies" instance=ExtResource("5_hollow")]
 position = Vector3(0, 0, -7.5)
+data = ExtResource("27_grinner")
 start_dormant = true
 
-[node name="HouseHollow" parent="Enemies" instance=ExtResource("5_hollow")]
+[node name="HouseSteeple" parent="Enemies" instance=ExtResource("5_hollow")]
 position = Vector3(-19.6, 0, -12.4)
 rotation = Vector3(0, -1.4, 0)
+data = ExtResource("13_steeple")
 start_dormant = true
 
-[node name="DoorwayHollow" parent="Enemies" instance=ExtResource("5_hollow")]
+[node name="DoorwayGrinner" parent="Enemies" instance=ExtResource("5_hollow")]
 position = Vector3(14.2, 0, 0.6)
 rotation = Vector3(0, 1.2, 0)
+data = ExtResource("27_grinner")
 
-[node name="WellMourner" parent="Enemies" instance=ExtResource("5_hollow")]
+[node name="WellSteeple" parent="Enemies" instance=ExtResource("5_hollow")]
 position = Vector3(-8, 0, -20.6)
-data = ExtResource("13_mourner")
+data = ExtResource("13_steeple")
+
+[node name="Witnesses" type="Node3D" parent="."]
+
+[node name="StarEyed" type="Node3D" parent="Witnesses"]
+position = Vector3(3.4, 0, 25.6)
+script = ExtResource("28_witness")
+id = "star"
+sheet = ExtResource("29_w_star")
+line = ExtResource("32_l_star")
+speak_after_wake = true
+
+[node name="RootSaint" type="Node3D" parent="Witnesses"]
+position = Vector3(-111.0, 0, 145.5)
+script = ExtResource("28_witness")
+id = "root"
+sheet = ExtResource("30_w_root")
+line = ExtResource("33_l_root")
+hover = 0.35
+
+[node name="SeatedMan" type="Node3D" parent="Witnesses"]
+position = Vector3(23.0, 0, 337.0)
+script = ExtResource("28_witness")
+id = "chair"
+sheet = ExtResource("31_w_chair")
+line = ExtResource("34_l_chair")
 
 [node name="Player" parent="." instance=ExtResource("3_player")]
 position = Vector3(1.2, 0.05, 29.0)
