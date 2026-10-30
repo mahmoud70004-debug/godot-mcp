@@ -86,6 +86,24 @@ func _apply_dev_perf_flags() -> void:
 			(node as Node3D).visible = false
 		if flags.has("nopost") and node.name == "PostProcess":
 			(node as CanvasLayer).visible = false
+		if node is GeometryInstance3D:
+			var gi := node as GeometryInstance3D
+			var bm := gi.material_override as BaseMaterial3D
+			if flags.has("notriplanar") and bm and bm.uv1_triplanar:
+				bm.uv1_triplanar = false
+			if flags.has("nocutout") and bm and bm.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR:
+				gi.visible = false
+			var cut := bm and bm.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+			if flags.has("cutcheap") and cut:
+				bm.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+				bm.disable_receive_shadows = true
+			if flags.has("cutnocast") and cut:
+				gi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			if flags.has("noshadow"):
+				gi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		# "hide:Name" hides every node called Name (cost of one baked group).
+		if node is Node3D and flags.has("hide:" + node.name):
+			(node as Node3D).visible = false
 
 
 ## Dev aid for rendering review shots: RC_SHOT="x,y,z,yaw_deg,pitch_deg".

@@ -58,3 +58,14 @@
 | U10 | H (router-hard) | done | castle_props.gd, meadow_builder.gd, meadow_props.gd, meadow shaders | spawn view: Gothic gate, feast spill, plains landmarks |
 | U13 publish | H | done | docs/ | smoke PASS, touch PASS; Medium: spawn 7.5-8.75, Hollowmere 7.5-7.75, prologue 4.5 fps (regressed: castle front dressing also built in the festive set -> follow-up), load 6.4-7 s; pck 25 MB |
 | review 3b | router-reviewer | interrupted by rate limit | - | resume next session |
+
+## Phase 3c
+| task | tier | status | note |
+|---|---|---|---|
+| P0 | H | done | Pages via Actions workflow on this branch (githack blocked big files = the 17% hang) |
+| P1 | N | done | tools/web_turn_test.cjs + DebugBridge render stats; cold-sweep spikes 600-780 ms |
+| P2 | H | done | ShaderPrewarm behind the loading fade; after: Hollowmere cold max 317 ms (was 667), cold = warm |
+| P3/P4 | H | partial | probe flags (hide:, nocutout, cutcheap...) found alpha-cut leaf cards = wood cost; bake lights them per vertex, no shadow receive (+19% wood, look kept) |
+| P5 | E->H | done | festive castle front lighter |
+| P6 | H | done | quality watchdog on sustained low fps |
+| P7 | H | done | smoke + touch PASS; turn test Medium: spawn 5.2 fps sweep (max 433 vs 600), Hollowmere 4.4 (max 317 vs 667), wood 2.45 (was 2.11) |
