@@ -20,6 +20,10 @@ var _anim_t := 0.0
 var _walking := false
 var _wander_target := Vector2.ZERO
 var _wander_wait := 2.0
+var world: Node = null          # set by world.gd (path finding)
+var patrol: Array = []          # world positions walked in a loop (daily errands)
+var _patrol_i := 0
+var _travel_id := 0             # bumps to cancel a running travel()
 
 
 func _ready() -> void:
@@ -31,11 +35,13 @@ func _ready() -> void:
 	_sprite.vframes = 5
 	_sprite.centered = false
 	_sprite.position = Vector2(-10, -30)
+	_sprite.scale = Vector2(0.5, 0.5)   # sheets are painted at 2x
 	add_child(_sprite)
 	var shadow := Sprite2D.new()
 	shadow.texture = load("res://assets/sprites/char_shadow.png")
 	shadow.centered = false
 	shadow.position = Vector2(-8, -3)
+	shadow.scale = Vector2(0.5, 0.5)
 	shadow.show_behind_parent = true
 	add_child(shadow)
 	move_child(shadow, 0)
@@ -73,7 +79,10 @@ func set_present(on: bool) -> void:
 
 
 func teleport(pos: Vector2, dir := "down") -> void:
+	_travel_id += 1
+	_walking = false
 	position = pos
+	reset_physics_interpolation()
 	_home = pos
 	_wander_target = pos
 	face(dir)
@@ -118,6 +127,34 @@ func walk_to(target: Vector2, speed := 45.0) -> void:
 	_update_frame(0)
 
 
+## Walks along a path of world points (daily routines). Unlike walk_to() it can be
+## cancelled by a teleport or a cutscene taking control.
+func travel(points: PackedVector2Array, dir := "down", speed := 34.0) -> void:
+	_travel_id += 1
+	var my := _travel_id
+	_walking = true
+	for target in points:
+		while position.distance_to(target) > 1.0:
+			if my != _travel_id or not is_inside_tree() or scripted:
+				return
+			if Game.input_locked:
+				await get_tree().physics_frame
+				continue
+			var d := target - position
+			if abs(d.x) > abs(d.y):
+				facing = "right" if d.x > 0 else "left"
+			else:
+				facing = "down" if d.y > 0 else "up"
+			position += d.normalized() * minf(speed * get_physics_process_delta_time(), d.length())
+			await get_tree().physics_frame
+	if my != _travel_id:
+		return
+	_walking = false
+	_home = position
+	_wander_target = position
+	face(dir)
+
+
 func _physics_process(delta: float) -> void:
 	if not visible:
 		return
@@ -126,6 +163,14 @@ func _physics_process(delta: float) -> void:
 		_update_frame(int(_anim_t) % 4)
 		return
 	if scripted or Game.input_locked:
+		return
+	if not patrol.is_empty() and world != null:
+		_wander_wait -= delta
+		_update_frame(0)
+		if _wander_wait <= 0.0:
+			_wander_wait = randf_range(3.0, 7.0)
+			_patrol_i = (_patrol_i + 1) % patrol.size()
+			travel(world.find_path(position, patrol[_patrol_i]))
 		return
 	if not idle_action.is_empty() and current_spot != "":
 		# working at their post: alternate between the work pose and looking around

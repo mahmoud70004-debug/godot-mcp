@@ -100,7 +100,7 @@ func _ready() -> void:
 	coin.texture = UI.icon("coin")
 	coin.custom_minimum_size = Vector2(18, 18)
 	coin.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	coin.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	coin.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	mh.add_child(coin)
 	_money = UI.label("0", 14, UI.INK, HORIZONTAL_ALIGNMENT_LEFT)
 	_money.text_direction = Control.TEXT_DIRECTION_LTR
@@ -135,7 +135,7 @@ func _ready() -> void:
 		var tex := TextureRect.new()
 		tex.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		tex.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-		tex.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		tex.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		tex.custom_minimum_size = Vector2(22, 22)
 		tex.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		slot.add_child(tex)
@@ -162,6 +162,25 @@ func _ready() -> void:
 	_tooltip_label = UI.label("", 12)
 	_tooltip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_tooltip.add_child(_tooltip_label)
+
+	# --- camera zoom (also: pinch, mouse wheel, +/- keys) ------------------------
+	var zoom := HBoxContainer.new()
+	zoom.add_theme_constant_override("separation", 4)
+	zoom.alignment = BoxContainer.ALIGNMENT_END
+	right.add_child(zoom)
+	for d in [-1, 1]:
+		var b := UI.panel()
+		b.custom_minimum_size = Vector2(30, 26)
+		b.mouse_filter = Control.MOUSE_FILTER_STOP
+		var t := UI.label("−" if d < 0 else "+", 16, UI.WOOD, HORIZONTAL_ALIGNMENT_CENTER)
+		t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		b.add_child(t)
+		b.name = "ZoomOut" if d < 0 else "ZoomIn"
+		var dir: int = d
+		b.gui_input.connect(func(e):
+			if _is_tap(e) and player != null:
+				player.zoom_step(dir))
+		zoom.add_child(b)
 
 	# --- toasts & prompt -------------------------------------------------------
 	_toasts = VBoxContainer.new()

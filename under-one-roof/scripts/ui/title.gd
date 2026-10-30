@@ -1,19 +1,20 @@
 extends Control
-## Main menu: a painted dusk panorama of Hrafnvik (layered pixel art with drifting clouds,
-## shimmering water, flickering windows and chimney smoke) and the menu on the left:
-## Play, Settings, Music. Sub-pages open in a parchment panel on the right.
+## Main menu: the living village itself (the same painted world the game uses, with its
+## shimmering water, gulls, chimney smoke and lit lamps) seen at dusk while the view
+## drifts slowly over the harbour, and the menu on the left: Play, Settings, Music.
+## Sub-pages open in a parchment panel on the right.
 
-const MENU_JSON := "res://data/menu.json"
+const WORLD_SCRIPT := preload("res://scripts/world/world.gd")
+# slow drift over the village: [world centre, zoom]
+const VIEWS := [[Vector2(1330, 930), 1.05], [Vector2(1180, 560), 1.0], [Vector2(1560, 1020), 1.1], [Vector2(700, 480), 1.0]]
 
-var _backdrop: Node2D
-var _clouds: Sprite2D
-var _lights: Sprite2D
+var _layer: CanvasLayer
+var _world: Node2D
 var _menu_box: VBoxContainer
 var _page: PanelContainer
 var _page_body: VBoxContainer
 var _page_title: Label
 var _t := 0.0
-var _size := Vector2(420, 180)
 var _current_page := ""
 
 
@@ -26,58 +27,22 @@ func _ready() -> void:
 	Audio.ambience("sea")
 	_build_backdrop()
 	_build_ui()
-	get_viewport().size_changed.connect(_layout)
 	Loc.language_changed.connect(_rebuild)
-	_layout()
 
 
 # ---------------------------------------------------------------- backdrop
-func _sprite(path: String) -> Sprite2D:
-	var s := Sprite2D.new()
-	s.texture = load(path)
-	s.centered = false
-	s.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	_backdrop.add_child(s)
-	return s
-
-
 func _build_backdrop() -> void:
-	var meta: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(MENU_JSON))
-	_size = Vector2(meta["size"][0], meta["size"][1])
-	_backdrop = Node2D.new()
-	add_child(_backdrop)
-	_sprite("res://assets/ui/menu_sky.png")
-	_clouds = _sprite("res://assets/ui/menu_clouds.png")
-	_sprite("res://assets/ui/menu_scene.png")
-	var sea := _sprite("res://assets/ui/menu_sea.png")
-	var mat := ShaderMaterial.new()
-	mat.shader = load("res://assets/shaders/menu_sea.gdshader")
-	mat.set_shader_parameter("sea_y", float(meta["sea_y"]) / _size.y)
-	sea.material = mat
-	_sprite("res://assets/ui/menu_front.png")
-	_lights = _sprite("res://assets/ui/menu_lights.png")
-	var add := CanvasItemMaterial.new()
-	add.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	_lights.material = add
-	for ch in meta["chimneys"]:
-		var p := CPUParticles2D.new()
-		p.position = Vector2(ch[0] + 1, ch[1])
-		p.amount = 6
-		p.lifetime = 3.0
-		p.direction = Vector2(0.3, -1)
-		p.spread = 12.0
-		p.gravity = Vector2(4, -6)
-		p.initial_velocity_min = 3.0
-		p.initial_velocity_max = 6.0
-		p.scale_amount_min = 1.0
-		p.scale_amount_max = 2.0
-		p.color = Color(0.85, 0.8, 0.85, 0.45)
-		var ramp := Gradient.new()
-		ramp.set_color(0, Color(0.9, 0.86, 0.9, 0.5))
-		ramp.set_color(1, Color(0.9, 0.86, 0.9, 0.0))
-		p.color_ramp = ramp
-		p.preprocess = 3.0
-		_backdrop.add_child(p)
+	_layer = CanvasLayer.new()
+	_layer.layer = -1
+	add_child(_layer)
+	_world = Node2D.new()
+	_world.set_script(WORLD_SCRIPT)
+	_layer.add_child(_world)
+	var dusk := CanvasModulate.new()
+	dusk.color = Color(0.93, 0.8, 0.74)
+	_layer.add_child(dusk)
+	for g in _world._glows:
+		g.visible = true
 	# darker band behind the menu on the left so the text stays readable
 	var shade := TextureRect.new()
 	var g := GradientTexture2D.new()
@@ -95,26 +60,35 @@ func _build_backdrop() -> void:
 	shade.offset_right = 330
 	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(shade)
+	_update_view()
 
 
-func _layout() -> void:
+func _update_view() -> void:
+	# ease between the views, 24 s each
+	var n := VIEWS.size()
+	var f := fmod(_t / 24.0, float(n))
+	var i := int(f)
+	var k := smoothstep(0.0, 1.0, f - i)
+	var a: Array = VIEWS[i]
+	var b: Array = VIEWS[(i + 1) % n]
+	var centre: Vector2 = (a[0] as Vector2).lerp(b[0], k)
+	var z: float = lerpf(a[1], b[1], k)
 	var vp := get_viewport_rect().size
-	var s: float = max(vp.x / _size.x, vp.y / _size.y)
-	_backdrop.scale = Vector2(s, s)
-	# keep the village (right part of the painting) in view on very wide screens
-	_backdrop.position = Vector2(vp.x - _size.x * s, (vp.y - _size.y * s) * 0.5)
+	z *= maxf(1.0, vp.y / 360.0)
+	_layer.scale = Vector2(z, z)
+	# keep the village right of the menu
+	_layer.offset = (vp * Vector2(0.62, 0.5) - centre * z).round()
 
 
 func _process(delta: float) -> void:
 	_t += delta
-	_clouds.position.x = -fmod(_t * 2.0, 420.0)
-	_lights.modulate.a = 0.75 + 0.2 * sin(_t * 1.7) + 0.05 * sin(_t * 7.3)
+	_update_view()
 
 
 # ---------------------------------------------------------------- menu
 func _rebuild() -> void:
 	for c in get_children():
-		if c != _backdrop and not c is TextureRect:
+		if c != _layer and not c is TextureRect:
 			c.queue_free()
 	_build_ui()
 	if _current_page != "":

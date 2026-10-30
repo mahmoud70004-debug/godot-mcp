@@ -15,6 +15,8 @@ const NAMES := {
 	"bjorn": "بيورن", "sigrid": "سيغريد", "leif": "لايف", "astrid": "أستريد", "einar": "الأب إينار",
 	"runa": "رونا", "henrik": "هنريك", "jonas": "يوناس", "halldor": "هالدور", "gunnar": "غونار",
 	"olafur": "أولافور", "worker_a": "عامل", "worker_b": "عامل", "voice": "صوت من الداخل",
+	"fisher_a": "صياد عجوز", "fisher_b": "صياد", "fisher_c": "صيادة", "farmer_a": "مزارع", "farmer_b": "مزارعة",
+	"trader": "تاجر", "child_a": "طفل", "child_b": "طفلة", "porter": "حمّال",
 }
 
 const VOICE := {"clara": 1.4, "margaret": 1.1, "sigrid": 1.15, "astrid": 1.2, "runa": 1.25,
@@ -96,19 +98,29 @@ const NPCS := {
 	"clara": {"wander": 10.0, "spots": [[["final_scene"], "clara_home"], [["ending"], "clara_paint"], [["ch2"], "clara_square"], [[], "clara_home"]]},
 	"elias": {"spots": [[["elias_fled"], null], [["ch8"], "elias_farm"], [["ch6", "!refused_elias"], "elias_study"], [["ch3"], "elias_estate"], [["ch2"], "elias_square"], [[], null]]},
 	"edmund": {"spots": [[["final_scene"], "edmund_home"], [["ending"], "home_yard"], [["ch8", "!elias_fled"], null], [["ch5"], "edmund_barn"], [[], null]]},
-	"bjorn": {"action": [19], "spots": [[[], "bjorn_dock"]]},
+	"bjorn": {"action": [19], "spots": [[["hour>=19", "!ch8"], "bjorn_inn_evening"], [[], "bjorn_dock"]]},
 	"sigrid": {"spots": [[[], "sigrid_inn"]]},
 	"leif": {"action": [16, 17], "spots": [[[], "leif_smithy"]]},
-	"astrid": {"wander": 12.0, "action": [18], "spots": [[[], "astrid_cottage"]]},
+	"astrid": {"wander": 12.0, "action": [18], "spots": [[["hour>=9", "hour<12"], "astrid_herbs"], [[], "astrid_cottage"]]},
 	"einar": {"spots": [[[], "einar_church"]]},
-	"runa": {"action": [19], "spots": [[[], "runa_house"]]},
+	"runa": {"action": [19], "spots": [[["ch2", "hour>=10", "hour<14"], "runa_square"], [[], "runa_house"]]},
 	"henrik": {"spots": [[[], "henrik_cart"]]},
-	"jonas": {"wander": 10.0, "spots": [[["ch8", "!elias_fled"], "jonas_farm"], [["ch2"], "jonas_square"], [[], "jonas_harbor"]]},
+	"jonas": {"wander": 10.0, "spots": [[["ch8", "!elias_fled"], "jonas_farm"], [["hour>=18"], "jonas_inn_evening"], [["ch2"], "jonas_square"], [[], "jonas_harbor"]]},
 	"halldor": {"spots": [[[], "halldor_estate"]]},
 	"gunnar": {"wander": 18.0, "spots": [[[], "gunnar_field"]]},
 	"olafur": {"spots": [[[], "olafur_road"]]},
 	"worker_a": {"sheet": "worker", "spots": [[["ch8", "!elias_fled"], "worker_a"], [[], null]]},
 	"worker_b": {"sheet": "worker", "spots": [[["ch8", "!elias_fled"], "worker_b"], [[], null]]},
+	# ambient villagers with daily routines (hours are in-game time)
+	"fisher_a": {"action": [19], "spots": [[["hour>=18", "hour<22"], "amb_inn_1"], [["hour>=5", "hour<18"], "amb_fish_1"], [[], null]]},
+	"fisher_b": {"action": [19], "spots": [[["hour>=18", "hour<22"], "amb_inn_2"], [["hour>=5", "hour<18"], "amb_fish_2"], [[], null]]},
+	"fisher_c": {"wander": 8.0, "spots": [[["hour>=6", "hour<19"], "amb_fish_4"], [[], null]]},
+	"farmer_a": {"action": [18], "spots": [[["hour>=6", "hour<19"], "amb_farm_1"], [[], null]]},
+	"farmer_b": {"wander": 14.0, "spots": [[["hour>=7", "hour<13"], "amb_farm_2"], [["hour>=13", "hour<18"], "amb_square_2"], [[], null]]},
+	"trader": {"spots": [[["hour>=8", "hour<18"], "amb_trade_1"], [["hour>=18", "hour<21"], "amb_trade_2"], [[], null]]},
+	"child_a": {"wander": 26.0, "spots": [[["hour>=8", "hour<12"], "amb_child_1"], [["hour>=12", "hour<19"], "amb_child_2"], [[], null]]},
+	"child_b": {"wander": 22.0, "spots": [[["hour>=9", "hour<19"], "amb_child_2"], [[], null]]},
+	"porter": {"sheet": "worker", "patrol": ["amb_road_1", "amb_square_1", "amb_road_2", "amb_square_1"], "spots": [[["hour>=7", "hour<19"], "amb_road_1"], [[], null]]},
 }
 
 const CHAPTERS := [
@@ -198,7 +210,7 @@ const DOORS := {
 	"door_warehouse": [{"lines": [["gideon", "مستودع شركة التجارة. البضائع تُسلَّم عند الباب الجانبي."]]}],
 }
 
-const DOOR_EVENTS := {"door_barn": "barn_enter", "door_home": "home_enter"}
+const DOOR_EVENTS := {"door_barn": "barn_enter", "door_home": "home_enter", "door_home_fixed": "home_enter"}
 const ZONE_EVENTS := {"farm": "farm_arrive"}
 
 const LABELS := {
@@ -706,6 +718,22 @@ const EVENTS := {
 		["gideon", "سأخبرك بكل شيء الليلة يا أمي. أعدك."]], "do": [["save"]]}],
 	"farm_arrive": [{"if": ["ch8", "!elias_fled"], "do": [["cutscene", "farm_confrontation"]]}],
 	"worker_a": [{"lines": [["worker_a", "نحن نعمل لمن يدفع يا سيدي."]]}],
+	"fisher_a": [
+		{"if": ["evening"], "lines": [["fisher_a", "يوم طويل على الماء. كأس من شاي سيغريد ثم إلى الفراش."]]},
+		{"lines": [["fisher_a", "أصلح شباكي منذ أربعين سنة. البحر يمزّقها، وأنا أخيطها. هكذا نتفاهم."]]}],
+	"fisher_b": [
+		{"if": ["ch3"], "lines": [["fisher_b", "سمعت أن ابن عمّك يشتري الديون في القرية. احذر منه يا غيديون."]]},
+		{"lines": [["fisher_b", "الرنجة كثيرة هذا الأسبوع. لو كان معك قارب لكنت غنيًا!"]]}],
+	"fisher_c": [{"lines": [["fisher_c", "زوجي في البحر منذ الفجر. أنتظر قاربه عند الرصيف كل يوم."]]}],
+	"farmer_a": [{"lines": [["farmer_a", "التربة هنا صخرية وباردة، لكن البطاطس تنبت إن صبرت عليها."]]}],
+	"farmer_b": [
+		{"if": ["hour>=13"], "lines": [["farmer_b", "جئت أبيع الزبدة والبيض في الساحة. الأسعار جيدة اليوم."]]},
+		{"lines": [["farmer_b", "صباح الخير يا غيديون. أمك بخير؟ قل لها إن عندي صوفًا لها."]]}],
+	"trader": [{"lines": [["trader", "قماش من كوبنهاغن، وتوابل من هامبورغ! لا شيء رخيص، لكن كل شيء جميل."]]}],
+	"child_a": [{"lines": [["child_a", "هل رأيت النوارس؟ أراهن أنني أسرع منها!"]]}],
+	"child_b": [{"lines": [["child_b", "أمي تقول ألا أقترب من الماء. لكن الأصداف هناك جميلة جدًا."]]}],
+	"porter": [{"lines": [["porter", "صناديق من الميناء إلى الساحة، ومن الساحة إلى الميناء. هذه حياتي."]]}],
+	"ruins": [{"lines": [["", "جدران حجرية قديمة تكسوها الطحالب."], ["gideon", "يقولون إنها كانت أول كنيسة في هرافنفيك، قبل أن يهدمها الشتاء الكبير."]]}],
 	"worker_b": [{"lines": [["worker_b", "قيل لنا إن الأرض صارت للسيد إلياس..."]]}],
 
 	# ======================= collectibles =======================

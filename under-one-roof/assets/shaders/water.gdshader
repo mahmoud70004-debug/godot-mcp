@@ -1,18 +1,24 @@
 shader_type canvas_item;
-// Gentle animated shimmer on the sea, river and pond (water_mask.png marks water pixels).
+// Ground chunks: alpha < 1 marks water (sea, river, pond). The water shimmers with
+// soft travelling glints computed in world space, so chunk seams never show.
 
-uniform sampler2D water_mask : filter_nearest;
+varying vec2 world;
+
+void vertex() {
+	world = (MODEL_MATRIX * vec4(VERTEX, 0.0, 1.0)).xy;
+}
 
 void fragment() {
 	vec4 col = texture(TEXTURE, UV);
-	float m = texture(water_mask, UV).r;
-	if (m > 0.5) {
-		vec2 px = floor(UV / TEXTURE_PIXEL_SIZE);
-		float wave = sin(px.x * 0.16 + TIME * 1.3 + sin(px.y * 0.11 + TIME * 0.4) * 2.5);
-		float band = sin(px.y * 0.85 + TIME * 0.9 + px.x * 0.02);
-		float glint = step(0.96, wave * band);
-		col.rgb += glint * vec3(0.20, 0.22, 0.20);
-		col.rgb *= 0.985 + 0.03 * sin(TIME * 0.7 + px.x * 0.013 + px.y * 0.021);
+	float m = 1.0 - smoothstep(0.72, 0.9, col.a);
+	if (m > 0.01) {
+		vec2 px = world;
+		float wave = sin(px.x * 0.08 + TIME * 1.3 + sin(px.y * 0.055 + TIME * 0.4) * 2.5);
+		float band = sin(px.y * 0.42 + TIME * 0.9 + px.x * 0.01);
+		float glint = smoothstep(0.9, 1.0, wave * band);
+		vec3 lit = col.rgb + glint * vec3(0.16, 0.18, 0.17);
+		lit *= 0.985 + 0.03 * sin(TIME * 0.7 + px.x * 0.007 + px.y * 0.011);
+		col.rgb = mix(col.rgb, lit, m);
 	}
-	COLOR = col;
+	COLOR = vec4(col.rgb, 1.0);
 }

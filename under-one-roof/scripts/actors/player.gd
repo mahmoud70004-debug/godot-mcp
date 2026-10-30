@@ -7,6 +7,8 @@ signal target_changed(area: Area2D)
 const WALK_SPEED := 72.0
 const RUN_SPEED := 112.0
 const DIRS := {"down": 0, "left": 1, "right": 2, "up": 3}
+const ZOOM_MIN := 0.7
+const ZOOM_MAX := 2.2
 const REACH := {"down": Vector2(0, 10), "up": Vector2(0, -18), "left": Vector2(-13, -5), "right": Vector2(13, -5)}
 
 @onready var sprite: Sprite2D = $Sprite
@@ -19,9 +21,50 @@ var _action_frames: Array = []
 var _action_t := 0.0
 var _anim_t := 0.0
 var _step_t := 0.0
+var room_rect := Rect2()        # set indoors: the camera never zooms out past the room
+var _touches := {}              # pinch-zoom: index -> position (touches the HUD did not take)
+var _pinch_d := 0.0
+var _zoom_save_t := -1.0        # saves the chosen zoom shortly after the player stops zooming
+
+
+## Camera zoom the player chose (saved in the settings).
+func zoom_level() -> float:
+	return clampf(float(Game.settings.get("zoom", 1.0)), ZOOM_MIN, ZOOM_MAX)
+
+
+func set_zoom_level(z: float) -> void:
+	Game.settings["zoom"] = clampf(z, ZOOM_MIN, ZOOM_MAX)
+	_zoom_save_t = 0.4
+
+
+func zoom_step(dir: int) -> void:
+	set_zoom_level(zoom_level() * (1.15 if dir > 0 else 1.0 / 1.15))
+
+
+func _effective_zoom() -> float:
+	var z := zoom_level()
+	if room_rect.has_area():
+		var view := get_viewport_rect().size
+		z = maxf(z, maxf(view.x / room_rect.size.x, view.y / room_rect.size.y))
+	return z
+
+
+func _process(delta: float) -> void:
+	if _zoom_save_t > 0.0:
+		_zoom_save_t -= delta
+		if _zoom_save_t <= 0.0:
+			Game.save_settings()
+	var z := _effective_zoom()
+	var cur := camera.zoom.x
+	if not is_equal_approx(cur, z):
+		cur = lerpf(cur, z, 1.0 - exp(-delta * 10.0))
+		if absf(cur - z) < 0.002:
+			cur = z
+		camera.zoom = Vector2(cur, cur)
 
 
 func _ready() -> void:
+	camera.zoom = Vector2.ONE * zoom_level()
 	reach.area_entered.connect(func(_a): _pick_target())
 	reach.area_exited.connect(func(_a): _pick_target())
 
@@ -109,6 +152,7 @@ func _area_center(a: Area2D) -> Vector2:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	_zoom_input(event)
 	if Game.input_locked:
 		return
 	if event.is_action_pressed("interact"):
@@ -120,3 +164,36 @@ func interact() -> void:
 	_pick_target()
 	if target and not Game.input_locked:
 		Director.interact(target)
+
+
+## Mouse wheel, trackpad pinch, two-finger pinch on the world, +/- keys.
+func _zoom_input(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			set_zoom_level(zoom_level() * 1.1)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			set_zoom_level(zoom_level() / 1.1)
+	elif event is InputEventMagnifyGesture:
+		set_zoom_level(zoom_level() * event.factor)
+	elif event is InputEventScreenTouch:
+		if event.pressed:
+			_touches[event.index] = event.position
+		else:
+			_touches.erase(event.index)
+			if _touches.size() < 2:
+				_pinch_d = 0.0
+		if _touches.size() == 2:
+			var v: Array = _touches.values()
+			_pinch_d = (v[0] as Vector2).distance_to(v[1])
+	elif event is InputEventScreenDrag and _touches.has(event.index):
+		_touches[event.index] = event.position
+		if _touches.size() == 2 and _pinch_d > 0.0:
+			var v: Array = _touches.values()
+			var d := (v[0] as Vector2).distance_to(v[1])
+			if d > 8.0:
+				set_zoom_level(zoom_level() * d / _pinch_d)
+				_pinch_d = d
+	elif event.is_action_pressed("zoom_in"):
+		zoom_step(1)
+	elif event.is_action_pressed("zoom_out"):
+		zoom_step(-1)

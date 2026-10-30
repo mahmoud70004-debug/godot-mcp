@@ -55,7 +55,7 @@ func _ready() -> void:
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	_portrait.custom_minimum_size = Vector2(60, 64)
-	_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_portrait_frame.add_child(_portrait)
 
 	_text = UI.label("", 15)

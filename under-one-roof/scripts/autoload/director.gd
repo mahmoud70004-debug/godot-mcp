@@ -320,6 +320,7 @@ func teleport(spot: String, fade := true) -> void:
 	var p = player()
 	p.global_position = world().spot_pos(spot)
 	p.face(world().spot_dir(spot))
+	p.reset_physics_interpolation()
 	_update_zone(true)
 	p.camera.reset_smoothing()
 	if fade:
@@ -341,8 +342,10 @@ func _update_zone(force := false) -> void:
 	if z["indoor"]:
 		var a: Array = z["rect"]
 		r = Rect2(a[0], a[1], a[2], a[3]).grow(48)
+		p.room_rect = r
 	else:
 		r = world().outdoor_rect()
+		p.room_rect = Rect2()
 	cam.limit_left = int(r.position.x)
 	cam.limit_top = int(r.position.y)
 	cam.limit_right = int(r.end.x)

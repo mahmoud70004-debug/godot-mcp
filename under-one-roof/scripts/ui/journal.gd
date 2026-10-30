@@ -159,7 +159,7 @@ func _bag() -> void:
 		ic.texture = UI.icon(it["id"])
 		ic.custom_minimum_size = Vector2(24, 24)
 		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		ic.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		ic.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		row.add_child(ic)
 		var l := UI.label("%s ×%d — %s" % [Loc.t(def.get("name", it["id"])), it["n"], Loc.t(def.get("desc", ""))], 12)
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

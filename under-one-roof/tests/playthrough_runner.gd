@@ -128,6 +128,44 @@ func _validate_data() -> void:
 	for id in Story.NPCS:
 		var sheet: String = Story.NPCS[id].get("sheet", id)
 		expect(ResourceLoader.exists("res://assets/chars/%s.png" % sheet), "character sheet " + sheet)
+	_validate_reachability(w)
+	# nobody is placed on a door (stepping out would walk straight back in)
+	for o in w.data["objects"]:
+		if o.get("type", "") != "door":
+			continue
+		var r := Rect2(o["x"], o["y"], o["w"], o["h"]).grow(3)
+		for k in w.spots:
+			expect(not r.has_point(w.spot_pos(k)), "spot %s is not on door %s" % [k, o["id"]])
+
+
+## Every outdoor spot, door and interactable can be walked to from Gideon's house
+## (on the navigation grid, which blocks whole tiles under every footprint - stricter
+## than the real collision shapes).
+func _validate_reachability(w) -> void:
+	var a: AStarGrid2D = w._astar
+	var start := Vector2i(w.spot_pos("spawn_home_out") / 16.0)
+	var out: Rect2 = w.outdoor_rect()
+	var targets := {}
+	for k in w.spots:
+		targets["spot " + k] = w.spot_pos(k)
+	for o in w.data["objects"]:
+		if o.get("type", "") in ["door", "interact"]:
+			targets[o["id"]] = Vector2(o["x"] + o["w"] / 2.0, o["y"] + o["h"] + 4)
+		elif o.has("interact"):
+			var m: Dictionary = w.sprites["sprites"][o["sprite"]]
+			targets[o["interact"]] = Vector2(o["x"] + m["w"] / 2.0, o["y"] + m["oy"] + 6)
+	for k in targets:
+		var p: Vector2 = targets[k]
+		if not out.has_point(p):
+			continue
+		var t := Vector2i(p / 16.0)
+		var ok := false
+		for d in [Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(0, 2), Vector2i(0, -2)]:
+			var c: Vector2i = t + d
+			if a.is_in_boundsv(c) and not a.is_point_solid(c) and a.get_id_path(start, c).size() > 0:
+				ok = true
+				break
+		expect(ok, "reachable on foot: %s %s" % [k, t])
 
 
 # ------------------------------------------------------------------ the story

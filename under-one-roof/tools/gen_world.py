@@ -1,44 +1,46 @@
-"""Builds the world of Hrafnvik (redesign following the coastal-village reference).
+"""Builds the world of Hrafnvik, following the art reference (assets/reference/world_reference.jpg).
 
-Layout (tiles, 16px): a terraced coastal village under snowy mountains.
-  north    mountains, a high plateau with the herbalist's turf house
-           and the waterfall; a cliff band with stone stairs separates it from the village
-  centre   market square with the church and Henrik's shop, a cobbled main street to the harbour,
-           houses in red/blue/yellow/green/white, smithy, gardens, farms
-  south    the harbour bay with long piers, fishing boats and a trading vessel, the inn and
-           the warehouse; a beach with a small dock and an old mine below the south-west cliffs
-  north-east  Elias' manor on its own terrace above the village
-  east     Gideon's worn home at the eastern edge, the river and bridge (gated until ch.4),
-           the eastern hills with the abandoned farm, the barn and the shipwreck coast
-  x>=152   interiors (home, inn, study, farmhouse, barn)
+Layout (tiles, 16px; outdoor area 150 x 92):
+  north      dense forest under the mountains; Elias' manor with fountain, pond and a
+             gazebo garden (north-west); the waterfall where the eastern river begins
+  centre     cobbled market square with the inn, Henrik's market, longhouses, the
+             monument and stalls; church and graveyard, smithy; cobbled main street
+  south      fishermen's quarter on the sand: weathered cabins, warehouse, boathouse,
+             a T-shaped pier and a small pier with rowing boats; the open sea
+  west       farm fields and paddock, the herbalist's thatched cottage in the woods,
+             a river crossed by wooden bridges flowing into the bay, beach and old mine
+  east       Gideon's worn cabin by the eastern river; gated bridge to the hills, the
+             abandoned farmhouse and barn; the wreck on the eastern shore
+  x >= 152   interiors (home, inn, study, farmhouse, barn)
 
-Outputs data/map.txt, data/world.json, assets/world/ground.png and water_mask.png.
+Buildings, trees and boats are cut-outs from the reference (ref_*); props are painted.
+Outputs data/map.txt, data/world.json and assets/world/ground_*.png chunks.
 
 Terrain chars
-  .  grass   h hill grass   g tall grass   f farmland   =  dirt path   p cobbles   k stone path
-  s  sand    b bridge       d dock         S stairs     ~  sea         r river     P pond
-  #  cliff   ^ mountain     o/O/c/D floors V/U/Y/W walls X void
+  .  grass   h meadow   g tall grass   f farmland   =  dirt path   p cobbles   k stone path
+  s  sand    b bridge   d pier         S stairs     ~  sea         r river     P pond
+  ^  impassable forest  o/O/c/D floors V/U/Y/W walls X void
 """
 import json
 import random
 import numpy as np
-from paint_ground import paint, value_noise
+from paint_ground import paint, save_chunks, value_noise
 
 TS = 16
 W, H = 192, 100
-OUT_W, OUT_H = 150, 92          # outdoor area used for the camera
-IX = 35                         # interiors are the old interior layout shifted by 35 tiles
+OUT_W, OUT_H = 150, 92
+IX = 35
 BLOCKED = set("~rP#^WVUYX")
-CRISP = set("bdoOcDVUYWX#^S")
+CRISP = set("bdoOcDVUYWXS")
 
 g = np.full((H, W), ".", dtype="<U1")
 rng = random.Random(1887)
 objects = []
 spots = {}
 zones = []
-occupied = np.zeros((H, W), dtype=bool)
+occupied = np.zeros((H, W), dtype=bool)   # footprints (no decor here)
+covered = np.zeros((H, W), dtype=bool)    # whole building sprites (no tree canopies here)
 SPR = {}
-cliff_y = {}
 
 
 # ---------------------------------------------------------------- helpers
@@ -54,9 +56,9 @@ def disc(cx, cy, r, ch):
 
 
 def path(points, width, ch="="):
-    """Paint a road. Crossing a river or pond automatically builds a bridge."""
+    """Paint a road; crossing a river or pond builds a wooden bridge."""
     for (x0, y0), (x1, y1) in zip(points, points[1:]):
-        steps = max(abs(x1 - x0), abs(y1 - y0)) * 2 + 1
+        steps = int(max(abs(x1 - x0), abs(y1 - y0)) * 2 + 1)
         for i in range(steps + 1):
             t = i / steps
             x, y = x0 + (x1 - x0) * t, y0 + (y1 - y0) * t
@@ -68,7 +70,7 @@ def path(points, width, ch="="):
                     cur = g[yi, xi]
                     if cur in "rP":
                         g[yi, xi] = "b"
-                    elif cur in "bdS#^~":
+                    elif cur in "bdS~^":
                         continue
                     else:
                         g[yi, xi] = ch
@@ -86,6 +88,14 @@ def noise1(n, scale, amp, seed):
     return out
 
 
+def _bases(m):
+    if "bases" in m:
+        return m["bases"]
+    if "base" in m:
+        return [m["base"]]
+    return []
+
+
 def place(sprite, tx, ty, oid=None, show_if=None, interact=None, reserve=True, extra=None, px=0, py=0):
     m = SPR[sprite]
     o = {"sprite": sprite, "x": int(tx * TS + px), "y": int(ty * TS + py)}
@@ -101,76 +111,45 @@ def place(sprite, tx, ty, oid=None, show_if=None, interact=None, reserve=True, e
         o.update(extra)
     objects.append(o)
     if reserve:
-        x0 = o["x"] // TS
-        y0 = (o["y"] + int(m["oy"] * 0.5)) // TS
-        x1 = (o["x"] + m["w"] - 1) // TS
-        y1 = (o["y"] + m["oy"] - 1) // TS
-        occupied[max(0, y0):y1 + 1, max(0, x0):x1 + 1] = True
+        rects = _bases(m) or [[0, int(m["oy"] * 0.6), m["w"], int(m["oy"] * 0.4)]]
+        for (bx, by, bw, bh) in rects:
+            x0, y0 = (o["x"] + bx) // TS, (o["y"] + by) // TS
+            x1, y1 = (o["x"] + bx + bw - 1) // TS, (o["y"] + by + bh - 1) // TS
+            occupied[max(0, y0):y1 + 1, max(0, x0):x1 + 1] = True
     return o
 
 
-def check_footprint(name, o):
-    m = SPR[o["sprite"]]
-    if "base" not in m:
-        return
-    bx, by, bw, bh = m["base"]
-    for y in range((o["y"] + by) // TS, (o["y"] + by + bh - 1) // TS + 1):
-        for x in range((o["x"] + bx) // TS, (o["x"] + bx + bw - 1) // TS + 1):
-            if g[y, x] in "=pkbdS":
-                print(f"WARN {name} footprint covers road {g[y, x]} at {x},{y}")
-
-
-def building(sprite, tx, ty, door_to=None, door_id=None, oid=None, show_if=None, smoke=True, door_path=True):
-    o = place(sprite, tx, ty, oid=oid, show_if=show_if)
-    check_footprint(sprite, o)
-    if sprite.startswith("house") or sprite.startswith("turf") or sprite in ("shop", "smithy", "inn"):
-        if not show_if:
-            DRESSED.append((sprite, o))
+def at(sprite, cx, bottom, **kw):
+    """Place a sprite by the centre of its footprint (tile x) and its ground line (tile y)."""
     m = SPR[sprite]
-    if smoke and "smoke" in m and not show_if:
+    return place(sprite, 0, 0, px=int(cx * TS - m["w"] / 2), py=int(bottom * TS - m["oy"]), **kw)
+
+
+def building(sprite, cx, bottom, door_to=None, door_id=None, oid=None, show_if=None, smoke=False):
+    o = at(sprite, cx, bottom, oid=oid, show_if=show_if)
+    m = SPR[sprite]
+    x0, y0 = o["x"] // TS, o["y"] // TS
+    x1, y1 = (o["x"] + m["w"]) // TS, (o["y"] + m["oy"]) // TS
+    covered[max(0, y0):y1 + 1, max(0, x0):x1 + 1] = True
+    for (bx, by, bw, bh) in _bases(m):
+        for y in range((o["y"] + by) // TS, (o["y"] + by + bh - 1) // TS + 1):
+            for x in range((o["x"] + bx) // TS, (o["x"] + bx + bw - 1) // TS + 1):
+                if g[y, x] in "=pkbdS":
+                    print(f"WARN {sprite} footprint covers road {g[y, x]} at {x},{y}")
+    if smoke and "smoke" in m:
         sx, sy = m["smoke"]
         place("smoke", 0, 0, px=o["x"] + sx - 6, py=o["y"] + sy - 22, reserve=False)
     if "door" in m:
         dx, dy = m["door"]
         door_tx, door_ty = (o["x"] + dx) // TS, (o["y"] + dy) // TS
-        if door_path:
-            for k in range(0, 2):
-                if g[door_ty + k, door_tx] in ".hg":
-                    g[door_ty + k, door_tx] = "k"
+        for k in range(0, 2):
+            if g[door_ty + k, door_tx] in ".hg":
+                g[door_ty + k, door_tx] = "k"
         if door_to:
-            objects.append({
-                "type": "door", "id": door_id or f"door_{sprite}_{tx}", "to": door_to,
-                "x": o["x"] + dx - 8, "y": o["y"] + dy - 6, "w": 16, "h": 14,
-            })
+            objects.append({"type": "door", "id": door_id, "to": door_to,
+                            "x": o["x"] + dx - 8, "y": o["y"] + dy - 6, "w": 16, "h": 14})
         occupied[door_ty:door_ty + 2, door_tx] = True
     return o
-
-
-HOUSE_PROPS = ["barrel", "crate", "woodpile", "flowers_a", "flowers_b", "bush", "bush_berry", "lobster_pot", "bench"]
-DRESSED = []
-
-
-def dress_buildings():
-    """Little lived-in details around every village house: barrels, firewood, flower beds..."""
-    for (sprite, o) in DRESSED:
-        m = SPR[sprite]
-        x0, x1 = o["x"] // TS - 1, (o["x"] + m["w"]) // TS + 1
-        yb = (o["y"] + m["oy"]) // TS
-        r = random.Random(o["x"] * 31 + o["y"])
-        cands = [(x0, yb - 1), (x0, yb), (x1, yb - 1), (x1, yb), (x0 + 1, yb + 1), (x1 - 1, yb + 1), (x0, yb - 2), (x1, yb - 2)]
-        r.shuffle(cands)
-        placed = 0
-        for (x, y) in cands:
-            if placed >= 3 or not (0 <= x < 150 and 0 <= y < H):
-                continue
-            if g[y, x] not in ".h" or occupied[y, x]:
-                continue
-            if np.isin(g[max(0, y - 1):y + 2, max(0, x - 1):x + 2], list("=pkbdS")).any():
-                continue
-            k = r.choice(HOUSE_PROPS)
-            place(k, x, y, reserve=k not in ("flowers_a", "flowers_b"))
-            occupied[y, x] = True
-            placed += 1
 
 
 def spot(name, x_px, y_px, facing="down"):
@@ -200,136 +179,108 @@ def walkable(x, y):
 
 
 def nearest_walkable(x, y, avoid_occupied=True):
+    """Closest free tile, preferring tiles below (in front of) the original one."""
     for r in range(0, 8):
-        for dy in range(-r, r + 1):
-            for dx in range(-r, r + 1):
-                xx, yy = x + dx, y + dy
-                if walkable(xx, yy) and not (avoid_occupied and occupied[yy, xx]):
-                    return xx, yy
+        ring = [(dx, dy) for dy in range(-r, r + 1) for dx in range(-r, r + 1)]
+        ring.sort(key=lambda d: (abs(d[0]) + abs(d[1]), d[1] < 0, abs(d[0])))
+        for dx, dy in ring:
+            xx, yy = x + dx, y + dy
+            if walkable(xx, yy) and not (avoid_occupied and occupied[yy, xx]):
+                return xx, yy
     return x, y
 
 
 # ---------------------------------------------------------------- terrain
+RIVER_A = {}   # y -> x of the eastern river
+RIVER_B = {}   # x -> y of the western river
+
+
 def build_terrain():
     fill(0, 0, W - 1, H - 1, "X")
     fill(0, 0, 149, H - 1, ".")
-    mtn = noise1(150, 9, 1.6, 3)
+    edge = noise1(150, 9, 1.4, 3)
     for x in range(150):
-        fill(x, 0, x, int(5 + mtn[x]), "^")
-    # the high plateau north of the village and the estate terrace
-    cl = noise1(150, 6, 2.2, 4)
-    for x in range(0, 118):
-        cy = int(round((22 if x < 86 else 30) + cl[x]))
-        cliff_y[x] = cy
-        for y in range(int(6 + mtn[x]), cy):
-            g[y, x] = "h"
-        g[cy, x] = "#"
-        g[cy + 1, x] = "#"
-        g[cy + 2, x] = "#"
-    for y in range(cliff_y[85], cliff_y[88] + 3):
-        g[y, 86] = "#"
-        g[y, 87] = "#"
-    # eastern countryside beyond the river
-    for x in range(118, 150):
-        for y in range(int(6 + mtn[x]), 70):
-            g[y, x] = "h"
-    # sea, beaches and the harbour bay
-    coast = noise1(150, 7, 1.4, 5)
+        fill(x, 0, x, int(2 + edge[x]), "^")
+    # the sea
+    coast = noise1(150, 7, 1.2, 5)
     for x in range(150):
-        if x <= 46:
-            cy = 77 + coast[x]
-        elif x <= 52:
-            cy = 77 - (x - 46) * 2.2 + coast[x] * 0.3
-        elif x <= 112:
-            cy = 64 + coast[x] * 0.4
-        elif x <= 121:
-            cy = 64 + (x - 112) * 1.4
+        if x < 50:
+            cy = 71 + coast[x]
+        elif x < 58:
+            cy = 71 - (x - 50) * 0.8 + coast[x] * 0.3
+        elif x < 114:
+            cy = 64.5 + coast[x] * 0.4
+        elif x < 122:
+            cy = 64.5 + (x - 114) * 1.4
         else:
-            cy = 77 + coast[x]
+            cy = 76 + coast[x]
         cy = int(cy)
         for y in range(cy, H):
             g[y, x] = "~"
-        if x <= 46 or x >= 122:
-            for y in range(cy - 4, cy):
-                if g[y, x] in ".h":
-                    g[y, x] = "s"
-        elif 104 <= x <= 116:
-            for y in range(cy - 2, cy):
-                g[y, x] = "#"
-        else:
-            g[cy - 1, x] = "s"
-    # low cliffs above the south-west beach
-    for x in range(0, 42):
-        g[69, x] = "#"
-        g[70, x] = "#"
-    # river between village and the eastern hills
-    rx = noise1(H, 8, 0.8, 9)
-    for y in range(4, H):
-        x = int(117 + rx[y])
+        depth = 5 if (58 <= x < 114) else 4
+        for y in range(cy - depth, cy):
+            if g[y, x] in ".h":
+                g[y, x] = "s"
+    # eastern river from the waterfall pool down to the sea
+    disc(117, 7, 2.6, "P")
+    rx = noise1(H, 9, 0.9, 9)
+    for y in range(8, H):
+        x = int(116.5 + rx[y])
         if g[y, x] == "~":
             break
-        g[y, x] = "r"
-        g[y, x + 1] = "r"
-    # waterfall stream: plateau river -> falls -> pond -> stream to the beach
-    for y in range(5, cliff_y[40] + 3):
-        g[y, 40] = "r"
-        g[y, 41] = "r"
-    disc(41, cliff_y[40] + 6, 3.2, "P")
-    sx = noise1(H, 6, 1.2, 13)
-    for y in range(cliff_y[40] + 9, H):
-        x = int(41 + sx[y])
-        if g[y, x] == "~":
-            break
-        g[y, x] = "r"
-        g[y, x + 1] = "r"
-    # stairs through the cliff bands
-    for (x, y0, y1) in ((61, cliff_y[61], cliff_y[61] + 2), (62, cliff_y[61], cliff_y[61] + 2),
-                        (28, cliff_y[28], cliff_y[28] + 2), (29, cliff_y[28], cliff_y[28] + 2),
-                        (100, cliff_y[100], cliff_y[100] + 2), (101, cliff_y[100], cliff_y[100] + 2),
-                        (31, 69, 70), (32, 69, 70)):
-        for y in range(y0, y1 + 1):
-            g[y, x] = "S"
+        RIVER_A[y] = x
+        g[y, x] = "r"; g[y, x + 1] = "r"; g[y, x + 2] = "r"
+    # western river: from the west edge, east through the woods, then south into the bay
+    ry = noise1(150, 8, 1.1, 11)
+    for x in range(0, 47):
+        y = int(54 + ry[x])
+        RIVER_B[x] = y
+        for k in range(3):
+            g[y + k, x] = "r"
+    for y in range(int(54 + ry[46]), 72):
+        x = 46 + int(min(4, max(0, (y - 54) * 0.35)))
+        for k in range(3):
+            if g[y, x + k] != "~":
+                g[y, x + k] = "r"
+    # the manor pond
+    disc(25, 15, 3.2, "P")
     # roads ---------------------------------------------------------------
-    path([(0, 44), (20, 44), (40, 44), (52, 43)], 2)                         # west road
-    path([(72, 43), (90, 44), (116, 44), (121, 44)], 2)                      # east road + river bridge
-    path([(61, cliff_y[61] + 3), (61, 34)], 2, "k")                          # north stairs -> square
-    path([(61, 46), (61, 60)], 2, "k")                                       # main street: square -> harbour
-    path([(61, cliff_y[61] - 1), (60, 18)], 2)                               # stairs -> plateau
-    path([(28, cliff_y[28] - 1), (24, 18), (19, 17)], 1)                     # plateau: to Astrid
-    path([(28, 19), (40, 19), (52, 19), (60, 19)], 1)                        # plateau path (bridge above falls)
-    path([(60, 19), (72, 18), (78, 18)], 1)                                  # to the hill bench
-    path([(100, cliff_y[100] + 3), (100, 43)], 2)                            # estate drive
-    path([(100, cliff_y[100] - 1), (100, 18)], 2, "k")
-    path([(28, cliff_y[28] + 3), (30, 30), (31, 41), (36, 43)], 1)           # west stairs -> smithy
-    path([(30, 45), (31, 56), (31, 68)], 2)                                  # to the beach stairs
-    path([(31, 71), (25, 74), (20, 75)], 1)                                  # beach path
-    path([(8, 45), (8, 50)], 1)                                              # field track
-    path([(104, 45), (104, 52), (108, 52)], 1)                                          # to Gideon's home
-    path([(121, 45), (128, 41), (134, 35), (137, 27)], 1)                    # old farm track
-    path([(128, 41), (130, 52), (132, 62), (134, 70)], 1)                    # down to the wreck coast
-    path([(84, 44), (85, 52), (85, 59)], 1)                                  # to the warehouse
-    fill(52, 34, 72, 46, "p")                                                # market square
-    mn = value_noise(H, W, 6, 91)                                            # meadow colour patches
-    for y in range(24, 70):
-        for x in range(0, 117):
-            if g[y, x] == "." and mn[y, x] > 0.62:
-                g[y, x] = "h"
-    fill(46, 60, 104, 62, "k")                                               # harbour promenade
-    for y in range(50, 63):                                                  # west fields
-        for x in range(3, 25):
-            if g[y, x] == ".":
-                g[y, x] = "f"
+    fill(66, 25, 101, 37, "p")                                   # market square
+    path([(84, 4), (84, 25)], 3, "p")                            # main street north
+    path([(84, 37), (84, 59)], 3, "p")                           # main street to the harbour
+    path([(0, 40), (30, 40), (52, 39), (66, 33)], 2)             # west road
+    path([(40, 21), (40, 32), (44, 39)], 2, "k")                 # manor drive
+    path([(101, 33), (113, 33), (121, 33)], 2)                   # east road + gated bridge
+    path([(121, 33), (128, 31), (132, 26)], 1)                   # to the farmhouse
+    path([(132, 26), (138, 22)], 1)                              # to the barn
+    path([(124, 34), (126, 48), (128, 62), (130, 74)], 1)        # down to the wreck shore
+    path([(24, 40), (24, 52), (23, 60), (18, 66)], 1)            # south across the river to the beach
+    path([(15, 40), (15, 47)], 1)                                # to the herbalist
+    path([(84, 13), (96, 10), (104, 8)], 1)                      # to the view bench
+    path([(101, 30), (110, 40), (111, 48)], 1)                   # to Gideon's home
+    path([(60, 48), (70, 47)], 1)                                # church path
+    path([(117, 12), (116, 33)], 1)                              # river path to the waterfall
+    for y in range(0, 92):                                       # don't let the river path flood bridges
+        pass
+    for y in range(36, 49):                                      # west fields
+        for x in range(3, 22):
+            if g[y, x] == "." and y not in (40, 41):
+                g[y, x] = "f" if 42 <= y <= 48 else g[y, x]
     tn = value_noise(H, W, 4, 77)
-    for y in range(12, 44):                                                  # overgrown farm
-        for x in range(121, 149):
-            if g[y, x] == "h" and tn[y, x] > 0.32:
+    for y in range(12, 40):                                      # overgrown farm
+        for x in range(120, 149):
+            if g[y, x] == "." and tn[y, x] > 0.36:
                 g[y, x] = "g"
-    # docks
-    fill(61, 63, 62, 81, "d")
-    fill(61, 72, 86, 73, "d")
-    fill(85, 63, 86, 81, "d")
-    fill(98, 63, 99, 74, "d")
-    fill(19, 74, 20, 81, "d")
+    mn = value_noise(H, W, 7, 91)
+    for y in range(4, 70):
+        for x in range(0, 150):
+            if g[y, x] == "." and mn[y, x] > 0.64:
+                g[y, x] = "h"
+    # piers (reference: a long jetty with a T-head and two side fingers)
+    fill(86, 60, 87, 71, "d")
+    fill(86, 69, 103, 70, "d")
+    fill(102, 64, 103, 75, "d")
+    fill(70, 61, 71, 66, "d")
 
 
 def build_interiors():
@@ -340,197 +291,153 @@ def build_interiors():
         g[y1, door_x] = "D"
         g[y1, door_x + 1] = "D"
 
-    room(121 + IX, 2, 134 + IX, 12, "o", "V", 127 + IX)      # Ashford home
-    room(138 + IX, 2, 155 + IX, 14, "o", "Y", 146 + IX)      # inn
-    room(121 + IX, 16, 138 + IX, 27, "c", "Y", 129 + IX)     # Elias' study
-    room(142 + IX, 17, 153 + IX, 26, "O", "U", 147 + IX)     # abandoned farmhouse
-    room(121 + IX, 31, 138 + IX, 43, "O", "U", 129 + IX)     # barn
+    room(121 + IX, 2, 134 + IX, 12, "o", "V", 127 + IX)
+    room(138 + IX, 2, 155 + IX, 14, "o", "Y", 146 + IX)
+    room(121 + IX, 16, 138 + IX, 27, "c", "Y", 129 + IX)
+    room(142 + IX, 17, 153 + IX, 26, "O", "U", 147 + IX)
+    room(121 + IX, 31, 138 + IX, 43, "O", "U", 129 + IX)
 
 
 # ---------------------------------------------------------------- objects
 def build_objects():
-    # mountains (backdrop) and the waterfall
-    x, i = -60, 0
-    while x < 150 * TS - 40:
-        name = "mountain_a" if i % 2 == 0 else "mountain_b"
-        last = x + SPR[name]["w"] > 152 * TS
-        if last:
-            x = 152 * TS - SPR[name]["w"]
-        place(name, 0, 0, px=x, py=-34 - (i % 3) * 10, reserve=False)
-        if last:
-            break
-        x += SPR[name]["w"] - 90 - (i % 2) * 30
-        i += 1
-    place("waterfall", 40, cliff_y[40] - 2, px=-2, py=-4, reserve=False, interact="paint_waterfall")
-    tspot("paint_waterfall", 45, cliff_y[40] + 5, "left")
-    interact("paint_waterfall", 43, cliff_y[40] + 3, 3, 4)
-
-    # --- the church beside the market square, with its small graveyard ---
-    building("church", 52, 25, "spawn_church_none", door_id="door_church")
-    for (gx, gy) in ((45, 27), (47, 27), (49, 27), (45, 30), (47, 30), (49, 30)):
-        place("grave" if (gx + gy) % 2 else "gravestone", gx, gy, px=3)
-    for fx in range(44, 51):
-        place("fence", fx, 32)
-    place("fence_post", 44, 26); place("fence_post", 50, 26)
-    interact("graves", 44, 26, 7, 6)
-    interact("paint_church", 58, 35, 3, 2)
-    # --- plateau: herbalist, hill bench ---
-    building("turf_house", 15, 12, "herbalist_closed", door_id="door_astrid")
-    place("garden", 21, 13, reserve=False)
-    place("bench", 76, 16, interact="paint_hills_view")
-    tspot("paint_hills", 77, 17.5, "up")
-    building("house_white_gable", 70, 7)
-    place("rock_snow", 34, 9); place("rock_big", 82, 11)
-
-    # --- Elias' estate on its terrace ---
-    building("manor", 94, 9, "spawn_study_in", door_id="door_manor")
-    building("stable", 107, 18)
-    place("estate_gate", 99, cliff_y[100] - 3, px=-4, reserve=False)
-    for ly in (19, 23, 27):
-        place("lamp", 98, ly, px=6, py=-14)
-        place("lamp", 102, ly, px=6, py=-14)
-    for fx in list(range(89, 99)) + list(range(103, 116)):
-        place("fence", fx, cliff_y[fx] - 1 if fx < 118 else 28)
-    for (bx, by) in ((91, 19), (91, 23), (95, 21), (96, 25), (106, 25), (110, 25), (114, 25)):
-        place("bush_berry" if (bx + by) % 3 == 0 else "bush", bx, by)
-    for (fx, fy) in ((97, 19), (99, 22), (104, 19), (106, 22), (102, 24), (93, 26), (110, 26)):
-        place("flowers_b" if fx % 2 else "flowers_a", fx, fy, reserve=False)
-    place("well", 104, 22, interact="estate_fountain")
-    interact("estate_garden", 93, 21, 4, 3)
-    place("carriage", 103, 20, oid="carriage_estate", show_if=["ch3", "!elias_fled"])
-
-    # --- village houses ---
-    building("house_red_gable", 20, 25)
-    building("house_blue_gable", 66, 26, "runa_closed", door_id="door_runa")
-    building("house_redyellow", 76, 24)
-    building("smithy", 33, 35)
-    building("shop", 74, 35, "shop_closed", door_id="door_shop")
-    building("boathouse", 100, 56)
-    building("house_green", 86, 34)
-    building("house_white", 104, 33)
-    building("house_yellow", 43, 47)
-    building("house_green_gable", 23, 46)
-    building("house_white_gable", 76, 48)
-    building("house_blue", 94, 46)
-    building("house_red_small", 5, 30)
-    building("house_blue", 44, 36)
-    building("house_red_gable", 11, 24)
-    building("turf_house", 25, 57)
-    building("house_red", 52, 48)
-    place("garden", 82, 46, reserve=False)
-    building("shed", 14, 45)
-    building("shed_red", 20, 37)
-    building("turf_house_b", 49, 54, "bjorn_closed", door_id="door_bjorn")
-    building("inn", 64, 52, "spawn_inn_in", door_id="door_inn")
-    building("warehouse", 87, 53, "warehouse_closed", door_id="door_warehouse")
-    building("house_gideon", 106, 47, "spawn_home_in", door_id="door_home", show_if=["!roof_fixed"])
-    building("house_gideon_repaired", 106, 47, show_if=["roof_fixed", "!ending"])
-    building("house_gideon_fixed", 106, 47, show_if=["ending"])
-    building("farmhouse", 125, 30, "spawn_farmhouse_in", door_id="door_farmhouse", smoke=False)
-    building("barn", 134, 17, "spawn_barn_in", door_id="door_barn", smoke=False)
-    place("mine_entrance", 11, 67, interact="mine")
-
-    # gardens, laundry lines and little fences around houses
-    place("garden", 50, 28, reserve=False); place("garden", 28, 26, reserve=False)
-    place("garden", 81, 37, reserve=False); place("garden", 99, 47, reserve=False)
-    place("laundry", 49, 47); place("laundry", 82, 30); place("laundry", 110, 52)
-    for fx in range(26, 30):
-        place("fence", fx, 30)
-    for fx in range(80, 84):
-        place("fence", fx, 40)
+    # --- Elias' estate (north-west): manor, fountain, pond, gazebo garden ---
+    building("ref_manor", 40, 20, "spawn_study_in", door_id="door_manor", smoke=False)
+    at("ref_fountain", 30, 22, interact="estate_fountain")
+    building("ref_gazebo", 58, 15)
+    place("garden", 54, 16, reserve=False); place("garden", 60, 16, reserve=False)
+    interact("estate_garden", 53, 15, 4, 3)
+    for (fx, fy) in ((50, 18), (63, 18), (52, 20), (61, 20)):
+        place("flowers_a" if fx % 2 else "flowers_b", fx, fy, reserve=False)
+    for fx in range(20, 37):
+        place("fence", fx, 24)
+    for fx in range(45, 66):
+        place("fence", fx, 24)
+    at("ref_carriage", 46, 23, oid="carriage_estate", show_if=["ch3", "!elias_fled"])
+    for ly in (25, 29, 33):
+        place("lamp", 38, ly, px=6, py=-14); place("lamp", 42, ly, px=6, py=-14)
+    building("stable", 12, 22)
 
     # --- market square ---
-    place("monument", 57, 38, px=-2, interact="monument")
-    place("well", 67, 38)
-    place("stall_red", 53, 35, interact="stall_fish")
-    place("stall_blue", 69, 35, interact="stall_bread")
-    place("stall_green", 69, 42)
-    place("cart", 53, 41, oid="henrik_cart", interact="henrik_cart")
-    for (lx, ly) in ((52, 37), (72, 37), (59, 46), (64, 46), (60, 33), (100, 42), (68, 59), (62, 58), (90, 43), (112, 43), (32, 43)):
+    building("ref_inn", 75, 25, "spawn_inn_in", door_id="door_inn", smoke=True)
+    building("ref_market", 92, 24, "shop_closed", door_id="door_shop")
+    building("ref_longhouse", 99.5, 24)
+    building("ref_longhouse_f", 92, 46)
+    building("ref_cabin_d", 100, 46, "runa_closed", door_id="door_runa")
+    building("church", 71, 47, "spawn_church_none", door_id="door_church")
+    for (gx, gy) in ((61, 42), (63, 42), (65, 42), (61, 45), (63, 45), (65, 45)):
+        place("grave" if (gx + gy) % 2 else "gravestone", gx, gy, px=3)
+    interact("graves", 60, 41, 7, 6)
+    interact("paint_church", 70, 48, 3, 2)
+    building("smithy", 60, 31)
+    place("anvil", 63, 31, interact="anvil")
+    at("monument", 82, 31, interact="monument")
+    at("well", 90, 31)
+    place("stall_red", 68, 27, interact="stall_fish")
+    place("stall_blue", 96, 27, interact="stall_bread")
+    place("stall_green", 96, 33)
+    place("cart", 69, 33, oid="henrik_cart", interact="henrik_cart")
+    place("bench", 76, 34)
+    place("bench_coat", 87, 35, oid="coat_bench", show_if=["ch2", "!got_key"], interact="elias_coat")
+    place("bench", 87, 35, show_if=["!ch2"]); place("bench", 87, 35, show_if=["got_key"])
+    at("ref_carriage", 78, 37, oid="carriage_square", show_if=["ch2", "!ch3"])
+    for (lx, ly) in ((66, 25), (101, 25), (66, 37), (101, 37), (82, 47), (82, 55), (88, 59), (98, 59), (110, 34)):
         place("lamp", lx, ly, px=3, py=-14)
-    place("bench", 63, 35, px=0)
-    place("bench_coat", 64, 45, oid="coat_bench", show_if=["ch2", "!got_key"], interact="elias_coat")
-    place("bench", 64, 45, show_if=["!ch2"])
-    place("bench", 64, 45, show_if=["got_key"])
-    place("carriage", 66, 40, oid="carriage_square", show_if=["ch2", "!ch3"])
-    place("barrel", 72, 44); place("crates", 52, 44); place("barrel", 71, 34)
+    for (bx, by) in ((72, 25), (79, 25), (86, 25), (95, 37), (67, 30)):
+        place(rng.choice(["barrel", "crates", "crate"]), bx, by)
 
-    # --- harbour ---
-    place("fishing_boat", 63, 64, px=6, py=-6, reserve=False)
-    place("trade_ship", 87, 66, px=4, py=-8, reserve=False)
-    place("sailboat", 73, 74, px=0, py=2, reserve=False)
-    place("sailboat", 100, 66, px=6, reserve=False)
-    place("rowboat", 63, 68, px=2, py=2, reserve=False, interact="bjorn_boat")
-    place("rowboat", 59, 77, reserve=False); place("rowboat", 83, 75, reserve=False)
-    place("rowboat", 22, 76, px=2, reserve=False); place("rowboat", 14, 74, reserve=False)
-    for (bx, by) in ((70, 69), (78, 77), (92, 70), (55, 72), (104, 72)):
+    # --- fishermen's quarter & harbour ---
+    building("ref_cabin_c", 64, 61, "bjorn_closed", door_id="door_bjorn")
+    building("ref_cabin_b_f", 76, 60)
+    building("boathouse", 94, 60)
+    building("warehouse", 108, 60, "warehouse_closed", door_id="door_warehouse")
+    building("ref_cabin_d_f", 56, 52)
+    building("ref_thatch_f", 64, 52)
+    for (fx, fy) in ((72, 52), (79, 52), (98, 52), (105, 52)):
+        place("laundry" if fx % 2 else "net_rack", fx, fy)
+    place("net_rack", 80, 62); place("fish_rack", 59, 62); place("fish_rack", 99, 62)
+    place("lobster_pot", 72, 63, reserve=False); place("lobster_pot", 73, 64, reserve=False)
+    place("rope", 88, 62, reserve=False); place("rope", 101, 66, reserve=False)
+    place("crates", 89, 61, interact="harbor_crates"); place("crate", 91, 62); place("barrel", 84, 62)
+    place("barrel", 110, 62); place("crates", 112, 61, interact="warehouse_drop")
+    interact("harbor_crates", 89, 61, 2, 2)
+    interact("warehouse_drop", 111, 60, 3, 3)
+    tspot("crate_pile", 90, 63)
+    at("ref_boat_a", 74, 66, reserve=False)
+    at("ref_boat_b", 90, 68, reserve=False)
+    at("ref_boat_c", 97, 67, reserve=False)
+    at("ref_boat_d", 99, 73, reserve=False)
+    at("ref_boat_a_f", 107, 69, reserve=False)
+    at("ref_boat_d_f", 64, 73, reserve=False)
+    place("sailboat", 110, 72, reserve=False)
+    at("ref_boat_c", 68, 64, reserve=False, interact="bjorn_boat")
+    interact("bjorn_boat", 67, 62, 3, 2)
+    for (bx, by) in ((80, 70), (94, 77), (112, 68), (60, 70)):
         place("buoy", bx, by, reserve=False)
-    for (px_, py_) in ((61, 81), (62, 81), (85, 81), (86, 81), (87, 72), (98, 74), (99, 74), (19, 81), (20, 81)):
-        place("post", px_, py_, px=5, py=2, reserve=False)
-    for (ix, iy) in ((36, 86), (112, 80), (140, 86), (128, 90)):
+    for (ix, iy) in ((36, 84), (120, 84), (140, 86), (70, 86)):
         place("islet", ix, iy, reserve=False)
-    place("net_rack", 46, 58); place("net_rack", 76, 59)
-    place("fish_rack", 56, 57); place("fish_rack", 82, 57)
-    place("lobster_pot", 58, 60, reserve=False); place("lobster_pot", 59, 61, reserve=False)
-    place("rope", 63, 63, reserve=False); place("rope", 84, 62, reserve=False)
-    place("crates", 83, 59, interact="harbor_crates"); place("crate", 81, 60); place("barrel", 78, 61)
-    place("barrel", 95, 60); place("crates", 95, 57, interact="warehouse_drop")
-    interact("harbor_crates", 83, 59, 2, 2)
-    interact("warehouse_drop", 94, 57, 3, 3)
-    tspot("crate_pile", 84, 61)
-    interact("fishing_spot", 61, 81, 2, 1)
-    interact("fishing_spot", 85, 81, 2, 1)
-    interact("fishing_spot", 98, 74, 2, 1)
-    interact("paint_harbor", 61, 79, 2, 2)
-    interact("bjorn_boat", 61, 68, 2, 2)
+    interact("fishing_spot", 86, 71, 2, 1)
+    interact("fishing_spot", 102, 75, 2, 1)
+    interact("fishing_spot", 70, 66, 2, 1)
+    interact("paint_harbor", 94, 69, 3, 2)
 
-    # --- Gideon's yard ---
-    place("woodpile", 101, 49, interact="woodpile")
-    place("chopping_block", 103, 52, interact="chop_wood")
-    place("fence_broken", 111, 50, oid="broken_fence", show_if=["!fence_fixed"], interact="broken_fence")
-    place("fence", 111, 50, show_if=["fence_fixed"])
-    for fx in (112, 113):
-        place("fence", fx, 50)
-    place("fence_post", 114, 50, px=2)
-    place("barrel", 105, 51, px=-4)
-    tspot("home_yard", 109.5, 55)
+    # --- Gideon's home on the eastern edge ---
+    building("ref_cabin_a", 110, 50, "spawn_home_in", door_id="door_home", show_if=["!roof_fixed"])
+    building("ref_cabin_warm", 110, 50, show_if=["roof_fixed", "!ending"])
+    building("ref_cabin_c_f", 110, 50, show_if=["ending"])
+    objects.append({"type": "door", "id": "door_home_fixed", "to": "spawn_home_in",
+                    "x": objects[-1]["x"] + SPR["ref_cabin_c_f"]["door"][0] - 8,
+                    "y": objects[-1]["y"] + SPR["ref_cabin_c_f"]["door"][1] - 6, "w": 16, "h": 14, "show_if": ["roof_fixed"]})
+    place("woodpile", 104, 51, interact="woodpile")
+    place("chopping_block", 105, 53, interact="chop_wood")
+    place("fence_broken", 113, 52, oid="broken_fence", show_if=["!fence_fixed"], interact="broken_fence")
+    place("fence", 113, 52, show_if=["fence_fixed"])
+    place("fence", 114, 52)
+    place("barrel", 107, 51, px=-4)
+    tspot("home_yard", 108.5, 54)
 
-    # --- smithy ---
-    place("anvil", 39, 39, interact="anvil")
-    place("barrel", 32, 39)
-
-    # --- herbs ---
-    herb_spots = [(12, 18), (22, 20), (8, 14), (33, 15), (48, 12), (80, 13), (26, 40), (124, 50), (140, 46), (128, 12)]
-    for i, (hx, hy) in enumerate(herb_spots):
-        hx, hy = nearest_walkable(hx, hy)
-        place("herb", hx, hy, oid=f"herb_{i}", interact=f"herb_{i}", show_if=[f"!d_herb_{i}"])
-
-    # --- west farm & paddock ---
-    for fx in range(2, 20):
-        place("fence", fx, 36)
-        place("fence", fx, 42)
-    for fx in range(2, 25):
+    # --- west: farm fields, paddock, herbalist ---
+    for fx in range(2, 22):
+        place("fence", fx, 34)
+    for fx in range(2, 22):
         place("fence", fx, 49)
-    place("haystack", 16, 38)
-    for (sx_, sy_) in ((5, 38), (9, 39), (12, 38)):
+    place("haystack", 18, 36)
+    for (sx_, sy_) in ((5, 36), (9, 37), (12, 36)):
         place("sheep", sx_, sy_, oid=f"sheep_{sx_}", interact="sheep", reserve=False, extra={"wander": 24})
-    place("horse", 7, 40, interact="horse", reserve=False, extra={"wander": 14})
-    place("sign", 1, 42, interact="sign_west")
+    place("horse", 7, 37, interact="horse", reserve=False, extra={"wander": 14})
+    place("sign", 1, 41, interact="sign_west")
+    building("ref_thatch", 15, 50, "herbalist_closed", door_id="door_astrid")
+    place("garden", 19, 47, reserve=False)
+    building("ref_cabin_b", 30, 36)
+    building("shed", 8, 31)
+
+    # --- beach & old mine south of the river ---
+    place("mine_entrance", 6, 59, interact="mine")
+    at("ref_ruin", 34, 62, interact="ruins")
+    place("rowboat", 26, 70, reserve=False); place("rowboat", 10, 69, reserve=False)
+
+    # --- the waterfall and the view bench (north) ---
+    place("waterfall", 116, 1, px=2, reserve=False)
+    interact("paint_waterfall", 114, 8, 3, 3)
+    tspot("paint_waterfall", 114, 10, "right")
+    place("bench", 104, 7, interact="paint_hills_view")
+    tspot("paint_hills", 105, 8.5, "up")
 
     # --- east: gate, farm, barn, wreck ---
-    place("gate", 115, 44, oid="bridge_gate_a", show_if=["!bridge_open"], interact="bridge_gate", py=-6,
+    place("gate", 117, 33, oid="bridge_gate_a", show_if=["!bridge_open"], interact="bridge_gate", py=-6,
           extra={"block": [0, 0, 16, 32]})
-    place("footprints", 133, 26, oid="footprints", reserve=False, interact="footprints")
-    place("fence_broken", 124, 28); place("fence_post", 127, 28); place("fence_broken", 130, 28)
-    place("iron_chest", 143, 24, oid="iron_chest", show_if=["q_smith_started", "!got_iron_tools"], interact="iron_chest")
-    place("haystack", 143, 20); place("shed", 144, 30)
-    place("rock_big", 122, 14); place("rock_big", 146, 38)
-    place("wreck", 131, 72, interact="wreck")
-    place("debris", 127, 74, reserve=False); place("debris", 140, 75, reserve=False)
-    interact("barn_window", 134, 24, 2, 2)
-    place("smoke", 125, 27, oid="farm_smoke", show_if=["ch3", "!ending"], reserve=False, px=8 + 54, py=-6)
+    building("ref_cabin_old", 129, 27, "spawn_farmhouse_in", door_id="door_farmhouse")
+    building("barn", 140, 21, "spawn_barn_in", door_id="door_barn")
+    place("footprints", 137, 23, oid="footprints", reserve=False, interact="footprints")
+    place("fence_broken", 125, 30); place("fence_post", 128, 30); place("fence_broken", 133, 30)
+    place("iron_chest", 145, 25, oid="iron_chest", show_if=["q_smith_started", "!got_iron_tools"], interact="iron_chest")
+    place("haystack", 146, 18)
+    at("ref_ruin", 146, 34)
+    place("wreck", 128, 74, interact="wreck")
+    place("debris", 124, 78, reserve=False); place("debris", 136, 79, reserve=False)
+    interact("barn_window", 136, 18, 2, 3)
+    place("smoke", 128, 18, oid="farm_smoke", show_if=["ch3", "!ending"], reserve=False, px=4, py=-6)
 
-    # --- interiors (same furniture as before, shifted to the interior block) ---
+    # --- interiors (unchanged) ---
     place("bed_patched", 122 + IX, 5, interact="gideon_bed", show_if=["!debts_paid"])
     place("bed", 122 + IX, 5, interact="gideon_bed", show_if=["debts_paid"])
     place("wall_map", 124 + IX, 2, reserve=False, py=12, show_if=["debts_paid"])
@@ -598,7 +505,7 @@ def build_objects():
 
 def doors_out():
     for o in objects:
-        if o.get("type") == "door" and o["id"].startswith("door_"):
+        if o.get("type") == "door" and o["id"].startswith("door_") and not o["id"].endswith("_fixed"):
             spot(f"spawn_{o['id'][5:]}_out", o["x"] + 8, o["y"] + 26, "down")
 
 
@@ -611,29 +518,36 @@ def npc_spots():
     t("study_desk_spot", 127.5 + IX, 22, "up"); t("cabinet_spot", 133 + IX, 20.6, "up")
     t("floorboard_spot", 150.5 + IX, 22.5, "down"); t("bed", 123.5 + IX, 7.5, "left")
     # village
-    t("bjorn_dock", 61.5, 66, "down"); t("bjorn_harbor", 70, 61, "left")
-    t("bjorn_boat_spot", 61.5, 69, "right")
-    t("leif_smithy", 37, 41, "left"); t("astrid_cottage", 19, 18.5, "down")
-    t("einar_church", 57.5, 35.5, "down"); t("runa_house", 69, 33, "down")
-    t("henrik_cart", 57, 42.5, "left"); t("jonas_harbor", 56, 62, "right"); t("jonas_square", 65, 37, "left")
-    t("halldor_estate", 102, 19.5, "down"); t("gunnar_field", 12, 44, "down"); t("olafur_road", 2, 43.5, "right")
-    t("elias_square", 65, 43, "left"); t("elias_estate", 99, 19.5, "down")
-    t("clara_square", 60, 36.5, "down"); t("clara_paint", 61.5, 75, "down"); t("margaret_shop", 55, 40, "right")
-    t("woodpile_spot", 102.5, 51.5, "up"); t("fence_spot", 111.5, 51.6, "up"); t("coat_spot", 64.5, 46.4, "up")
-    t("ending_view", 108.5, 55, "up"); t("church_door", 55, 34.5, "up")
+    t("bjorn_dock", 86.5, 66, "down"); t("bjorn_harbor", 82, 63, "left"); t("bjorn_boat_spot", 68, 63.5, "down")
+    t("bjorn_inn_evening", 78, 27, "down")
+    t("leif_smithy", 62, 32, "left"); t("astrid_cottage", 18, 51, "down"); t("astrid_herbs", 30, 46, "left")
+    t("einar_church", 70, 48.5, "down"); t("runa_house", 100, 47.5, "down"); t("runa_square", 94, 30, "left")
+    t("henrik_cart", 71, 34, "left"); t("jonas_harbor", 80, 63.5, "right"); t("jonas_square", 85, 29, "left")
+    t("jonas_inn_evening", 73, 26.5, "right")
+    t("halldor_estate", 44, 22.5, "down"); t("gunnar_field", 12, 41, "down"); t("olafur_road", 2, 40.5, "right")
+    t("elias_square", 79, 35.5, "left"); t("elias_estate", 37, 22.5, "down")
+    t("clara_square", 83, 33, "down"); t("clara_paint", 86.5, 68, "down"); t("margaret_shop", 90, 26, "down")
+    t("woodpile_spot", 105.5, 52, "up"); t("fence_spot", 113.5, 53.6, "up"); t("coat_spot", 87.5, 36.4, "up")
+    t("ending_view", 108.5, 54, "up"); t("church_door", 71, 48, "up")
     # the east and the night chase
-    t("worker_a", 132.5, 27, "right"); t("worker_b", 133, 29, "right")
-    t("elias_farm", 135, 27.5, "right"); t("edmund_farm", 140.5, 26.5, "left")
-    t("gideon_farm", 138.5, 28.5, "left"); t("jonas_farm", 136, 30, "up")
-    t("follow_start", 110, 45, "right")
-    t("elias_walk_0", 114, 44.5, "right"); t("elias_walk_1", 122, 44.5, "right"); t("elias_walk_2", 128, 41, "right")
-    t("elias_walk_3", 134, 35, "up"); t("elias_walk_4", 137.5, 25.5, "up")
-    t("barn_window", 134.5, 26, "up")
-    # nudge every outdoor spot onto a walkable tile
+    t("worker_a", 135.5, 26, "right"); t("worker_b", 136, 28, "right")
+    t("elias_farm", 138, 26.5, "right"); t("edmund_farm", 142.5, 23, "left")
+    t("gideon_farm", 141.5, 26.5, "left"); t("jonas_farm", 139, 28, "up")
+    t("follow_start", 108, 37, "right")
+    t("elias_walk_0", 112, 33.5, "right"); t("elias_walk_1", 122, 33.5, "right"); t("elias_walk_2", 128, 31.5, "right")
+    t("elias_walk_3", 135, 24, "right"); t("elias_walk_4", 140, 22, "up")
+    t("barn_window", 137, 21, "up")
+    # ambient villagers' routines
+    for name, (x, y) in {"amb_fish_1": (95, 62), "amb_fish_2": (60, 63), "amb_fish_3": (103, 73), "amb_fish_4": (77, 63),
+                         "amb_farm_1": (10, 44), "amb_farm_2": (16, 38), "amb_trade_1": (93, 29), "amb_trade_2": (70, 30),
+                         "amb_child_1": (80, 31), "amb_child_2": (58, 56), "amb_square_1": (88, 33), "amb_square_2": (74, 36),
+                         "amb_inn_1": (70, 26.5), "amb_inn_2": (80, 26.5), "amb_road_1": (50, 40), "amb_road_2": (100, 34)}.items():
+        t(name, x, y, "down")
     for name, s in spots.items():
         tx, ty = s["x"] // TS, s["y"] // TS
-        if not walkable(tx, ty):
-            nx, ny = nearest_walkable(tx, ty, avoid_occupied=False)
+        exit_spot = name.startswith("spawn_") and name.endswith("_out")   # stands on the doorstep on purpose
+        if not walkable(tx, ty) or (occupied[ty, tx] and tx < 150 and not exit_spot):
+            nx, ny = nearest_walkable(tx, ty, avoid_occupied=tx < 150 and not exit_spot)
             print(f"note: moved spot {name} from {tx},{ty} to {nx},{ny}")
             s["x"], s["y"] = nx * TS + 8, ny * TS + 8
 
@@ -644,106 +558,111 @@ def build_zones():
     zone("study_in", "مكتب إلياس", 121 + IX, 16, 138 + IX, 27, indoor=True, music="estate")
     zone("farmhouse_in", "بيت المزرعة المهجور", 142 + IX, 17, 153 + IX, 26, indoor=True, music="mystery")
     zone("barn_in", "الحظيرة", 121 + IX, 31, 138 + IX, 43, indoor=True, music="mystery")
-    zone("harbor", "الميناء", 46, 56, 116, 91)
-    zone("church", "الكنيسة", 43, 22, 59, 33)
-    zone("square", "ساحة القرية", 50, 32, 74, 48)
-    zone("estate", "ضيعة إلياس", 88, 6, 117, 31, music="estate")
-
-    zone("home", "منزل غيديون", 100, 45, 116, 56)
-    zone("farm", "المزرعة المهجورة", 121, 12, 149, 36, music="mystery")
-    zone("wreck", "حطام السفينة", 119, 60, 149, 91, music="mystery")
-    zone("hills", "التلال الشرقية", 119, 0, 149, 91, music="mystery")
-    zone("falls", "الشلال", 30, 5, 49, 32)
-    zone("plateau", "المرتفعات الشمالية", 0, 5, 87, 23)
-    zone("fields", "الحقول الغربية", 0, 24, 26, 64)
-    zone("beach", "الشاطئ", 0, 65, 46, 91)
+    zone("harbor", "الميناء", 52, 50, 116, 91)
+    zone("church", "الكنيسة", 58, 38, 76, 49)
+    zone("square", "ساحة القرية", 64, 12, 103, 38)
+    zone("estate", "ضيعة إلياس", 18, 3, 66, 24, music="estate")
+    zone("home", "منزل غيديون", 102, 40, 116, 56)
+    zone("farm", "المزرعة المهجورة", 120, 10, 149, 38, music="mystery")
+    zone("wreck", "حطام السفينة", 118, 60, 149, 91, music="mystery")
+    zone("hills", "التلال الشرقية", 118, 0, 149, 91, music="mystery")
+    zone("falls", "الشلال", 104, 0, 120, 14)
+    zone("fields", "الحقول الغربية", 0, 25, 34, 52)
+    zone("beach", "الشاطئ", 0, 53, 51, 91)
     zone("village", "هرافنفيك", 0, 0, 149, 99)
+
+
+def scatter_trees():
+    """Forests of reference oaks and firs. Trunks block movement; canopies never cover roofs."""
+    oaks = ["ref_oak_a", "ref_oak_b", "ref_oak_c", "ref_oak_a_f", "ref_oak_b_f", "ref_oak_c_f"]
+    pines = ["ref_pine_a", "ref_pine_b", "ref_pine_a_f", "ref_pine_b_f"]
+
+    def can_tree(name, cx, by):
+        m = SPR[name]
+        x0 = int((cx * TS - m["w"] * 0.42) // TS)
+        x1 = int((cx * TS + m["w"] * 0.42) // TS)
+        y0 = int((by * TS - m["oy"] * 0.85) // TS)
+        if not (-2 <= x0 and x1 < 152 and by >= 2 and by < H):
+            return False
+        if covered[max(0, y0):by + 1, max(0, x0):x1 + 1].any():
+            return False
+        tile = g[by, int(cx)]
+        if tile not in ".hg^":
+            return False
+        near = g[max(0, by - 1):by + 2, max(0, int(cx) - 1):int(cx) + 2]
+        if np.isin(near, list("=pkbdsSrP~")).any():
+            return False
+        if occupied[max(0, by - 1):by + 2, max(0, int(cx) - 1):int(cx) + 2].any():
+            return False
+        return True
+
+    def forest(x0, y0, x1, y1, density, kinds, step):
+        for y in range(y0, y1 + 1, step):
+            for x in range(x0, x1 + 1, step):
+                cx = x + rng.uniform(0, step)
+                by = int(y + rng.uniform(0, step))
+                if rng.random() > density:
+                    continue
+                name = rng.choice(kinds)
+                if can_tree(name, cx, by):
+                    at(name, cx, by + 0.6)
+                    occupied[by, int(cx)] = True
+
+    big = oaks * 2 + pines
+    forest(0, 2, 149, 6, 1.0, big, 3)             # northern forest edge
+    forest(0, 5, 149, 10, 0.9, big, 4)
+    forest(0, 3, 18, 33, 0.9, big, 4)             # north-west woods
+    forest(0, 50, 45, 70, 0.75, oaks + pines, 5)  # woods along the western river
+    forest(26, 41, 58, 53, 0.55, oaks, 6)         # between the fields and the church
+    forest(66, 3, 82, 13, 0.7, big, 5)
+    forest(88, 3, 112, 12, 0.6, big, 5)
+    forest(102, 13, 114, 31, 0.55, big, 5)        # east of the square
+    forest(118, 2, 149, 12, 0.9, big, 4)          # eastern hills
+    forest(118, 38, 149, 74, 0.85, big, 4)
+    forest(142, 10, 149, 40, 0.9, big, 4)         # eastern forest wall
+    forest(46, 49, 54, 62, 0.5, pines, 4)
 
 
 def scatter_decor():
     free = lambda x, y: g[y, x] in ".hg" and not occupied[y, x]
-
-    def forest(x0, y0, x1, y1, density, kinds, step=2):
-        for y in range(y0, y1 + 1, step):
-            for x in range(x0, x1 + 1, step):
-                xx, yy = x + rng.randrange(0, step), y + rng.randrange(0, step)
-                if xx >= W or yy >= H or not free(xx, yy):
-                    continue
-                near = g[max(0, yy - 1):yy + 3, max(0, xx - 1):xx + 2]
-                if np.isin(near, list("=pkbdsrSP#")).any():
-                    continue
-                if occupied[max(0, yy - 2):yy + 3, max(0, xx - 1):xx + 2].any():
-                    continue
-                if rng.random() < density:
-                    k = rng.choice(kinds)
-                    place(k, xx, yy, px=-8, py=-SPR[k]["oy"] + 14)
-                    occupied[max(0, yy - 1):yy + 1, xx:xx + 2] = True
-    pines = ["pine", "pine_dark", "pine"]
-    forest(0, 6, 150, 10, 0.75, pines)                       # mountain foot
-    forest(0, 11, 12, 22, 0.55, pines)
-    forest(30, 11, 50, 18, 0.45, pines + ["pine_small"])
-    forest(78, 6, 88, 21, 0.5, pines)
-    forest(110, 6, 117, 30, 0.55, pines)
-    forest(118, 6, 150, 13, 0.6, pines + ["pine_small"])
-    forest(119, 44, 150, 60, 0.45, pines + ["pine_small", "oak"])
-    forest(0, 24, 4, 36, 0.5, pines)
-    forest(36, 24, 42, 34, 0.4, ["oak", "pine"])
-    forest(26, 52, 40, 66, 0.35, ["oak", "pine_small", "pine"])
-    forest(100, 56, 116, 62, 0.35, ["pine", "oak"])
-    forest(84, 24, 92, 32, 0.25, ["oak"])
-    forest(14, 26, 22, 35, 0.35, ["pine", "oak"])
-    forest(88, 36, 99, 45, 0.3, ["oak", "pine"])
-    forest(44, 24, 52, 35, 0.3, ["pine", "oak"])
-    forest(74, 26, 86, 34, 0.25, ["oak"])
-    forest(52, 6, 90, 21, 0.18, ["pine", "pine_small"])
-    forest(0, 24, 116, 66, 0.12, ["pine", "oak", "pine_small", "pine_dark"], step=3)
-    forest(0, 63, 40, 68, 0.3, ["pine_small", "oak"])
-    # rocks along the cliff bases, bushes, flowers
-    for x in range(0, 118):
-        cy = cliff_y.get(x)
-        if cy and rng.random() < 0.3 and free(x, cy + 3):
-            place(rng.choice(["rock", "rock_big", "rock"]), x, cy + 3, py=-6)
-        if cy and rng.random() < 0.25 and free(x, cy - 1):
-            place(rng.choice(["rock", "bush"]), x, cy - 1, py=4)
-    for _ in range(620):
-        x, y = rng.randrange(0, 150), rng.randrange(6, 72)
+    for _ in range(700):
+        x, y = rng.randrange(0, 150), rng.randrange(4, 76)
         if not free(x, y):
             continue
         if np.isin(g[max(0, y - 1):y + 2, max(0, x - 1):x + 2], list("=pkbdS")).any():
             continue
         k = rng.random()
-        if k < 0.22:
+        if k < 0.12:
             place(rng.choice(["rock", "rock", "rock_big"]), x, y)
-        elif k < 0.48:
+        elif k < 0.3:
             place(rng.choice(["bush", "bush_berry"]), x, y)
+        elif k < 0.36 and x < 118:
+            at("ref_stump", x + 0.5, y + 0.8)
         else:
             place(rng.choice(["flowers_a", "flowers_b"]), x, y, reserve=False)
     shell_i = 0
-    for _ in range(800):
-        x, y = rng.randrange(0, 150), rng.randrange(60, 92)
+    for _ in range(1500):
+        x, y = rng.randrange(0, 150), rng.randrange(55, 92)
         if g[y, x] == "s" and not occupied[y, x] and shell_i < 8:
             place("shell", x, y, oid=f"shell_{shell_i}", interact=f"shell_{shell_i}", show_if=[f"!shell_{shell_i}_taken"], px=3, py=4)
             shell_i += 1
             occupied[y, x] = True
-    # sparkles on the water
-    for _ in range(70):
-        x, y = rng.randrange(0, 150), rng.randrange(64, 99)
-        if g[y, x] == "~":
-            place("sparkle", x, y, px=rng.randrange(0, 8), py=rng.randrange(0, 12), reserve=False)
 
 
 def hidden_collectibles():
-    coins = [(9, 15), (45, 21), (73, 30), (113, 40), (24, 57), (52, 12), (140, 50), (130, 25), (100, 59), (6, 46), (146, 14), (33, 74)]
+    coins = [(9, 15), (45, 30), (73, 40), (113, 40), (24, 57), (52, 12), (140, 50), (130, 20), (100, 57), (6, 46), (146, 14), (33, 66)]
     for k, (x, y) in enumerate(coins):
         x, y = nearest_walkable(x, y)
         place("coin_pickup", x, y, oid=f"coin_{k}", interact=f"coin_{k}", show_if=[f"!coin_{k}_taken"], reserve=False, px=3, py=3)
         occupied[y, x] = True
-    for gid, (x, y) in {"lost_compass": (57, 62), "collect_letter_church": (51, 31),
-                        "collect_journal_1": (145, 33), "collect_journal_2": (141, 74),
-                        "collect_carving": (24, 19), "collect_fishing_gear": (24, 73),
-                        "collect_property_farm": (152 + IX - 35 + 35, 24), "collect_photo_inn": (154 + IX, 12)}.items():
-        if gid == "collect_property_farm":
-            x = 152 + IX
+    herb_spots = [(12, 26), (22, 30), (8, 18), (33, 45), (48, 28), (80, 10), (26, 44), (124, 50), (140, 46), (128, 12)]
+    for i, (hx, hy) in enumerate(herb_spots):
+        hx, hy = nearest_walkable(hx, hy)
+        place("herb", hx, hy, oid=f"herb_{i}", interact=f"herb_{i}", show_if=[f"!d_herb_{i}"])
+    for gid, (x, y) in {"lost_compass": (72, 64), "collect_letter_church": (66, 46),
+                        "collect_journal_1": (145, 30), "collect_journal_2": (138, 76),
+                        "collect_carving": (28, 30), "collect_fishing_gear": (40, 68),
+                        "collect_property_farm": (152 + IX, 24), "collect_photo_inn": (154 + IX, 12)}.items():
         x, y = nearest_walkable(x, y)
         cond = [f"!{gid}_taken"] + (["got_detector"] if gid in ("collect_carving", "collect_fishing_gear") else [])
         place("glint", x, y, oid=gid, interact=gid, show_if=cond, reserve=False, px=2, py=2, extra={"glint": True})
@@ -758,7 +677,7 @@ def build(sprite_meta, out_root):
     npc_spots()
     build_zones()
     hidden_collectibles()
-    dress_buildings()
+    scatter_trees()
     scatter_decor()
     for name, s in spots.items():
         tx, ty = s["x"] // TS, s["y"] // TS
@@ -766,12 +685,11 @@ def build(sprite_meta, out_root):
             print("WARN spot on blocked tile:", name, tx, ty, g[ty, tx])
     with open(f"{out_root}/data/map.txt", "w") as f:
         f.write("\n".join("".join(r) for r in g))
+    img = paint(g, TS, CRISP)
+    chunks = save_chunks(img, f"{out_root}/assets/world")
     world = {"tile": TS, "width": W, "height": H, "blocked": "".join(sorted(BLOCKED)),
-             "outdoor": [0, 0, OUT_W * TS, OUT_H * TS],
+             "outdoor": [0, 0, OUT_W * TS, OUT_H * TS], "ground": chunks, "ground_res": 2,
              "objects": objects, "spots": spots, "zones": zones}
     with open(f"{out_root}/data/world.json", "w") as f:
         json.dump(world, f, ensure_ascii=False, indent=0)
-    ground, mask = paint(g, TS, CRISP)
-    ground.save(f"{out_root}/assets/world/ground.png")
-    mask.save(f"{out_root}/assets/world/water_mask.png")
     return world

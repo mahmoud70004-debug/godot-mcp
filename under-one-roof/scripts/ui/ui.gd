@@ -13,6 +13,7 @@ const GOLD := Color(0.93, 0.74, 0.30)
 
 static var _icons: Texture2D
 static var _icon_index := {}
+static var _res := 1.0
 
 
 static func panel_style(bg := PAPER, border := WOOD, width := 3, radius := 5) -> StyleBoxFlat:
@@ -79,11 +80,13 @@ static func icon(item: String) -> Texture2D:
 		_icons = load("res://assets/ui/icons.png")
 		var meta = JSON.parse_string(FileAccess.get_file_as_string("res://data/sprites.json"))
 		_icon_index = meta["icons"]
+		_res = float(meta.get("res", 1))
 	var name: String = Story.ITEMS.get(item, {}).get("icon", item)
 	var i := int(_icon_index.get(name, 0))
 	var at := AtlasTexture.new()
 	at.atlas = _icons
-	at.region = Rect2((i % 8) * 16, (i / 8) * 16, 16, 16)
+	var s := 16 * int(_res)
+	at.region = Rect2((i % 8) * s, (i / 8) * s, s, s)
 	return at
 
 

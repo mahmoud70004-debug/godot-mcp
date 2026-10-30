@@ -1,9 +1,22 @@
-"""Paints the ground layer (terrain with organic edges) from the tile grid."""
+"""Paints the ground from the tile grid using materials synthesised from the art reference
+(tools/materials/*.png, see gen_materials.py).
+
+Rendered at RES x world resolution and cut into CHUNK x CHUNK textures
+(assets/world/ground_<cx>_<cy>.png). The alpha channel of each chunk marks water
+(used by the water shimmer shader), everything else is opaque.
+"""
+import os
+import cv2
 import numpy as np
 from PIL import Image
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+RES = 2
+CHUNK = 1024
+
 
 def value_noise(h, w, cell, seed):
+    """Smooth value noise of shape (h, w) (kept for the world generator)."""
     r = np.random.RandomState(seed)
     gh, gw = h // cell + 2, w // cell + 2
     grid = r.rand(gh, gw)
@@ -19,208 +32,244 @@ def value_noise(h, w, cell, seed):
     return top * (1 - ty[:, None]) + bot * ty[:, None]
 
 
+class Noise:
+    """Value noise evaluated at arbitrary pixel coordinates (lattice cached)."""
+
+    def __init__(self, h, w, cell, seed):
+        self.cell = cell
+        self.grid = np.random.RandomState(seed).rand(h // cell + 3, w // cell + 3).astype(np.float32)
+
+    def at(self, ys, xs):
+        fy, fx = ys / self.cell, xs / self.cell
+        y0, x0 = fy.astype(int), fx.astype(int)
+        ty, tx = fy - y0, fx - x0
+        ty = ty * ty * (3 - 2 * ty)
+        tx = tx * tx * (3 - 2 * tx)
+        g = self.grid
+        a = g[y0, x0] * (1 - tx) + g[y0, x0 + 1] * tx
+        b = g[y0 + 1, x0] * (1 - tx) + g[y0 + 1, x0 + 1] * tx
+        return a * (1 - ty) + b * ty
+
+
+def load_materials():
+    mats = {}
+    for f in os.listdir(os.path.join(HERE, "materials")):
+        if f.endswith(".png"):
+            mats[f[:-4]] = np.array(Image.open(os.path.join(HERE, "materials", f)).convert("RGB")).astype(np.float32)
+    return mats
+
+
+def sample(mat, ys, xs, scale=1.0, ox=0, oy=0):
+    h, w, _ = mat.shape
+    return mat[((ys * scale + oy).astype(int)) % h, ((xs * scale + ox).astype(int)) % w]
+
+
+def plank_floor(ys, xs, horizontal, base, dark, light, size):
+    """Wooden planks (bridges, piers, interior floors)."""
+    out = np.empty(ys.shape + (3,), np.float32)
+    out[:] = base
+    a = ys if horizontal else xs
+    b = xs if horizontal else ys
+    seam = (a % size) < RES
+    out[seam] = dark
+    row = (a // size).astype(int)
+    joint = ((b + row * 37) % (size * 7)) < RES
+    out[joint] = dark
+    grain = ((b * 0.5 + row * 13 + (a % size) * 3) % 11) < 1
+    out[grain & ~seam] = out[grain & ~seam] * 0.92
+    hl = (a % size) == RES
+    out[hl] = light
+    return out
+
+
 def paint(g, TS, CRISP):
     H, W = g.shape
-    PH, PW = H * TS, W * TS
-    rs = np.random.RandomState(42)
-    Y, X = np.mgrid[0:PH, 0:PW]
+    PH, PW = H * TS * RES, W * TS * RES
+    mats = load_materials()
     chars = sorted(set("".join(g.flatten())) | set(".hgf=psbd~rP#^oOcDVUYWXSk"))
     idx = {ch: i for i, ch in enumerate(chars)}
-    gi = np.vectorize(idx.get)(g)
+    gi = np.vectorize(idx.get)(g).astype(np.uint8)
+    crisp_ids = np.array([idx[ch] for ch in CRISP if ch in idx])
+    wx_n = Noise(PH, PW, 20 * RES, 1)
+    wy_n = Noise(PH, PW, 20 * RES, 2)
+    big_n = Noise(PH, PW, 90 * RES, 3)
+    mid_n = Noise(PH, PW, 26 * RES, 4)
+    det_n = Noise(PH, PW, 7 * RES, 5)
+    STRIP = 128
 
-    wx = (value_noise(PH, PW, 10, 1) - 0.5) * 9
-    wy = (value_noise(PH, PW, 10, 2) - 0.5) * 9
-    tc = gi[Y // TS, X // TS]
-    txw = np.clip(((X + wx) // TS).astype(int), 0, W - 1)
-    tyw = np.clip(((Y + wy) // TS).astype(int), 0, H - 1)
-    tw = gi[tyw, txw]
-    crisp_ids = [idx[ch] for ch in CRISP if ch in idx]
-    crisp_c = np.isin(tc, crisp_ids)
-    crisp_w = np.isin(tw, crisp_ids)
-    T = np.where(crisp_c | crisp_w, tc, tw)
+    # ---- pass 1: terrain id per output pixel ----
+    # Soft labels: each terrain's tile mask is blurred at 1 sample / world px and the
+    # strongest one wins, so tile staircases become rounded, organic shorelines and
+    # paths; a fine coordinate warp then roughens the edges. Crisp tiles (floors,
+    # piers, stairs...) keep exact tile borders.
+    LH, LW = H * TS * RES, W * TS * RES
+    best = np.full((LH, LW), -1.0, np.float32)
+    lab = np.zeros((LH, LW), np.uint8)
+    soft_n = Noise(LH, LW, 9 * RES, 6)
+    jitter = np.empty((LH, LW), np.float32)
+    for y0 in range(0, LH, STRIP * 2):
+        lys, lxs = np.mgrid[y0:min(LH, y0 + STRIP * 2), 0:LW].astype(np.float32)
+        jitter[y0:y0 + STRIP * 2] = (soft_n.at(lys, lxs) - 0.5) * 0.34
+    del lys, lxs
+    for ch, i in idx.items():
+        m = (gi == i)
+        if not m.any():
+            continue
+        up = cv2.resize(m.astype(np.float32), (LW, LH), interpolation=cv2.INTER_NEAREST)
+        if i not in crisp_ids:
+            up = cv2.GaussianBlur(up, (0, 0), TS * RES * 0.42) + jitter
+        better = up > best
+        best[better] = up[better]
+        lab[better] = i
+    del best, jitter
+    T = np.zeros((PH, PW), np.uint8)
+    for y0 in range(0, PH, STRIP):
+        ys, xs = np.mgrid[y0:min(PH, y0 + STRIP), 0:PW].astype(np.float32)
+        tc = gi[(ys // (TS * RES)).astype(int), (xs // (TS * RES)).astype(int)]
+        wx = (wx_n.at(ys, xs) - 0.5) * 5 * RES
+        wy = (wy_n.at(ys, xs) - 0.5) * 5 * RES
+        lx = np.clip((xs + wx).astype(int), 0, LW - 1)
+        ly = np.clip((ys + wy).astype(int), 0, LH - 1)
+        tw = lab[ly, lx]
+        crisp = np.isin(tc, crisp_ids) | np.isin(tw, crisp_ids)
+        T[y0:y0 + STRIP] = np.where(crisp, tc, tw)
 
-    img = np.zeros((PH, PW, 3), dtype=np.float32)
-    n1 = value_noise(PH, PW, 24, 3)
-    n2 = value_noise(PH, PW, 6, 4)
-    rnd = rs.rand(PH, PW)
+    water_ids = [idx[c] for c in "~rP" if c in idx]
+    water = np.isin(T, water_ids)
+    dist_land = cv2.distanceTransform(water.astype(np.uint8), cv2.DIST_L2, 5) / RES   # in world px
+    river = np.isin(T, [idx[c] for c in "rP" if c in idx])
+    dist_river = cv2.distanceTransform((~river).astype(np.uint8), cv2.DIST_L2, 5) / RES
+    blk = np.isin(T, [idx[c] for c in "#^" if c in idx])
+    dist_blk = cv2.distanceTransform((~blk).astype(np.uint8), cv2.DIST_L2, 5) / RES
 
-    def put(ch, rgb):
-        if ch in idx:
-            m = T == idx[ch]
-            img[m] = rgb[m] if rgb.ndim == 3 else rgb
+    img = np.zeros((PH, PW, 4), np.uint8)
+    for y0 in range(0, PH, STRIP):
+        y1 = min(PH, y0 + STRIP)
+        ys, xs = np.mgrid[y0:y1, 0:PW].astype(np.float32)
+        t = T[y0:y1]
+        col = np.zeros(ys.shape + (3,), np.float32)
+        bn = big_n.at(ys, xs)
+        mn = mid_n.at(ys, xs)
+        dn = det_n.at(ys, xs)
 
-    def blend3(c1, c2, c3, a, b):
-        c1, c2, c3 = (np.array(v, dtype=np.float32) for v in (c1, c2, c3))
-        out = c1[None, None, :] * (1 - a[..., None]) + c2[None, None, :] * a[..., None]
-        return out * (1 - b[..., None]) + c3[None, None, :] * b[..., None]
+        def put(ch, rgb):
+            if ch in idx:
+                m = t == idx[ch]
+                col[m] = rgb[m]
 
-    # grass
-    grass = blend3((104, 166, 76), (122, 182, 86), (86, 146, 66), n1, (n2 > 0.72) * 0.6)
-    grass[(rnd < 0.05)] = (82, 140, 60)
-    grass[(rnd > 0.985)] = (146, 200, 104)
-    tuft = (((X % 7) == 3) & ((Y % 9) < 2) & (n2 > 0.55))
-    grass[tuft] = (74, 128, 56)
-    put(".", grass)
-    hill = blend3((112, 158, 78), (134, 170, 88), (94, 136, 70), n1, (n2 > 0.7) * 0.5)
-    hill[(rnd < 0.05)] = (88, 126, 62)
-    hill[tuft] = (80, 116, 58)
-    put("h", hill)
-    tall = blend3((78, 130, 60), (96, 146, 66), (64, 108, 52), n1, n2 * 0.4)
-    blades = ((X + (Y // 3)) % 4 == 0) & (rnd < 0.6)
-    tall[blades] = (58, 98, 46)
-    tall[(rnd > 0.97)] = (170, 180, 96)
-    put("g", tall)
-    farm = np.zeros((PH, PW, 3), np.float32)
-    farm[:] = (122, 86, 56)
-    farm[(Y % 8) < 3] = (98, 68, 44)
-    farm[((Y % 8) == 5) & (X % 6 < 2)] = (90, 150, 70)
-    put("f", farm)
-    # paths
-    dirt = blend3((200, 166, 116), (186, 150, 102), (214, 182, 132), n1, (n2 > 0.75) * 0.5)
-    dirt[rnd < 0.03] = (160, 128, 90)
-    dirt[rnd > 0.99] = (230, 210, 170)
-    put("=", dirt)
-    # cobblestones
-    row = Y // 6
-    offs = (row % 2) * 4
-    cx = (X + offs) // 8
-    stone_rand = np.random.RandomState(9).rand(PH // 6 + 1, PW // 8 + 2)
-    sv = stone_rand[row, cx]
-    cob = blend3((168, 160, 150), (150, 142, 134), (186, 178, 166), sv, (sv > 0.8) * 0.5)
-    mortar = ((Y % 6) == 0) | (((X + offs) % 8) == 0)
-    cob[mortar] = (118, 112, 106)
-    put("p", cob)
-    small = ((Y // 4) % 2) * 2
-    kv = np.random.RandomState(19).rand(PH // 4 + 1, PW // 5 + 2)[Y // 4, (X + small) // 5]
-    kob = blend3((178, 164, 140), (158, 146, 124), (196, 184, 160), kv, (kv > 0.85) * 0.4)
-    kob[((Y % 4) == 0) | (((X + small) % 5) == 0)] = (124, 112, 96)
-    put("k", kob)
-    stairs = np.zeros((PH, PW, 3), np.float32)
-    stairs[:] = (176, 170, 162)
-    stairs[(Y % 6) < 2] = (128, 122, 116)
-    stairs[(Y % 6) == 2] = (204, 198, 190)
-    put("S", stairs)
-    sand = blend3((236, 218, 168), (226, 204, 150), (244, 230, 190), n1, (n2 > 0.8) * 0.4)
-    sand[rnd < 0.02] = (200, 180, 130)
-    put("s", sand)
-    # mountain rock / cliffs
-    rockc = blend3((112, 116, 132), (96, 100, 116), (136, 140, 152), n1, (rnd < 0.15) * 0.6)
-    put("^", rockc)
-    strata = ((Y + (n2 * 6).astype(int)) % 5 == 0)
-    cliff = blend3((134, 118, 104), (112, 98, 88), (88, 76, 70), n2, strata * 0.7)
-    cliff[(rnd < 0.04)] = (160, 146, 128)
-    cm = T == idx["#"]
-    top_edge = cm & ~np.roll(cm, 3, axis=0)
-    lip = cm & ~np.roll(cm, 1, axis=0)
-    cliff[top_edge] = (156, 142, 124)
-    cliff[lip] = (86, 140, 64)
-    bot = cm & ~np.roll(cm, -2, axis=0)
-    cliff[bot] = cliff[bot] * 0.7
-    put("#", cliff)
-    # wood: bridge, docks, floors
-    plank_v = np.zeros((PH, PW, 3), np.float32)
-    plank_v[:] = (150, 104, 64)
-    plank_v[(X % 6) == 0] = (104, 70, 44)
-    plank_v[((X % 6) == 3) & (rnd < 0.1)] = (176, 128, 82)
-    put("b", plank_v)
-    plank_h = np.zeros((PH, PW, 3), np.float32)
-    plank_h[:] = (156, 110, 68)
-    plank_h[(Y % 5) == 0] = (102, 70, 44)
-    plank_h[((Y % 5) == 2) & ((X + (Y // 5) * 7) % 23 == 0)] = (102, 70, 44)
-    put("d", plank_h)
-    floor = np.zeros((PH, PW, 3), np.float32)
-    floor[:] = (168, 122, 78)
-    floor[(Y % 6) == 0] = (124, 86, 54)
-    floor[((Y % 6) == 3) & ((X + (Y // 6) * 11) % 29 == 0)] = (124, 86, 54)
-    floor[rnd < 0.02] = (186, 140, 92)
-    put("o", floor)
-    old = np.zeros((PH, PW, 3), np.float32)
-    old[:] = (126, 104, 82)
-    old[(Y % 6) == 0] = (78, 62, 48)
-    old[rnd < 0.06] = (104, 88, 70)
-    old[(n2 > 0.8)] = (150, 136, 100)
-    put("O", old)
-    parq = np.zeros((PH, PW, 3), np.float32)
-    parq[:] = (128, 70, 50)
-    parq[((X // 4 + Y // 4) % 2) == 0] = (146, 84, 58)
-    parq[(X % 4 == 0) | (Y % 4 == 0)] = (100, 54, 40)
-    put("c", parq)
-    mat = np.zeros((PH, PW, 3), np.float32)
-    mat[:] = (150, 60, 50)
-    mat[(X % 4) < 2] = (170, 80, 60)
-    put("D", mat)
-    # walls
-    wallp = np.zeros((PH, PW, 3), np.float32)
-    wallp[:] = (220, 206, 168)
-    wallp[(X % 8) == 0] = (200, 184, 146)
-    wallp[(Y % TS) > 10] = (130, 92, 60)
-    wallp[(Y % TS) == 11] = (100, 70, 46)
-    put("V", wallp)
-    fine = np.zeros((PH, PW, 3), np.float32)
-    fine[:] = (96, 112, 92)
-    fine[((X % 8) == 0) | (((X + 4) % 8 == 0) & ((Y % 8) == 4))] = (122, 140, 112)
-    fine[(Y % TS) > 10] = (92, 54, 40)
-    fine[(Y % TS) == 11] = (200, 170, 100)
-    put("Y", fine)
-    plankw = np.zeros((PH, PW, 3), np.float32)
-    plankw[:] = (110, 80, 56)
-    plankw[(X % 7) == 0] = (78, 56, 40)
-    plankw[rnd < 0.05] = (90, 66, 46)
-    put("U", plankw)
-    put("W", np.zeros((PH, PW, 3), np.float32) + np.array((58, 40, 32), np.float32))
-    put("X", np.zeros((PH, PW, 3), np.float32) + np.array((14, 12, 16), np.float32))
+        grass = sample(mats["grass"], ys, xs)
+        gdark = sample(mats["grass_dark"], ys, xs, ox=171, oy=93)
+        mix_g = np.clip((bn - 0.35) * 2.2, 0, 1)[..., None] * 0.55
+        g_col = grass * (1 - mix_g) + gdark * mix_g
+        g_col *= (0.93 + 0.14 * mn)[..., None]
+        put(".", g_col)
+        put("h", g_col * np.array([1.03, 1.01, 0.92]))
+        mix_d = np.clip(0.35 + (bn - 0.5) * 1.6 + (mn - 0.5) * 0.5, 0.15, 0.85)[..., None]
+        put("g", (g_col * (1 - mix_d) + gdark * mix_d) * 0.94)
+        put("^", gdark * 0.72)
+        dirt = sample(mats["dirt"], ys, xs) * (0.95 + 0.1 * mn)[..., None]
+        put("=", dirt)
+        farm = dirt * 0.82
+        fur = (ys % (8 * RES)) < 3 * RES
+        farm[fur] *= 0.72
+        sprout = ((ys % (8 * RES)) == 5 * RES) & ((xs % (6 * RES)) < 2 * RES)
+        farm[sprout] = farm[sprout] * 0.4 + np.array([70, 120, 50]) * 0.6
+        put("f", farm)
+        cob = sample(mats["cobble"], ys, xs) * (0.95 + 0.1 * dn)[..., None]
+        put("p", cob)
+        put("k", cob * np.array([1.05, 1.03, 1.0]))
+        put("s", sample(mats["sand"], ys, xs) * (0.96 + 0.08 * mn)[..., None])
+        cliff = sample(mats["cobble"], ys, xs, scale=0.6, ox=55) * np.array([0.82, 0.78, 0.72])
+        put("#", cliff)
+        st = np.empty(ys.shape + (3,), np.float32)
+        st[:] = (150, 145, 136)
+        st[(ys % (6 * RES)) < 2 * RES] = (92, 88, 82)
+        st[(ys % (6 * RES)) == 2 * RES] = (186, 180, 170)
+        put("S", st)
+        put("b", plank_floor(ys, xs, False, (128, 92, 58), (66, 46, 30), (160, 120, 80), 7 * RES))
+        put("d", plank_floor(ys, xs, True, (122, 88, 56), (60, 42, 28), (150, 112, 74), 6 * RES))
+        put("o", plank_floor(ys, xs, True, (150, 108, 70), (100, 70, 46), (172, 128, 86), 6 * RES))
+        put("O", plank_floor(ys, xs, True, (112, 92, 72), (70, 56, 44), (130, 112, 88), 6 * RES))
+        parq = np.empty(ys.shape + (3,), np.float32)
+        parq[:] = (128, 70, 50)
+        parq[((xs // (4 * RES) + ys // (4 * RES)) % 2) == 0] = (146, 84, 58)
+        put("c", parq)
+        mat_ = np.empty(ys.shape + (3,), np.float32)
+        mat_[:] = (150, 60, 50)
+        mat_[(xs % (4 * RES)) < 2 * RES] = (170, 80, 60)
+        put("D", mat_)
+        wall = np.empty(ys.shape + (3,), np.float32)
+        wall[:] = (206, 190, 150)
+        wall[(xs % (8 * RES)) < RES] = (180, 162, 124)
+        wall[(ys % (TS * RES)) > 10 * RES] = (120, 84, 56)
+        put("V", wall)
+        fine = np.empty(ys.shape + (3,), np.float32)
+        fine[:] = (92, 108, 88)
+        fine[(xs % (8 * RES)) < RES] = (116, 132, 106)
+        fine[(ys % (TS * RES)) > 10 * RES] = (88, 52, 38)
+        put("Y", fine)
+        plk = plank_floor(ys, xs, False, (104, 76, 54), (70, 50, 36), (124, 92, 64), 7 * RES)
+        put("U", plk)
+        put("W", np.zeros(ys.shape + (3,), np.float32) + (54, 38, 30))
+        put("X", np.zeros(ys.shape + (3,), np.float32) + (14, 12, 16))
 
-    # water (sea, river, pond) with depth from distance to land
-    water_ids = [idx[ch] for ch in "~rP" if ch in idx]
-    wm = np.isin(T, water_ids)
-    land = ~wm
-    dist = np.full((PH, PW), 40, np.float32)
-    cur = land.copy()
-    for d in range(1, 40):
-        nxt = cur.copy()
-        nxt[1:, :] |= cur[:-1, :]; nxt[:-1, :] |= cur[1:, :]
-        nxt[:, 1:] |= cur[:, :-1]; nxt[:, :-1] |= cur[:, 1:]
-        newly = nxt & ~cur
-        dist[newly] = d
-        cur = nxt
-        if d > 30:
-            break
-    t = np.clip(dist / 30.0, 0, 1)[..., None]
-    shallow = np.array((72, 176, 214), np.float32)
-    deep = np.array((26, 82, 158), np.float32)
-    water = shallow * (1 - t) + deep * t
-    river = (T == idx.get("r", -1)) | (T == idx.get("P", -1))
-    water[river] = water[river] * 0.6 + np.array((84, 170, 210), np.float32) * 0.4
-    waves = (np.sin(X * 0.21 + np.sin(Y * 0.05) * 3) > 0.92) & ((Y % 9) == 0) & (rnd < 0.7)
-    water[waves] = water[waves] * 0.5 + 0.5 * np.array((210, 236, 245), np.float32)
-    foam = dist <= 2
-    water[foam] = (226, 244, 246)
-    foam2 = (dist == 3) & (rnd < 0.5)
-    water[foam2] = (180, 228, 236)
-    # darker water under docks & below cliffs
-    dock = T == idx.get("d", -1)
-    shadow = np.zeros_like(dock)
-    for k in range(1, 5):
-        shadow[k:, :] |= dock[:-k, :]
-    water[shadow & wm] *= 0.72
-    img[wm] = water[wm]
+        # water
+        dl = dist_land[y0:y1]
+        wm = water[y0:y1]
+        rv = river[y0:y1]
+        sea = sample(mats["sea"], ys, xs)
+        deep = sample(mats["sea_deep"], ys, xs, ox=90)
+        td = np.clip(dl / 60.0, 0, 1)[..., None]
+        sea_col = sea * (1 - td) + deep * td * 0.92
+        shallow = np.clip(1 - dl / 9.0, 0, 1)[..., None]
+        sea_col = sea_col * (1 - shallow * 0.45) + np.array([120, 170, 170]) * shallow * 0.45
+        riv = sample(mats["river"], ys, xs)
+        pond = sample(mats["pond"], ys, xs)
+        wcol = np.where(rv[..., None], riv, sea_col)
+        if "P" in idx:
+            wcol = np.where((t == idx["P"])[..., None], pond, wcol)
+        # white foam line along every shore, with broken wisps
+        foam_w = 2.2 + 1.4 * dn
+        foam = dl <= foam_w
+        wcol[foam & wm] = wcol[foam & wm] * 0.25 + np.array([236, 244, 240]) * 0.75
+        wisp = (dl > foam_w + 1) & (dl < foam_w + 3.5) & (dn > 0.62)
+        wcol[wisp & wm] = wcol[wisp & wm] * 0.55 + np.array([220, 236, 236]) * 0.45
+        col[wm] = wcol[wm]
 
-    # ambient shading: darken grass just under cliffs / mountains, light rim on cliff tops
-    blk = np.isin(T, [idx[ch] for ch in "#^" if ch in idx])
-    for k in range(1, 9):
-        under = np.zeros_like(blk)
-        under[k:, :] |= blk[:-k, :]
-        under &= ~blk & ~wm
-        img[under] *= 0.97 if k > 3 else 0.9
-    # bridge rails
-    bm = T == idx.get("b", -1)
-    edge_top = bm & ~np.roll(bm, 2, axis=0)
-    edge_bot = bm & ~np.roll(bm, -2, axis=0)
-    img[edge_top | edge_bot] = (92, 60, 38)
-    # dock edges
-    de = dock & (~np.roll(dock, 1, axis=0) | ~np.roll(dock, -1, axis=0) | ~np.roll(dock, 1, axis=1) | ~np.roll(dock, -1, axis=1))
-    img[de] = (96, 64, 40)
+        # land near water: wet sand on beaches, dark earthy banks along rivers
+        land = ~wm
+        dr = dist_river[y0:y1]
+        bank = land & (dr < 4.0) & ~np.isin(t, [idx[c] for c in "bdS" if c in idx])
+        k = np.clip(1 - dr / 4.0, 0, 1)[..., None]
+        col[bank] = (col * (1 - k * 0.75) + np.array([72, 60, 40]) * k * 0.75)[bank]
+        # ambient occlusion under cliffs / dense forest edges
+        db = dist_blk[y0:y1]
+        ao = land & (db > 0) & (db < 10)
+        col[ao] = col[ao] * (0.78 + 0.22 * np.clip(db[ao] / 10.0, 0, 1))[..., None]
 
-    out = np.clip(img, 0, 255).astype(np.uint8)
-    mask = (wm & (dist > 2)).astype(np.uint8) * 255
-    return Image.fromarray(out, "RGB"), Image.fromarray(mask, "L")
+        img[y0:y1, :, :3] = np.clip(col, 0, 255).astype(np.uint8)
+        img[y0:y1, :, 3] = np.where(wm & (dl > 2.5), 150, 255)
+    return img
+
+
+def save_chunks(img, out_dir):
+    """Writes ground_<cx>_<cy>.png chunks (skipping empty void ones) + .import presets."""
+    os.makedirs(out_dir, exist_ok=True)
+    for f in os.listdir(out_dir):
+        if f.startswith("ground_") and (f.endswith(".png") or f.endswith(".png.import")):
+            os.remove(os.path.join(out_dir, f))
+    PH, PW = img.shape[:2]
+    chunks = []
+    for cy in range(0, PH, CHUNK):
+        for cx in range(0, PW, CHUNK):
+            c = img[cy:cy + CHUNK, cx:cx + CHUNK]
+            if (c[..., :3].max(axis=2) < 20).all():
+                continue
+            name = f"ground_{cx // CHUNK}_{cy // CHUNK}.png"
+            Image.fromarray(c, "RGBA").save(os.path.join(out_dir, name), optimize=False, compress_level=6)
+            with open(os.path.join(out_dir, name + ".import"), "w") as f:
+                f.write('[remap]\n\nimporter="texture"\ntype="CompressedTexture2D"\n\n'
+                        f'[deps]\n\nsource_file="res://assets/world/{name}"\n\n'
+                        '[params]\n\ncompress/mode=2\nmipmaps/generate=false\n')
+            chunks.append([cx // RES, cy // RES, name])
+    return chunks

@@ -3,6 +3,10 @@ extends Node2D
 ##   data/map.txt      terrain grid -> static collisions
 ##   data/world.json   sprites, doors, interactables, named spots and zones
 ##   data/sprites.json sprite sizes / footprints
+## The ground is painted in chunks (assets/world/ground_*.png) at `ground_res` x world
+## resolution; sprites are stored at `res` x and drawn scaled down, so the world keeps
+## its proportions at any camera zoom. Buildings and tree canopies fade out while the
+## player walks behind them.
 ## Objects with a `show_if` condition are shown or hidden whenever story flags change.
 
 const TS := 16
@@ -32,6 +36,10 @@ var _glows: Array = []
 var _time := 0.0
 var _tex_cache := {}
 var _blocked := ""
+var _occluders: Array = []     # [root, Rect2 (world, the part drawn above the base line)]
+var _shadow_tex: Texture2D
+var player_ref: Node2D
+var _astar: AStarGrid2D
 
 
 func _ready() -> void:
@@ -42,15 +50,18 @@ func _ready() -> void:
 	zones = data["zones"]
 	_blocked = data["blocked"]
 
-	var ground := Sprite2D.new()
-	ground.texture = load("res://assets/world/ground.png")
-	ground.centered = false
-	ground.z_index = -10
 	var water := ShaderMaterial.new()
 	water.shader = load("res://assets/shaders/water.gdshader")
-	water.set_shader_parameter("water_mask", load("res://assets/world/water_mask.png"))
-	ground.material = water
-	add_child(ground)
+	var gres := float(data.get("ground_res", 1))
+	for c in data["ground"]:
+		var ground := Sprite2D.new()
+		ground.texture = load("res://assets/world/" + str(c[2]))
+		ground.centered = false
+		ground.position = Vector2(c[0], c[1])
+		ground.scale = Vector2.ONE / gres
+		ground.z_index = -10
+		ground.material = water
+		add_child(ground)
 	reflections = Node2D.new()
 	reflections.z_index = -7
 	add_child(reflections)
@@ -66,10 +77,12 @@ func _ready() -> void:
 	_build_collisions()
 	for o in data["objects"]:
 		_build_object(o)
+	_build_nav()
 	_spawn_npcs()
 	_spawn_gulls()
 	Game.flags_changed.connect(refresh)
 	Game.time_changed.connect(_update_glows)
+	Game.time_changed.connect(_place_npcs)
 	refresh()
 	_update_glows()
 
@@ -144,6 +157,50 @@ func _add_rect(body: CollisionObject2D, r: Rect2) -> CollisionShape2D:
 	return cs
 
 
+# ---------------------------------------------------------------- navigation
+## Tile grid for villagers' daily walks: blocked terrain plus every permanent footprint.
+func _build_nav() -> void:
+	_astar = AStarGrid2D.new()
+	_astar.region = Rect2i(0, 0, int(data["width"]), int(data["height"]))
+	_astar.cell_size = Vector2(TS, TS)
+	_astar.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_ONLY_IF_NO_OBSTACLES
+	_astar.update()
+	for y in grid.size():
+		for x in grid[y].length():
+			if _blocked.contains(grid[y][x]):
+				_astar.set_point_solid(Vector2i(x, y))
+	for o in data["objects"]:
+		if not o.has("sprite") or o.has("show_if"):
+			continue
+		var m: Dictionary = sprites["sprites"][o["sprite"]]
+		var bases: Array = m.get("bases", [m["base"]] if m.has("base") else [])
+		for b in bases:
+			var r := Rect2(float(o["x"]) + b[0], float(o["y"]) + b[1], b[2], b[3])
+			for ty in range(int(r.position.y) / TS, int(r.end.y - 1) / TS + 1):
+				for tx in range(int(r.position.x) / TS, int(r.end.x - 1) / TS + 1):
+					if _astar.is_in_boundsv(Vector2i(tx, ty)):
+						_astar.set_point_solid(Vector2i(tx, ty))
+
+
+## World-space path between two points (falls back to a straight line).
+func find_path(from: Vector2, to: Vector2) -> PackedVector2Array:
+	var a := Vector2i(from / TS)
+	var b := Vector2i(to / TS)
+	var out := PackedVector2Array()
+	if _astar != null and _astar.is_in_boundsv(a) and _astar.is_in_boundsv(b):
+		var was_a := _astar.is_point_solid(a)
+		var was_b := _astar.is_point_solid(b)
+		_astar.set_point_solid(a, false)
+		_astar.set_point_solid(b, false)
+		var ids := _astar.get_id_path(a, b)
+		_astar.set_point_solid(a, was_a)
+		_astar.set_point_solid(b, was_b)
+		for i in range(1, ids.size() - 1):
+			out.append(Vector2(ids[i]) * TS + Vector2(TS, TS) * 0.5)
+	out.append(to)
+	return out
+
+
 # ---------------------------------------------------------------- objects
 func _build_object(o: Dictionary) -> void:
 	var entry := {"cond": o.get("show_if", null), "nodes": [], "shapes": [], "areas": []}
@@ -167,6 +224,7 @@ func _build_object(o: Dictionary) -> void:
 		spr.texture = _tex("res://assets/sprites/%s.png" % o["sprite"])
 		spr.centered = false
 		spr.position = Vector2(0, -oy)
+		spr.scale = Vector2.ONE / float(m.get("res", 1))
 		if m.has("frames"):
 			spr.hframes = int(m["frames"])
 			_animated.append([spr, float(m["fps"]), int(m["frames"]), randf() * 3.0])
@@ -178,16 +236,29 @@ func _build_object(o: Dictionary) -> void:
 		else:
 			entities.add_child(root)
 		entry["nodes"].append(root)
-		var base = o.get("block", m.get("base", null))
-		if base != null:
+		if m.has("shadow"):
+			entry["nodes"].append(_add_shadow(root, m["shadow"], oy))
+		var bases: Array = []
+		if o.has("block"):
+			var b: Array = o["block"]
+			bases.append([b[0], b[1] + 6, b[2], b[3]])
+		elif m.has("bases"):
+			bases = m["bases"]
+		elif m.has("base"):
+			bases.append(m["base"])
+		if not bases.is_empty():
 			var body := StaticBody2D.new()
 			body.collision_layer = L_WORLD
 			body.collision_mask = 0
 			root.add_child(body)
-			var r := Rect2(base[0], base[1] - oy, base[2], base[3])
-			if o.has("block"):
-				r = Rect2(base[0], base[1] - oy + 6, base[2], base[3])
-			entry["shapes"].append(_add_rect(body, r))
+			for base in bases:
+				entry["shapes"].append(_add_rect(body, Rect2(base[0], base[1] - oy, base[2], base[3])))
+		if m.get("tree", false) or (m.has("bases") and int(m["h"]) > 60):
+			# canopy / roof area that may hide the player
+			var bottom := float(oy) - 4.0
+			if not m.get("tree", false):
+				bottom = float(m["bases"][0][1]) + 18.0
+			_occluders.append([root, Rect2(float(o["x"]) + 6.0, float(o["y"]), float(m["w"]) - 12.0, bottom)])
 		if o.has("interact"):
 			var ar := Rect2(o["x"] - 4, o["y"] - 2, int(m["w"]) + 8, int(m["h"]) + 6)
 			if int(m["h"]) > 40:
@@ -212,7 +283,8 @@ func _add_reflection(o: Dictionary, m: Dictionary, spr: Sprite2D) -> void:
 	r.hframes = spr.hframes
 	r.centered = false
 	r.flip_v = true
-	r.scale = Vector2(1, 0.8)
+	var res := float(m.get("res", 1))
+	r.scale = Vector2(1, 0.8) / res
 	var h := int(m["h"])
 	var waterline := float(o["y"]) + float(m["oy"]) - 2.0
 	r.position = Vector2(o["x"], waterline - (h - 1 - int(m["oy"])) * 0.8)
@@ -221,6 +293,29 @@ func _add_reflection(o: Dictionary, m: Dictionary, spr: Sprite2D) -> void:
 	var tw := create_tween().set_loops()
 	tw.tween_property(r, "skew", 0.05, 1.6).set_trans(Tween.TRANS_SINE)
 	tw.tween_property(r, "skew", -0.05, 1.6).set_trans(Tween.TRANS_SINE)
+
+
+## Soft elliptical contact shadow under buildings, trees and large props.
+func _add_shadow(root: Node2D, sh: Array, oy: int) -> Sprite2D:
+	if _shadow_tex == null:
+		var tex := GradientTexture2D.new()
+		tex.width = 64
+		tex.height = 64
+		tex.fill = GradientTexture2D.FILL_RADIAL
+		tex.fill_from = Vector2(0.5, 0.5)
+		tex.fill_to = Vector2(1.0, 0.5)
+		var grad := Gradient.new()
+		grad.set_color(0, Color(0.05, 0.06, 0.03, 0.42))
+		grad.add_point(0.55, Color(0.05, 0.06, 0.03, 0.22))
+		grad.set_color(grad.get_point_count() - 1, Color(0.05, 0.06, 0.03, 0.0))
+		tex.gradient = grad
+		_shadow_tex = tex
+	var s := Sprite2D.new()
+	s.texture = _shadow_tex
+	s.position = root.position + Vector2(float(sh[0]), float(sh[1]) - oy)
+	s.scale = Vector2(float(sh[2]) / 64.0, float(sh[3]) / 64.0)
+	decals.add_child(s)
+	return s
 
 
 func _spawn_gulls() -> void:
@@ -296,6 +391,14 @@ func _wander(root: Node2D, spr: Sprite2D, radius: float) -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
+	if player_ref != null and is_instance_valid(player_ref):
+		var p := player_ref.global_position
+		for oc in _occluders:
+			var root: Node2D = oc[0]
+			var hide: bool = root.visible and p.y < root.position.y and (oc[1] as Rect2).has_point(p + Vector2(0, -8))
+			var target := 0.45 if hide else 1.0
+			if not is_equal_approx(root.modulate.a, target):
+				root.modulate.a = move_toward(root.modulate.a, target, delta * 3.0)
 	for a in _animated:
 		var spr: Sprite2D = a[0]
 		if spr.is_visible_in_tree():
@@ -356,6 +459,7 @@ func _spawn_npcs() -> void:
 		n.sheet = def.get("sheet", id)
 		n.wander_radius = def.get("wander", 0.0)
 		n.idle_action = def.get("action", [])
+		n.world = self
 		entities.add_child(n)
 		npcs[id] = n
 
@@ -379,7 +483,16 @@ func _place_npcs() -> void:
 			n.set_present(false)
 			n.current_spot = ""
 		else:
+			var was_here: bool = n.visible and n.current_spot != ""
 			n.set_present(true)
 			if n.current_spot != s:
 				n.current_spot = s
-				n.teleport(spot_pos(s), spot_dir(s))
+				var target := spot_pos(s)
+				var out := outdoor_rect()
+				if was_here and not Game.fast and out.has_point(n.position) and out.has_point(target):
+					n.travel(find_path(n.position, target), spot_dir(s))   # walks over on its own
+				else:
+					n.teleport(target, spot_dir(s))
+				n.patrol.clear()
+				for p in Story.NPCS[id].get("patrol", []):
+					n.patrol.append(spot_pos(p))

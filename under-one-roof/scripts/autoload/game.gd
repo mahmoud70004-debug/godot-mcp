@@ -31,7 +31,7 @@ var player_spot := "game_start"
 var player_pos := Vector2.ZERO
 const DEFAULT_SETTINGS := {
 	"music": 0.7, "sfx": 0.8, "music_on": true, "menu_track": "village", "lang": "",
-	"text_speed": 1, "vibrate": true, "keep_on": true, "fullscreen": true, "touch": true,
+	"text_speed": 1, "vibrate": true, "keep_on": true, "fullscreen": true, "touch": true, "zoom": 1.0,
 }
 const TEXT_DELAYS := [0.045, 0.022, 0.01, 0.0]   # slow, normal, fast, instant
 var settings := DEFAULT_SETTINGS.duplicate()
@@ -202,7 +202,7 @@ func _term(t: String) -> bool:
 		if i > 0:
 			var key := t.substr(0, i)
 			var val := int(t.substr(i + op.length()))
-			var have := money if key == "money" else counter(key)
+			var have := money if key == "money" else (hour() if key == "hour" else counter(key))
 			match op:
 				">=": return have >= val
 				"<=": return have <= val

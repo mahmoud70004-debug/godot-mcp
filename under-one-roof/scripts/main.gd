@@ -28,6 +28,7 @@ func _ready() -> void:
 	Director.main = self
 	player = PLAYER_SCENE.instantiate()
 	world.entities.add_child(player)
+	world.player_ref = player
 	hud.player = player
 	player.target_changed.connect(func(a): hud.set_prompt(Director.prompt_for(a)))
 	touch.action_pressed.connect(func(): player.interact())

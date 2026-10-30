@@ -106,7 +106,7 @@ func shop(items: Array, title: String) -> void:
 		ic.texture = UI.icon(it["id"])
 		ic.custom_minimum_size = Vector2(24, 24)
 		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-		ic.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+		ic.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		row.add_child(ic)
 		var def: Dictionary = Story.ITEMS.get(it["id"], {})
 		var info := UI.label("%s — %s" % [Loc.t(def.get("name", it["id"])), Loc.t(it.get("blurb", def.get("desc", "")))], 12)
