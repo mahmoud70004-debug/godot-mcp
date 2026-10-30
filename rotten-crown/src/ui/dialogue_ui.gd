@@ -31,7 +31,11 @@ var _speaker: Label
 var _entity_text: Label
 var _static: AudioStreamPlayer
 var _sfx: AudioStreamPlayer
+var _voice: AudioStreamPlayer
 var _rng := RandomNumberGenerator.new()
+## Bumped when the scene changes: a line still playing from the old scene stops.
+var _generation := 0
+var _insets := Vector4.ZERO
 
 
 func _ready() -> void:
@@ -41,7 +45,15 @@ func _ready() -> void:
 	_build()
 	_place()
 	get_viewport().size_changed.connect(_place)
+	# Safe-area insets can change without a resize (a 180 degree flip, late browser bars).
+	var poll := Timer.new()
+	poll.wait_time = 1.0
+	poll.autostart = true
+	poll.timeout.connect(_on_inset_poll)
+	add_child(poll)
 	Events.dialogue_requested.connect(_on_requested)
+	Events.menu_state_changed.connect(_on_menu_state_changed)
+	SceneLoader.scene_changed.connect(_on_scene_changed)
 
 
 ## Keep clear of notches and the browser bar (UiSafeArea) whenever the screen changes.
@@ -51,7 +63,28 @@ func _place() -> void:
 	_thought.offset_top = _thought.offset_bottom - THOUGHT_HEIGHT
 	_panel.offset_bottom = -bottom - PANEL_GAP
 	_panel.offset_top = _panel.offset_bottom - PANEL_HEIGHT
-	_panel.remove_meta(&"home")
+	_insets = UiSafeArea.insets()
+
+
+func _on_inset_poll() -> void:
+	if UiSafeArea.insets() != _insets:
+		_place()
+
+
+## Pause menu, lore reader, death screen: they draw below this layer, so step aside.
+func _on_menu_state_changed(is_open: bool) -> void:
+	visible = not is_open
+
+
+func _on_scene_changed(_path: String) -> void:
+	_generation += 1
+	_queue.clear()
+	_playing = false
+	_thought.visible = false
+	_panel.visible = false
+	offset = Vector2.ZERO
+	_static.stop()
+	_voice.stop()
 
 
 func _on_requested(lines: Array) -> void:
@@ -62,19 +95,22 @@ func _on_requested(lines: Array) -> void:
 
 func _play_queue() -> void:
 	_playing = true
+	var gen := _generation
 	while not _queue.is_empty():
 		var line := _queue.pop_front() as DialogueLine
 		if line == null:
 			continue
 		if line.style == DialogueLine.Style.ENTITY:
-			await _show_entity(line)
+			await _show_entity(line, gen)
 		else:
-			await _show_thought(line)
+			await _show_thought(line, gen)
+		if gen != _generation:
+			return
 	_playing = false
 	Events.dialogue_finished.emit()
 
 
-func _show_thought(line: DialogueLine) -> void:
+func _show_thought(line: DialogueLine, gen: int) -> void:
 	_thought.text = line.text
 	_thought.visible_ratio = 0.0
 	_thought.modulate.a = 1.0
@@ -83,13 +119,16 @@ func _show_thought(line: DialogueLine) -> void:
 	reveal.tween_property(_thought, "visible_ratio", 1.0, line.text.length() / CHARS_PER_SECOND)
 	await reveal.finished
 	await get_tree().create_timer(line.hold, false).timeout
+	if gen != _generation:
+		return
 	var out := create_tween()
 	out.tween_property(_thought, "modulate:a", 0.0, FADE)
 	await out.finished
-	_thought.visible = false
+	if gen == _generation:
+		_thought.visible = false
 
 
-func _show_entity(line: DialogueLine) -> void:
+func _show_entity(line: DialogueLine, gen: int) -> void:
 	_speaker.text = _corrupt(line.speaker.to_upper(), 0.25) if line.speaker != "" else "???"
 	_entity_text.text = ""
 	_panel.modulate.a = 0.0
@@ -100,7 +139,9 @@ func _show_entity(line: DialogueLine) -> void:
 	var appear := create_tween()
 	appear.tween_property(_panel, "modulate:a", 1.0, 0.12)
 	await appear.finished
-	_play(_sfx, voice)
+	if gen != _generation:
+		return
+	_play(_voice, voice)
 	# The words arrive wrong and settle into the real line, letter by letter.
 	var steps := maxi(line.text.length(), 1)
 	var dt := 1.0 / CHARS_PER_SECOND
@@ -109,6 +150,8 @@ func _show_entity(line: DialogueLine) -> void:
 		_entity_text.text = line.text.substr(0, known) + _corrupt(line.text.substr(known, 4), 1.0)
 		_jitter()
 		await get_tree().create_timer(dt, false).timeout
+		if gen != _generation:
+			return
 	_entity_text.text = line.text
 	var left := line.hold
 	while left > 0.0:
@@ -116,25 +159,28 @@ func _show_entity(line: DialogueLine) -> void:
 		var step := _rng.randf_range(0.08, 0.3)
 		await get_tree().create_timer(step, false).timeout
 		left -= step
+		if gen != _generation:
+			return
 	_play(_sfx, STATIC_BURST)
 	var out := create_tween()
 	out.tween_property(_panel, "modulate:a", 0.0, 0.18)
 	await out.finished
+	if gen != _generation:
+		return
 	_panel.visible = false
-	_panel.position = _panel.get_meta(&"home", _panel.position)
+	offset = Vector2.ZERO
+	_panel.self_modulate = Color.WHITE
 	_static.stop()
 
 
-## A short glitch: the window slips a few pixels and the light stutters.
+## A short glitch: the window slips a few pixels and the light stutters. The whole
+## layer moves (the subtitle is hidden meanwhile), so the anchored layout is untouched.
 func _jitter() -> void:
-	var home: Vector2 = _panel.get_meta(&"home", _panel.position)
-	if not _panel.has_meta(&"home"):
-		_panel.set_meta(&"home", home)
 	if _rng.randf() < 0.35:
-		_panel.position = home + Vector2(_rng.randi_range(-3, 3), _rng.randi_range(-1, 1))
+		offset = Vector2(_rng.randi_range(-3, 3), _rng.randi_range(-1, 1))
 		_panel.self_modulate = Color(1.0, _rng.randf_range(0.7, 1.0), _rng.randf_range(0.7, 1.0))
 	else:
-		_panel.position = home
+		offset = Vector2.ZERO
 		_panel.self_modulate = Color.WHITE
 
 
@@ -213,3 +259,7 @@ func _build() -> void:
 	_sfx.bus = &"SFX"
 	_sfx.volume_db = -6.0
 	add_child(_sfx)
+	_voice = AudioStreamPlayer.new()
+	_voice.bus = &"SFX"
+	_voice.volume_db = -6.0
+	add_child(_voice)

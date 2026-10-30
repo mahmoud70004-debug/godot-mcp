@@ -52,6 +52,10 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	if state == State.DEAD:
+		# Killed mid-leap: the body still falls to the ground.
+		if not is_on_floor():
+			velocity = Vector3(0.0, velocity.y - _gravity * delta, 0.0)
+			move_and_slide()
 		return
 	_state_time += delta
 	_cooldown = maxf(_cooldown - delta, 0.0)
@@ -78,7 +82,9 @@ func _physics_process(delta: float) -> void:
 					if _skitter_moving:
 						desired = to_target.normalized() * data.chase_speed
 		State.WINDUP:
-			_face(to_target, delta, data.turn_speed * 0.4)
+			# A slam is already aimed at the ground it marked: turning would drag the blow away.
+			if data.attack_style != EnemyData.AttackStyle.SLAM:
+				_face(to_target, delta, data.turn_speed * 0.4)
 			_tremble()
 			if _state_time >= data.attack_windup:
 				_change_state(State.ATTACK)
@@ -109,6 +115,7 @@ func _change_state(new_state: State) -> void:
 		rig.position = Vector3.ZERO
 		if new_state != State.ATTACK:
 			_clear_telegraph()
+			_restore_attack_shape()
 	state = new_state
 	_state_time = 0.0
 	match new_state:
@@ -161,8 +168,11 @@ func _begin_attack_style() -> void:
 	match data.attack_style:
 		EnemyData.AttackStyle.LEAP:
 			velocity.y = data.leap_up_speed
+			# Leave the ground already moving, or the leap falls short of its range.
+			var forward := -global_basis.z * data.lunge_speed
+			velocity.x = forward.x
+			velocity.z = forward.z
 		EnemyData.AttackStyle.SLAM:
-			_move_hitbox_to_slam_point()
 			if _telegraph:
 				_telegraph.fade_and_free()
 				_telegraph = null
@@ -176,6 +186,8 @@ func _begin_slam_telegraph() -> void:
 	get_parent().add_child(_telegraph)
 	_telegraph.global_position = _slam_point + Vector3.UP * 0.03
 	_telegraph.grow(data.slam_radius, data.attack_windup)
+	# Swap the shape now, while the hitbox is off, so its overlaps are fresh when it strikes.
+	_move_hitbox_to_slam_point()
 
 
 func _find_ground(point: Vector3) -> Vector3:
@@ -320,7 +332,7 @@ func _spawn_ooze() -> void:
 	puddle.material_override = mat
 	puddle.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	get_parent().add_child(puddle)
-	puddle.global_position = global_position + Vector3(0.0, 0.02, 0.0) - global_basis.z * 0.8
+	puddle.global_position = _find_ground(global_position - global_basis.z * 0.8) + Vector3(0.0, 0.02, 0.0)
 	puddle.set_instance_shader_parameter("seed", randf() * 50.0)
 	puddle.scale = Vector3(0.2, 1.0, 0.2)
 	puddle.create_tween().tween_property(puddle, "scale", Vector3.ONE, 3.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)

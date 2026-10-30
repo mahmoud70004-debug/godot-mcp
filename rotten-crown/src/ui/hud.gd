@@ -25,6 +25,7 @@ var _open_menu: Control
 var _message_tween: Tween
 var _region_tween: Tween
 var _region_name := ""
+var _insets := Vector4.ZERO
 
 
 func _ready() -> void:
@@ -64,6 +65,12 @@ func _ready() -> void:
 	%PauseTouchButton.visible = Settings.uses_touch_controls()
 	get_viewport().size_changed.connect(_fit_safe_area)
 	_fit_safe_area()
+	# Insets can change without a resize (a 180 degree flip, late browser bars).
+	var inset_poll := Timer.new()
+	inset_poll.wait_time = 1.0
+	inset_poll.autostart = true
+	inset_poll.timeout.connect(_on_inset_poll)
+	add_child(inset_poll)
 	DebugBridge.register("hud", _debug_rects)
 
 
@@ -75,6 +82,12 @@ func _fit_safe_area() -> void:
 	]
 	for control in edge_controls:
 		UiSafeArea.inset_control(control)
+	_insets = UiSafeArea.insets()
+
+
+func _on_inset_poll() -> void:
+	if UiSafeArea.insets() != _insets:
+		_fit_safe_area()
 
 
 ## Screen rectangles (UI units) of the bottom-anchored elements, for browser tests (?debug=1).

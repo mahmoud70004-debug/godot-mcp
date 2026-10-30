@@ -32,6 +32,7 @@ var _rng := RandomNumberGenerator.new()
 var _twitch_wait := 1.0
 var _twitch_left := 0.0
 var _waiting_for_wake := false
+var _snap_tries := 30
 
 
 func _ready() -> void:
@@ -39,7 +40,6 @@ func _ready() -> void:
 		queue_free()
 		return
 	_rng.randomize()
-	_snap_to_ground.call_deferred()
 	_sprite = PixelSprite3D.new()
 	_sprite.name = "Sprite"
 	_sprite.sheet = sheet
@@ -66,6 +66,8 @@ func _ready() -> void:
 	_waiting_for_wake = speak_after_wake and GameState.get_flag("waking_up")
 	if _waiting_for_wake:
 		Events.dialogue_finished.connect(_on_dialogue_finished)
+		# Should the thoughts never come, do not wait for ever.
+		get_tree().create_timer(40.0, false).timeout.connect(_stop_waiting)
 
 
 func _process(delta: float) -> void:
@@ -78,11 +80,25 @@ func _process(delta: float) -> void:
 
 ## The knight's wake-up thoughts are over (then: our own line is over).
 func _on_dialogue_finished() -> void:
-	if _phase == Phase.WAITING and _waiting_for_wake:
-		_waiting_for_wake = false
-		_speak.call_deferred()
+	if _phase == Phase.WAITING:
+		# From now on it speaks as soon as the knight is near and looking at it.
+		_stop_waiting()
 	elif _phase == Phase.SPEAKING:
 		_vanish()
+
+
+func _stop_waiting() -> void:
+	_waiting_for_wake = false
+
+
+## Terrain collision may not answer on the very first frame: try for a while.
+func _physics_process(_delta: float) -> void:
+	if _snap_tries <= 0:
+		set_physics_process(false)
+		return
+	_snap_tries -= 1
+	if _snap_to_ground():
+		_snap_tries = 0
 
 
 func _speak() -> void:
@@ -131,14 +147,20 @@ func _player_close_and_looking() -> bool:
 		return false
 	if player.global_position.distance_to(global_position) > trigger_radius:
 		return false
-	var to_me := (global_position + Vector3.UP * 1.2 - cam.global_position).normalized()
-	return (-cam.global_basis.z).dot(to_me) > LOOK_DOT
+	var head := global_position + Vector3.UP * 1.2
+	var to_me := (head - cam.global_position).normalized()
+	if (-cam.global_basis.z).dot(to_me) <= LOOK_DOT:
+		return false
+	# Not through walls.
+	var query := PhysicsRayQueryParameters3D.create(cam.global_position, head, 1)
+	return get_world_3d().direct_space_state.intersect_ray(query).is_empty()
 
 
-func _snap_to_ground() -> void:
+func _snap_to_ground() -> bool:
 	var from := global_position + Vector3.UP * 4.0
 	var query := PhysicsRayQueryParameters3D.create(from, from + Vector3.DOWN * 12.0, 1)
 	var hit := get_world_3d().direct_space_state.intersect_ray(query)
-	if not hit.is_empty():
-		global_position.y = (hit.position as Vector3).y
-	global_position.y += hover
+	if hit.is_empty():
+		return false
+	global_position.y = (hit.position as Vector3).y + hover
+	return true

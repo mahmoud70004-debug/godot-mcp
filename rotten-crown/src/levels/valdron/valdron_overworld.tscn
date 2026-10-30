@@ -194,6 +194,7 @@ id = "star"
 sheet = ExtResource("29_w_star")
 line = ExtResource("32_l_star")
 speak_after_wake = true
+trigger_radius = 7.0
 
 [node name="RootSaint" type="Node3D" parent="Witnesses"]
 position = Vector3(-111.0, 0, 145.5)

@@ -250,8 +250,11 @@ const engine = new Engine(GODOT_CONFIG);
 		const w = Math.round(vv ? vv.width : window.innerWidth);
 		const h = Math.round(vv ? vv.height : window.innerHeight);
 		if (w > 0 && h > 0) {
-			canvas.style.width = w + 'px';
-			canvas.style.height = h + 'px';
+			// Once running, Godot sizes the canvas itself every frame (canvas_resize_policy 2): do not fight it.
+			if (!window.rcEngineRunning) {
+				canvas.style.width = w + 'px';
+				canvas.style.height = h + 'px';
+			}
 			const launch = document.getElementById('status');
 			if (launch) {
 				launch.style.width = w + 'px';
@@ -338,6 +341,7 @@ const engine = new Engine(GODOT_CONFIG);
 
 	function setReady() {
 		ready = true;
+		window.rcEngineRunning = true;
 		setProgress(1);
 		button.disabled = false;
 		button.textContent = 'Wake up';
