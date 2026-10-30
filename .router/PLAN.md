@@ -323,3 +323,12 @@ Witnesses (harmless, weirdcore; static + garbled speech + a line in a dialogue w
 | D5 | Monster behaviours: Enemy subclasses / EnemyData (reach, telegraph, burst speed, freeze-when-watched, area slam); populator uses the 3 new types instead of hollow/mourner | N |
 | D6 | Witnesses: models in Blender + Witness scene (idle twitch, faces the player, static + voice, dialogue window, vanishes); wake-up placement beside the knight + 2 regions | N |
 | D7 | Verify (renders, smoke/touch/turn tests), docs, publish | H |
+
+## Contracts (Phase 3d)
+- C11 creature sheets: assets/sprites/{steeple,grinner,bent}/ (v2, C10), anims exactly idle(loop), walk(loop), windup, strike,
+  stagger, death (one-shots) - SpriteCreatureVisual keeps working; data/enemies/{steeple,grinner,bent}.tres.
+- C12 witness sheets: assets/sprites/{witness_star,witness_root,witness_chair}/ (v2), anims idle(loop), speak(loop).
+- C13 dialogue: `DialogueLine` Resource {speaker: String ("" = the knight's thought), text: String, style: int (0 THOUGHT
+  bottom subtitle, 1 ENTITY glitch window), hold: float seconds}; `Events.dialogue_requested(lines: Array)`;
+  `Events.dialogue_finished`; UI = autoload scene `Dialogue` (CanvasLayer), anchored to the bottom with safe margins.
+- C14 audio: assets/audio/sfx/static_burst.wav, static_loop.wav (loop), assets/audio/voices/garble_1..4.wav.
