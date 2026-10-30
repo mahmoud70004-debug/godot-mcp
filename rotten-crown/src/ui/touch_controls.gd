@@ -94,7 +94,7 @@ func _on_touch_down(finger: int, pos: Vector2) -> void:
 		# Only one thumb fits on the stick: the newest touch always owns it.
 		_joystick_finger = finger
 		joystick.begin_touch(pos)
-	elif pos.x >= size.x * look_zone_start:
+	elif pos.x >= global_position.x + size.x * look_zone_start:
 		_look_finger = finger
 
 

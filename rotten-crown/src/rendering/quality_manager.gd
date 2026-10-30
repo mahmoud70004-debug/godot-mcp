@@ -6,6 +6,9 @@ extends Node
 ## persistent group "quality_ignore" (offline bake tools) are left alone. Scenes in the
 ## group "full_resolution_ui" (the 2D title screen, which costs nothing to draw) always keep
 ## the full 640x360 content scale, so its composition never has to fit 480x270.
+## The stretch aspect is "expand": content_scale_size is only the MINIMUM design size, so on a wider or
+## taller screen the UI space grows (e.g. 20:9 gives 800x360 at High, 640x270 at Low is never smaller than
+## 16:9) and bottom-anchored UI sits on the real screen edge. Low's 480x270 keeps the same 16:9 minimum.
 ## Web: ?quality=0|1|2 forces a level for this session (tests).
 ## After the first probe a watchdog keeps checking during play: if the frame rate
 ## stays under SUSTAINED_FPS for two windows in a row, quality steps down one level

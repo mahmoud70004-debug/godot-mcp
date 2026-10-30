@@ -33,7 +33,10 @@
 }
 
 * { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; height: 100%; }
+html, body { margin: 0; padding: 0; height: 100%; width: 100%; }
+/* 100vh on a phone includes the URL bar that may be showing; dvh/svh follow what is really visible.
+   The script below sets exact pixel sizes from window.visualViewport and wins when it runs. */
+html, body { height: 100vh; height: 100svh; height: 100dvh; }
 body {
 	background: var(--ground);
 	color: var(--ink);
@@ -44,14 +47,41 @@ body {
 	touch-action: none;
 	-webkit-font-smoothing: antialiased;
 }
-#canvas { display: block; position: fixed; inset: 0; margin: 0; border: 0; }
+#canvas {
+	display: block;
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 100vw;
+	height: 100vh;
+	height: 100svh;
+	height: 100dvh;
+	margin: 0;
+	border: 0;
+}
+/* Probe: lets script read env(safe-area-inset-*) (published as window.rcSafe for the game's UI margins). */
+#rc-safe {
+	position: fixed;
+	left: 0;
+	top: 0;
+	width: 0;
+	height: 0;
+	visibility: hidden;
+	pointer-events: none;
+	padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px);
+}
 #canvas:focus { outline: none; }
 ::selection { background: var(--accent); color: var(--accent-ink); }
 
 /* The launch screen sits over the canvas while the engine loads and starts. */
 .launch {
 	position: fixed;
-	inset: 0;
+	left: 0;
+	top: 0;
+	width: 100vw;
+	height: 100vh;
+	height: 100svh;
+	height: 100dvh;
 	z-index: 2;
 	background: var(--ground);
 	display: grid;
@@ -176,6 +206,7 @@ h1 span { display: block; }
 $GODOT_HEAD_INCLUDE
 </head>
 <body>
+<div id="rc-safe" aria-hidden="true"></div>
 <canvas id="canvas">Your browser does not support the canvas tag.</canvas>
 <noscript><p style="padding:24px">Rotten Crown needs JavaScript to run in the browser.</p></noscript>
 
@@ -204,6 +235,53 @@ $GODOT_HEAD_INCLUDE
 const GODOT_CONFIG = $GODOT_CONFIG;
 const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
 const engine = new Engine(GODOT_CONFIG);
+
+// Fit the canvas to the visible viewport (browser bars, fullscreen, rotation) and publish safe-area insets.
+(function () {
+	const canvas = document.getElementById('canvas');
+	const probe = document.getElementById('rc-safe');
+	let timers = [];
+	function readSafe() {
+		const cs = getComputedStyle(probe);
+		const px = (v) => parseFloat(v) || 0;
+		window.rcSafe = { top: px(cs.paddingTop), right: px(cs.paddingRight), bottom: px(cs.paddingBottom), left: px(cs.paddingLeft) };
+	}
+	function fit() {
+		const vv = window.visualViewport;
+		const w = Math.round(vv ? vv.width : window.innerWidth);
+		const h = Math.round(vv ? vv.height : window.innerHeight);
+		if (w > 0 && h > 0) {
+			canvas.style.width = w + 'px';
+			canvas.style.height = h + 'px';
+			const launch = document.getElementById('status');
+			if (launch) {
+				launch.style.width = w + 'px';
+				launch.style.height = h + 'px';
+			}
+		}
+		readSafe();
+		window.rcFit = { width: w, height: h, dpr: window.devicePixelRatio || 1, fullscreen: !!document.fullscreenElement };
+	}
+	// Browsers settle their bars after the event fires, so fit again shortly afterwards; Godot follows the canvas size.
+	function refit() {
+		fit();
+		timers.forEach(clearTimeout);
+		timers = [120, 400, 1000].map((ms) => setTimeout(() => {
+			fit();
+			window.dispatchEvent(new Event('resize'));
+		}, ms));
+	}
+	window.addEventListener('resize', fit);
+	window.addEventListener('orientationchange', refit);
+	document.addEventListener('fullscreenchange', refit);
+	document.addEventListener('webkitfullscreenchange', refit);
+	if (window.visualViewport) {
+		window.visualViewport.addEventListener('resize', fit);
+		window.visualViewport.addEventListener('scroll', fit);
+	}
+	window.rcRefit = refit;
+	fit();
+}());
 
 (function () {
 	const overlay = document.getElementById('status');
@@ -281,15 +359,31 @@ const engine = new Engine(GODOT_CONFIG);
 			canvas.focus();
 		}
 		// On a phone, take the whole screen and hold it sideways where the browser allows it.
+		// Every step may be refused (iOS Safari has neither API); the game then simply fits what is visible.
 		const coarse = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
 		const root = document.documentElement;
-		if (coarse && root.requestFullscreen && !document.fullscreenElement) {
-			root.requestFullscreen({ navigationUI: 'hide' }).then(() => {
+		const lockLandscape = () => {
+			try {
 				if (screen.orientation && screen.orientation.lock) {
-					return screen.orientation.lock('landscape');
+					return Promise.resolve(screen.orientation.lock('landscape')).catch(() => {});
 				}
-				return null;
-			}).catch(() => {});
+			} catch (err) { /* refused */ }
+			return Promise.resolve();
+		};
+		if (coarse) {
+			try {
+				const request = root.requestFullscreen || root.webkitRequestFullscreen;
+				if (request && !document.fullscreenElement && !document.webkitFullscreenElement) {
+					Promise.resolve(request.call(root, { navigationUI: 'hide' })).then(lockLandscape, lockLandscape).then(() => window.rcRefit && window.rcRefit());
+				} else {
+					lockLandscape();
+				}
+			} catch (err) {
+				lockLandscape();
+			}
+		}
+		if (window.rcRefit) {
+			window.rcRefit();
 		}
 	}
 	button.addEventListener('click', begin);

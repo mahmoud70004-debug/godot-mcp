@@ -62,6 +62,32 @@ func _ready() -> void:
 	%PauseTouchButton.pressed.connect(func() -> void: _toggle_menu(pause_menu))
 	%InventoryTouchButton.visible = Settings.uses_touch_controls()
 	%PauseTouchButton.visible = Settings.uses_touch_controls()
+	get_viewport().size_changed.connect(_fit_safe_area)
+	_fit_safe_area()
+	DebugBridge.register("hud", _debug_rects)
+
+
+## Edge-anchored HUD controls that keep a scene margin of their own; moved in by the safe-area insets.
+func _fit_safe_area() -> void:
+	var edge_controls: Array[Control] = [
+		health_bar, stamina_bar, prompt_label, message_label, touch_controls.joystick, %AttackButton, %BlockButton,
+		interact_button, %InventoryTouchButton, %PauseTouchButton, %PauseColumn, %PauseRegion, %LorePanel,
+	]
+	for control in edge_controls:
+		UiSafeArea.inset_control(control)
+
+
+## Screen rectangles (UI units) of the bottom-anchored elements, for browser tests (?debug=1).
+func _debug_rects() -> Dictionary:
+	var rects := {}
+	for control: Control in [prompt_label, message_label, touch_controls.joystick, %AttackButton, %BlockButton, interact_button, %PauseRegion]:
+		var r := control.get_global_rect()
+		rects[control.name] = [r.position.x, r.position.y, r.end.x, r.end.y]
+	var vs := get_viewport().get_visible_rect().size
+	rects["viewport"] = [0.0, 0.0, vs.x, vs.y]
+	rects["bottom_margin"] = UiSafeArea.bottom_margin()
+	rects["pause_open"] = pause_menu.visible
+	return rects
 
 
 func _process(_delta: float) -> void:

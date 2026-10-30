@@ -45,6 +45,11 @@ func _process(delta: float) -> void:
 		return
 	_accum = 0.0
 	var state := {"fps": Engine.get_frames_per_second(), "scene": str(get_tree().current_scene.name) if get_tree().current_scene else ""}
+	var vp := get_viewport()
+	state["screen"] = {
+		"ui": [vp.get_visible_rect().size.x, vp.get_visible_rect().size.y],
+		"window": [DisplayServer.window_get_size().x, DisplayServer.window_get_size().y],
+	}
 	state["render"] = {
 		"draw_calls": int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)),
 		"primitives": int(Performance.get_monitor(Performance.RENDER_TOTAL_PRIMITIVES_IN_FRAME)),

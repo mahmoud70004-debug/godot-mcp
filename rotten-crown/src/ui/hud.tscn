@@ -12,16 +12,7 @@
 layer = 10
 script = ExtResource("1_hud")
 
-[node name="Root" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="DamageFlash" type="ColorRect" parent="Root"]
+[node name="DamageFlash" type="ColorRect" parent="."]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -31,6 +22,15 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0.55, 0.02, 0.02, 0.6)
+
+[node name="Root" type="Control" parent="."]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="Crosshair" type="ColorRect" parent="Root"]
 unique_name_in_owner = true
@@ -160,6 +160,7 @@ mouse_filter = 2
 script = ExtResource("4_stick")
 
 [node name="AttackButton" type="Control" parent="Root/TouchControls"]
+unique_name_in_owner = true
 layout_mode = 1
 anchor_left = 1
 anchor_top = 1
@@ -177,6 +178,7 @@ radius = 27.0
 color = Color(0.62, 0.141, 0.098, 0.5)
 
 [node name="BlockButton" type="Control" parent="Root/TouchControls"]
+unique_name_in_owner = true
 layout_mode = 1
 anchor_left = 1
 anchor_top = 1
@@ -262,7 +264,8 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.043, 0.055, 0.047, 0.78)
 
-[node name="Column" type="VBoxContainer" parent="PauseMenu"]
+[node name="PauseColumn" type="VBoxContainer" parent="PauseMenu"]
+unique_name_in_owner = true
 layout_mode = 1
 anchor_top = 0.5
 anchor_bottom = 0.5
@@ -274,24 +277,24 @@ grow_vertical = 2
 theme_override_constants/separation = 0
 alignment = 1
 
-[node name="Title" type="Label" parent="PauseMenu/Column"]
+[node name="Title" type="Label" parent="PauseMenu/PauseColumn"]
 layout_mode = 2
 theme_type_variation = &"DisplayLabel"
 theme_override_constants/line_spacing = 0
 text = "The night waits"
 
-[node name="Gap" type="Control" parent="PauseMenu/Column"]
+[node name="Gap" type="Control" parent="PauseMenu/PauseColumn"]
 custom_minimum_size = Vector2(0, 14)
 layout_mode = 2
 
-[node name="ResumeButton" type="Button" parent="PauseMenu/Column"]
+[node name="ResumeButton" type="Button" parent="PauseMenu/PauseColumn"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
 text = "Resume"
 script = ExtResource("7_item")
 
-[node name="SaveButton" type="Button" parent="PauseMenu/Column"]
+[node name="SaveButton" type="Button" parent="PauseMenu/PauseColumn"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
@@ -299,7 +302,7 @@ text = "Write Memories"
 script = ExtResource("7_item")
 hint = "save"
 
-[node name="QualityOption" type="OptionButton" parent="PauseMenu/Column"]
+[node name="QualityOption" type="OptionButton" parent="PauseMenu/PauseColumn"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
@@ -313,7 +316,7 @@ popup/item_1/id = 1
 popup/item_2/text = "Quality: High"
 popup/item_2/id = 2
 
-[node name="MainMenuButton" type="Button" parent="PauseMenu/Column"]
+[node name="MainMenuButton" type="Button" parent="PauseMenu/PauseColumn"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
@@ -351,7 +354,8 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.043, 0.055, 0.047, 0.8)
 
-[node name="Panel" type="PanelContainer" parent="LoreReader"]
+[node name="LorePanel" type="PanelContainer" parent="LoreReader"]
+unique_name_in_owner = true
 layout_mode = 1
 anchor_left = 0.5
 anchor_right = 0.5
@@ -361,32 +365,32 @@ offset_top = 8.0
 offset_right = 230.0
 offset_bottom = -8.0
 
-[node name="VBox" type="VBoxContainer" parent="LoreReader/Panel"]
+[node name="VBox" type="VBoxContainer" parent="LoreReader/LorePanel"]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="LoreTitle" type="Label" parent="LoreReader/Panel/VBox"]
+[node name="LoreTitle" type="Label" parent="LoreReader/LorePanel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"DisplayLabel"
 
-[node name="LoreAuthor" type="Label" parent="LoreReader/Panel/VBox"]
+[node name="LoreAuthor" type="Label" parent="LoreReader/LorePanel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 theme_type_variation = &"MutedLabel"
 
-[node name="Scroll" type="ScrollContainer" parent="LoreReader/Panel/VBox"]
+[node name="Scroll" type="ScrollContainer" parent="LoreReader/LorePanel/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="LoreText" type="Label" parent="LoreReader/Panel/VBox/Scroll"]
+[node name="LoreText" type="Label" parent="LoreReader/LorePanel/VBox/Scroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 autowrap_mode = 3
 
-[node name="CloseLoreButton" type="Button" parent="LoreReader/Panel/VBox"]
+[node name="CloseLoreButton" type="Button" parent="LoreReader/LorePanel/VBox"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(96, 36)
 layout_mode = 2

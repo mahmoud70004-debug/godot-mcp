@@ -34,6 +34,7 @@ var _rng := RandomNumberGenerator.new()
 
 var _fade: ColorRect
 var _subtitle: Label
+var _skip_button: Button
 var _title: Label
 var _bars: Array[ColorRect] = []
 
@@ -241,8 +242,6 @@ func _build_overlay() -> void:
 	_subtitle.anchor_right = 1.0
 	_subtitle.anchor_top = 1.0
 	_subtitle.anchor_bottom = 1.0
-	_subtitle.offset_top = -33.0
-	_subtitle.offset_bottom = -3.0
 	_subtitle.theme_type_variation = &"HudLabel"
 	_subtitle.modulate.a = 0.0
 	layer.add_child(_subtitle)
@@ -269,9 +268,23 @@ func _build_overlay() -> void:
 	skip.offset_right = -8.0
 	skip.offset_top = 4.0
 	skip.offset_bottom = 40.0
+	_skip_button = skip
 	skip.focus_mode = Control.FOCUS_NONE
 	skip.pressed.connect(_skip)
 	layer.add_child(skip)
+	get_viewport().size_changed.connect(_fit_overlay)
+	_fit_overlay()
+
+
+## Cinematic bars, subtitle and Skip button follow the real screen edges: the bottom bar
+## grows by the safe margin so the subtitle never touches (or leaves) the visible screen.
+func _fit_overlay() -> void:
+	var bottom := UiSafeArea.bottom_margin()
+	_bars[0].offset_bottom = 34.0 + UiSafeArea.insets().y
+	_bars[1].offset_top = -(30.0 + bottom + 2.0)
+	_subtitle.offset_bottom = -bottom
+	_subtitle.offset_top = -bottom - 30.0
+	UiSafeArea.inset_control(_skip_button)
 
 
 func _apply_festive_grade() -> void:
