@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/enemies/enemy_data.gd" id="1_script"]
+[ext_resource type="Resource" path="res://data/items/consumables/grave_moss.tres" id="2_res"]
+[ext_resource type="Resource" path="res://assets/sprites/steeple/steeple.tres" id="9_sheet"]
+
+[resource]
+script = ExtResource("1_script")
+id = "steeple"
+display_name = "The Steeple"
+bestiary_entry = "It stood over the chapel door before there was a chapel. Six legs, and it only ever uses two of them to kill.
+
+When its front legs draw back and tremble, step aside. It reaches much further than it should."
+max_health = 85.0
+stagger_threshold = 20.0
+stagger_duration = 0.7
+knockback_resistance = 0.7
+chase_speed = 1.4
+acceleration = 3.0
+turn_speed = 2.0
+detection_range = 14.0
+lose_interest_range = 24.0
+dormant_wake_range = 6.0
+freezes_when_watched = false
+damage = 26.0
+knockback = 5.0
+attack_range = 3.0
+attack_windup = 1.3
+attack_active_time = 0.3
+attack_recovery = 1.3
+attack_cooldown = 1.8
+lunge_speed = 1.2
+twitch_intensity = 0.6
+head_tilt_degrees = 18.0
+body_scale = Vector3(1, 1, 1)
+drop_item = ExtResource("2_res")
+drop_chance = 0.3
+sprite_sheet = ExtResource("9_sheet")

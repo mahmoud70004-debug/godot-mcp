@@ -1,0 +1,38 @@
+[gd_resource type="Resource" script_class="EnemyData" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://src/enemies/enemy_data.gd" id="1_script"]
+[ext_resource type="Resource" path="res://data/items/consumables/grave_moss.tres" id="2_res"]
+[ext_resource type="Resource" path="res://assets/sprites/bent/bent.tres" id="9_sheet"]
+
+[resource]
+script = ExtResource("1_script")
+id = "bent"
+display_name = "The Bent One"
+bestiary_entry = "Seen at the edge of the lamplight, walking over the roofs as if they were stepping stones. Its head hangs where its heart should be.
+
+When it rises up tall, watch its shadow, not its hands."
+max_health = 220.0
+stagger_threshold = 45.0
+stagger_duration = 0.9
+knockback_resistance = 0.95
+chase_speed = 1.1
+acceleration = 2.0
+turn_speed = 1.2
+detection_range = 20.0
+lose_interest_range = 34.0
+dormant_wake_range = 10.0
+freezes_when_watched = false
+damage = 40.0
+knockback = 8.0
+attack_range = 2.4
+attack_windup = 1.5
+attack_active_time = 0.35
+attack_recovery = 1.8
+attack_cooldown = 2.6
+lunge_speed = 0.8
+twitch_intensity = 0.4
+head_tilt_degrees = 30.0
+body_scale = Vector3(1, 1, 1)
+drop_item = ExtResource("2_res")
+drop_chance = 0.6
+sprite_sheet = ExtResource("9_sheet")

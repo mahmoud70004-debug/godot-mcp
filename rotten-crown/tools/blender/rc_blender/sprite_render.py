@@ -172,3 +172,19 @@ def render_character(char, root, pose_fn, anims, out_root, dirs=8, camera_size=2
         json.dump(meta, fh, indent=1)
     print("RENDERED %s: %d frames in %.1fs" % (char, count, time.time() - t_start))
     return count
+
+
+def render_stills(char, root, pose_fn, spec, out_root, dir_list, dirs=8):
+    """Iteration helper: spec "anim:t,anim:t" -> <out>/<char>_stills/<anim>_<t>_<dir>.png (no id maps)."""
+    sc = bpy.context.scene
+    out_dir = os.path.join(out_root, char + "_stills")
+    os.makedirs(out_dir, exist_ok=True)
+    for item in spec.split(","):
+        anim, t = item.split(":")
+        for k in dir_list:
+            root.rotation_euler.z = k * math.tau / dirs
+            pose_fn(anim, float(t))
+            bpy.context.view_layer.update()
+            sc.render.filepath = os.path.join(out_dir, "%s_%s_%d.png" % (anim, t, k))
+            bpy.ops.render.render(write_still=True)
+    print("STILLS %s -> %s" % (char, out_dir))
