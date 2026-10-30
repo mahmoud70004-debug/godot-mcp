@@ -283,3 +283,43 @@ billboard in the vertex shader, shaded. Per frame it sets region_rect and offset
 | P6 | Weak-phone path: auto quality re-check after the first minute and on sustained drops (not only once), keep UI crisp | N |
 | P7 | Verify all, publish, report | H |
 Gate: no visible quality change at Medium/High (side-by-side renders), turn test hitches eliminated, avg fps up.
+
+---
+
+# PLAN — Phase 3d: the knight's inner voice, screen fit, new creatures and the Witnesses (user request)
+
+## Request
+1. Inner monologue as subtitles at the bottom after waking ("What happened?", "Where is everyone?"), plus an adaptive
+   fullscreen/screen-fit so bottom text is never cut off on some phones.
+2. Replace the creatures: 3 new monster types with new attack styles, inspired by the user's two weirdcore reference boards
+   (/root/.claude/uploads/bbd3ba3c-e2c7-5ce1-b8e0-8b1a5b7ac4eb/51fc010b-image.jpg, e898b306-image.jpg): non-human, creepy,
+   surreal faces. Plus harmless side entities that appear beside/in front of the knight when he wakes, speak garbled
+   frightening words with radio static, then a dialogue window shows their line ("Everyone exploded.", "Did you see the
+   child? He grew so big."). Gothic + surreal + weirdcore; creative freedom.
+
+## Designs
+Monsters (Blender sprites, 8 dirs, same pipeline):
+- THE STEEPLE: a hooded cone-skull on a crouched black body folded over six too-long stilt legs (board 1, top left). Slow,
+  stalks; attack = long-reach stab with the two front legs after a long tremble (dodge window); 3.2 m reach.
+- THE GRINNER: pale, starved, a face that is mostly grin, crawls on all fours with arms twice too long and spider fingers,
+  head upside down (board 2, ceiling crawler). Fast skitter in bursts, freezes when looked at directly, attack = leap + rake.
+- THE BENT ONE: a black arched giant walking on four impossibly long limbs, tiny head hanging under the arch (board 2,
+  street-light walker). Very slow, huge; attack = rises and slams down (area hit, telegraphed by its shadow).
+Witnesses (harmless, weirdcore; static + garbled speech + a line in a dialogue window, then they are gone):
+- THE STAR-EYED GENTLEMAN: a man in a black suit whose head is a five-pointed star with one huge eye (board 1, bottom
+  right) - stands beside the knight when he wakes: "Everyone exploded."
+- THE ROOT SAINT: a pale figure whose arms are branching roots, floating over the field (board 1, bottom left) - Thornfield:
+  "Did you see the child? He grew so big."
+- THE CHAIR MAN: a long-necked, top-hatted figure sitting on a too-tall chair, head tilted 90 degrees (board 2, bottom
+  left) - Hollowmere: a third hint line.
+
+## Tasks
+| id | title | tier |
+|---|---|---|
+| D1 | Dialogue system: DialogueLine/DialogueSequence data, Events.dialogue_requested, bottom subtitle (inner voice, italic, typed out) and entity window (glitch, static) in the HUD; wake-up monologue sequence + a few region thoughts | H |
+| D2 | Screen fit: launch page uses dynamic viewport height (100dvh + visualViewport), fullscreen + landscape on Wake up, Godot stretch aspect "expand" with safe margins so HUD/subtitles never fall off; Playwright check at 19.5:9, 20:9, 16:9, 4:3 with browser bars | N |
+| D3 | Audio: radio static + garbled reversed whisper voices (tools/gen_audio.py) | E |
+| D4 | Monster models + anims in Blender (Steeple, Grinner, Bent One) -> v2 sheets | H |
+| D5 | Monster behaviours: Enemy subclasses / EnemyData (reach, telegraph, burst speed, freeze-when-watched, area slam); populator uses the 3 new types instead of hollow/mourner | N |
+| D6 | Witnesses: models in Blender + Witness scene (idle twitch, faces the player, static + voice, dialogue window, vanishes); wake-up placement beside the knight + 2 regions | N |
+| D7 | Verify (renders, smoke/touch/turn tests), docs, publish | H |
