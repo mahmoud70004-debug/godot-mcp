@@ -22,9 +22,13 @@ func _ready() -> void:
 
 	# 1. walk out of the house through the door
 	var start: Vector2 = p.global_position
-	await _hold("move_down", 0.8)
-	await _hold("move_right", 0.85)
-	await _hold("move_down", 2.0)
+	# walk to the door with the movement keys, following the room's free path
+	var door: Vector2 = Vector2(0, 0)
+	for o in w.data["objects"]:
+		if o.get("id", "") == "exit_home":
+			door = Vector2(o["x"] + o["w"] / 2.0, o["y"] + o["h"] / 2.0)
+	await _walk_keys(w.find_path(p.global_position, door - Vector2(0, 14)))
+	await _hold("move_down", 1.0)
 	await _wait(1.0)
 	var z: Dictionary = w.zone_at(p.global_position)
 	_expect(not z["indoor"], "walked out of the house (now in %s, from %s to %s)" % [z["id"], start, p.global_position])
@@ -288,6 +292,25 @@ func _world_features() -> void:
 	Game.set_time(9, 0)
 	await _wait(0.5)
 	_expect(porter.visible and porter.patrol.size() >= 3, "the porter runs his errands (%d stops)" % porter.patrol.size())
+
+
+## Walks through waypoints by holding the movement actions, like a player would.
+func _walk_keys(points: PackedVector2Array) -> void:
+	var p = Director.player()
+	for pt in points:
+		for i in 120:
+			var d: Vector2 = pt - p.global_position
+			if d.length() < 3.0:
+				break
+			for a in ["move_left", "move_right", "move_up", "move_down"]:
+				Input.action_release(a)
+			if absf(d.x) > 1.5:
+				Input.action_press("move_right" if d.x > 0 else "move_left")
+			if absf(d.y) > 1.5:
+				Input.action_press("move_down" if d.y > 0 else "move_up")
+			await get_tree().physics_frame
+	for a in ["move_left", "move_right", "move_up", "move_down"]:
+		Input.action_release(a)
 
 
 func _expect(c: bool, what: String) -> void:

@@ -291,11 +291,12 @@ def build_interiors():
         g[y1, door_x] = "D"
         g[y1, door_x + 1] = "D"
 
-    room(121 + IX, 2, 134 + IX, 12, "o", "V", 127 + IX)
-    room(138 + IX, 2, 155 + IX, 14, "o", "Y", 146 + IX)
-    room(121 + IX, 16, 138 + IX, 27, "c", "Y", 129 + IX)
-    room(142 + IX, 17, 153 + IX, 26, "O", "U", 147 + IX)
-    room(121 + IX, 31, 138 + IX, 43, "O", "U", 129 + IX)
+    # cozy, compact rooms (outer wall incl.); the door is a gap in the bottom wall
+    room(121 + IX, 2, 133 + IX, 11, "o", "V", 126 + IX)     # Ashford home
+    room(138 + IX, 2, 152 + IX, 12, "o", "V", 144 + IX)     # Sigrid's inn
+    room(121 + IX, 16, 133 + IX, 25, "c", "Y", 127 + IX)    # Elias' study
+    room(142 + IX, 17, 151 + IX, 25, "O", "U", 146 + IX)    # the abandoned farmhouse
+    room(121 + IX, 31, 134 + IX, 41, "O", "U", 127 + IX)    # the barn
 
 
 # ---------------------------------------------------------------- objects
@@ -437,70 +438,96 @@ def build_objects():
     interact("barn_window", 136, 18, 2, 3)
     place("smoke", 128, 18, oid="farm_smoke", show_if=["ch3", "!ending"], reserve=False, px=4, py=-6)
 
-    # --- interiors (unchanged) ---
-    place("bed_patched", 122 + IX, 5, interact="gideon_bed", show_if=["!debts_paid"])
-    place("bed", 122 + IX, 5, interact="gideon_bed", show_if=["debts_paid"])
-    place("wall_map", 124 + IX, 2, reserve=False, py=12, show_if=["debts_paid"])
-    place("lantern_prop", 129 + IX, 8, reserve=False, py=-2, show_if=["debts_paid"])
-    place("rug", 125 + IX, 8, reserve=False, show_if=["debts_paid", "!home_rug"], px=8, py=8)
-    place("bed", 132 + IX, 5, px=2)
-    place("fireplace", 126 + IX, 3, py=4)
-    place("table_meal", 128 + IX, 8, interact="home_table")
-    place("chair", 127 + IX, 8, px=6, py=6); place("chair", 130 + IX, 8, px=6, py=6)
-    place("sewing_table", 122 + IX, 9, px=2)
-    place("easel", 131 + IX, 9, interact="clara_easel")
-    place("bucket", 125 + IX, 6, oid="leak_bucket", show_if=["!roof_fixed"], interact="leak_bucket")
-    place("wall_window", 123 + IX, 2, reserve=False, py=8); place("wall_window", 132 + IX, 2, reserve=False, py=8)
-    place("wardrobe", 133 + IX, 9, px=4)
-    place("rug", 125 + IX, 8, reserve=False, show_if=["home_rug"], px=8, py=8)
-    for i in range(3):
-        place("wall_painting", 129 + i + IX, 2, oid=f"home_painting_{i}", reserve=False, py=10, show_if=[f"painting_{i + 1}"])
-    interact("gideon_bed", 122 + IX, 5, 1, 2)
-    place("counter", 140 + IX, 5, px=4, py=6)
-    place("fireplace", 151 + IX, 3, py=4)
-    for (tx, ty) in ((141 + IX, 9), (148 + IX, 9)):
-        place("table", tx, ty, interact="inn_table")
-        place("chair", tx - 1, ty, px=6, py=4); place("chair", tx + 2, ty, px=4, py=4)
-    place("barrel", 153 + IX, 6); place("barrel", 153 + IX, 8)
-    place("wall_painting", 144 + IX, 2, reserve=False, py=10)
-    place("wall_window", 141 + IX, 2, reserve=False, py=8); place("wall_window", 149 + IX, 2, reserve=False, py=8)
-    place("bookshelf", 122 + IX, 17, py=8); place("bookshelf", 124 + IX, 17, py=8, px=4); place("bookshelf", 135 + IX, 17, py=8)
-    place("desk", 128 + IX, 20, interact="study_desk")
-    place("chair", 129 + IX, 22, px=2)
-    place("cabinet", 132 + IX, 17, py=8, oid="cabinet_locked", show_if=["!cabinet_open"], interact="study_cabinet")
-    place("cabinet_open", 132 + IX, 17, py=8, show_if=["cabinet_open"], interact="study_cabinet")
-    place("wall_map", 126 + IX, 17, reserve=False, interact="study_map", py=10)
-    place("rug", 127 + IX, 23, reserve=False)
-    place("fireplace", 136 + IX, 22)
-    place("bed_fancy", 122 + IX, 23)
-    place("lantern_prop", 133 + IX, 21, reserve=False)
-    place("table", 144 + IX, 20); place("old_chair", 143 + IX, 21); place("old_chair", 147 + IX, 20, px=4)
-    place("floorboard", 150 + IX, 22, interact="floorboard", reserve=False)
-    place("bed_patched", 151 + IX, 19, px=2)
-    place("bucket", 143 + IX, 24)
-    place("papers", 145 + IX, 24, reserve=False, interact="farm_papers")
-    place("hay_pile", 122 + IX, 34); place("hay_pile", 135 + IX, 34, px=4); place("hay_pile", 134 + IX, 39)
-    place("fireplace", 126 + IX, 32, py=4)
-    place("old_chair", 128 + IX, 36, px=4)
-    place("table", 130 + IX, 36)
-    place("wood_box", 131 + IX, 35, px=4, py=-4, show_if=["ch5", "!got_box"], interact="edmund_box")
-    place("crates", 123 + IX, 39); place("barrel", 136 + IX, 41, px=-2); place("lantern_prop", 133 + IX, 36, reserve=False)
-    place("old_chair", 125 + IX, 40)
+    # --- interiors: cozy Nordic homes (tools/gen_interiors.py props) ---
+    def i(sprite, cx, bottom, **kw):
+        kw.setdefault("reserve", False)
+        return at(sprite, cx + IX, bottom, **kw)
+
+    # the Ashford home: hearth at the heart, beds in the corners, kitchen by the door
+    i("hearth", 127, 5.45)
+    i("rug_fur", 127, 7.25)
+    i("window_curtains", 123, 4.75)
+    i("shelf_jars", 124.85, 4.6)
+    i("lantern_wall", 125.25, 4.2, show_if=["debts_paid"])
+    i("herbs_hanging", 129.3, 4.45, show_if=["!debts_paid"])
+    i("wall_map", 129.3, 4.4, show_if=["debts_paid"])
+    for k in range(3):
+        i("wall_painting", 130.7 + k * 0.95, 4.2, oid=f"home_painting_{k}", show_if=[f"painting_{k + 1}"])
+    i("bed_worn", 122.75, 7.15, interact="gideon_bed", show_if=["!debts_paid"])
+    i("bed_quilt", 122.75, 7.15, interact="gideon_bed", show_if=["debts_paid"])
+    i("cupboard", 130.2, 6.1)
+    i("bed_quilt_red", 132.2, 7.4)
+    i("kitchen_counter", 123.3, 10.15)
+    i("rug_round", 127.6, 10.0)
+    i("table_feast", 127.6, 9.45, interact="home_table")
+    i("stool", 129.45, 9.25)
+    i("easel", 131.9, 10.0, interact="clara_easel")
+    i("bucket", 125.2, 6.55, oid="leak_bucket", show_if=["!roof_fixed"], interact="leak_bucket")
+    i("rug_long", 127.0, 11.0, show_if=["debts_paid", "!home_rug"])
+    i("rug_long", 127.0, 11.0, show_if=["home_rug"])
+    interact("gideon_bed", 122 + IX, 5, 2, 2)
+
+    # Sigrid's inn: the bar, an open fire in the middle, long tables
+    i("window_curtains", 140.3, 4.75); i("window_curtains", 150.8, 4.75)
+    i("shelf_bottles", 142.6, 4.5); i("fish_trophy", 146.3, 4.0); i("net_hanging", 148.6, 4.85)
+    i("lantern_wall", 144.5, 4.3); i("lantern_wall", 139.4, 4.3)
+    i("kitchen_counter", 141.5, 6.65)
+    i("barrel_stack", 140.1, 9.6)
+    i("rug_round", 145.5, 9.4)
+    i("firepit", 145.5, 8.6)
+    i("table_inn", 149.2, 7.0, interact="inn_table"); i("bench_in", 149.2, 7.95)
+    i("table_inn", 149.2, 10.3, interact="inn_table"); i("bench_in", 149.2, 11.25)
+    i("table_feast", 141.9, 11.0, interact="inn_table")
+    i("stool", 139.7, 10.85); i("plant_pot", 151.4, 11.8)
+
+    # Elias' study: books, the locked cabinet, the desk under the map
+    i("bookshelf_tall", 122.95, 19.65); i("bookshelf_tall", 124.85, 19.65); i("bookshelf_tall", 132.0, 19.65)
+    i("wall_map", 126.8, 18.45, interact="study_map")
+    i("window_curtains", 128.45, 18.75)
+    i("cabinet", 130.05, 19.95, oid="cabinet_locked", show_if=["!cabinet_open"], interact="study_cabinet")
+    i("cabinet_open", 130.05, 19.95, show_if=["cabinet_open"], interact="study_cabinet")
+    i("rug_long", 127.5, 23.6)
+    i("desk", 127.5, 21.55, interact="study_desk")
+    i("globe", 123.0, 22.6); i("armchair", 124.7, 24.3); i("candlestick", 132.4, 22.0); i("plant_pot", 132.4, 24.7)
+    i("lantern_wall", 133.4 - 0.9, 18.2)
+
+    # the abandoned farmhouse: dust, cobwebs, a broken household
+    i("cobweb", 143.5, 18.95); i("cobweb", 150.5, 18.95)
+    i("shelf_jars", 147.0, 18.8)
+    i("table_old", 145.0, 21.9); i("old_chair", 143.5, 22.6); i("old_chair", 146.7, 21.2)
+    i("bed_worn", 149.8, 22.3)
+    i("floorboard", 149.0, 24.25, interact="floorboard")
+    i("bucket", 143.6, 24.5)
+    i("papers", 145.3, 24.0, interact="farm_papers")
+    i("crate", 150.4, 24.75)
+
+    # the barn: hay and stalls, and Edmund's hidden corner by the stove
+    i("lantern_wall", 124.2, 33.6); i("lantern_wall", 131.6, 33.6)
+    i("herbs_hanging", 128.2, 33.45); i("net_hanging", 126.0, 33.9)
+    i("hay_pile", 123.2, 35.6); i("hay_pile", 132.7, 35.6); i("hay_pile", 132.7, 38.7)
+    i("stall_fence", 131.2, 37.0)
+    i("iron_stove", 124.0, 36.3)
+    i("bedroll", 123.1, 40.0)
+    i("table_old", 127.6, 37.45)
+    i("stool", 125.8, 37.3); i("stool", 129.4, 37.3)
+    i("candlestick", 126.6, 36.4)
+    i("wood_box", 128.6, 36.7, show_if=["ch5", "!got_box"], interact="edmund_box")
+    i("crates", 122.8, 40.75); i("barrel_stack", 132.4, 40.8); i("firewood_in", 124.8, 40.8)
 
     def exit_door(did, tx, ty, to):
         objects.append({"type": "door", "id": did, "to": to, "x": tx * TS + 2, "y": ty * TS + 4, "w": 28, "h": 12})
 
-    exit_door("exit_home", 127 + IX, 12, "spawn_home_out")
-    exit_door("exit_inn", 146 + IX, 14, "spawn_inn_out")
-    exit_door("exit_study", 129 + IX, 27, "spawn_manor_out")
-    exit_door("exit_farmhouse", 147 + IX, 26, "spawn_farmhouse_out")
-    exit_door("exit_barn", 129 + IX, 43, "spawn_barn_out")
-    tspot("spawn_home_in", 127.5 + IX, 11, "up")
-    tspot("spawn_inn_in", 146.5 + IX, 13, "up")
-    tspot("spawn_study_in", 129.5 + IX, 26, "up")
-    tspot("spawn_farmhouse_in", 147.5 + IX, 25, "up")
-    tspot("spawn_barn_in", 129.5 + IX, 42, "up")
-    tspot("game_start", 123.5 + IX, 7.5, "down")
+    exit_door("exit_home", 126 + IX, 11, "spawn_home_out")
+    exit_door("exit_inn", 144 + IX, 12, "spawn_inn_out")
+    exit_door("exit_study", 127 + IX, 25, "spawn_manor_out")
+    exit_door("exit_farmhouse", 146 + IX, 25, "spawn_farmhouse_out")
+    exit_door("exit_barn", 127 + IX, 41, "spawn_barn_out")
+    tspot("spawn_home_in", 127.0 + IX, 10.35, "up")
+    tspot("spawn_inn_in", 145.0 + IX, 11.4, "up")
+    tspot("spawn_study_in", 128.0 + IX, 24.4, "up")
+    tspot("spawn_farmhouse_in", 147.0 + IX, 24.4, "up")
+    tspot("spawn_barn_in", 128.0 + IX, 40.4, "up")
+    tspot("game_start", 124.1 + IX, 7.2, "down")
 
 
 def doors_out():
@@ -511,12 +538,12 @@ def doors_out():
 
 def npc_spots():
     t = tspot
-    t("margaret_home", 124.5 + IX, 9.5, "right"); t("clara_home", 131 + IX, 10.5, "left")
-    t("edmund_home", 127.5 + IX, 5.5, "down")
-    t("sigrid_inn", 143 + IX, 5, "down")
-    t("elias_study", 130 + IX, 21, "down"); t("edmund_barn", 129 + IX, 36.5, "left")
-    t("study_desk_spot", 127.5 + IX, 22, "up"); t("cabinet_spot", 133 + IX, 20.6, "up")
-    t("floorboard_spot", 150.5 + IX, 22.5, "down"); t("bed", 123.5 + IX, 7.5, "left")
+    t("margaret_home", 123.3 + IX, 8.75, "down"); t("clara_home", 130.6 + IX, 10.1, "right")
+    t("edmund_home", 127.5 + IX, 6.9, "down")
+    t("sigrid_inn", 141.5 + IX, 5.35, "down")
+    t("elias_study", 129.0 + IX, 20.7, "down"); t("edmund_barn", 130.3 + IX, 37.7, "left")
+    t("study_desk_spot", 127.5 + IX, 22.4, "up"); t("cabinet_spot", 130.0 + IX, 21.0, "up")
+    t("floorboard_spot", 147.9 + IX, 24.0, "right"); t("bed", 124.1 + IX, 7.2, "left")
     # village
     t("bjorn_dock", 86.5, 66, "down"); t("bjorn_harbor", 82, 63, "left"); t("bjorn_boat_spot", 68, 63.5, "down")
     t("bjorn_inn_evening", 78, 27, "down")
@@ -553,11 +580,11 @@ def npc_spots():
 
 
 def build_zones():
-    zone("home_in", "منزل آل آشفورد", 121 + IX, 2, 134 + IX, 12, indoor=True, music="melancholy")
-    zone("inn_in", "نُزل سيغريد", 138 + IX, 2, 155 + IX, 14, indoor=True, music="inn")
-    zone("study_in", "مكتب إلياس", 121 + IX, 16, 138 + IX, 27, indoor=True, music="estate")
-    zone("farmhouse_in", "بيت المزرعة المهجور", 142 + IX, 17, 153 + IX, 26, indoor=True, music="mystery")
-    zone("barn_in", "الحظيرة", 121 + IX, 31, 138 + IX, 43, indoor=True, music="mystery")
+    zone("home_in", "منزل آل آشفورد", 121 + IX, 2, 133 + IX, 11, indoor=True, music="melancholy")
+    zone("inn_in", "نُزل سيغريد", 138 + IX, 2, 152 + IX, 12, indoor=True, music="inn")
+    zone("study_in", "مكتب إلياس", 121 + IX, 16, 133 + IX, 25, indoor=True, music="estate")
+    zone("farmhouse_in", "بيت المزرعة المهجور", 142 + IX, 17, 151 + IX, 25, indoor=True, music="mystery")
+    zone("barn_in", "الحظيرة", 121 + IX, 31, 134 + IX, 41, indoor=True, music="mystery")
     zone("harbor", "الميناء", 52, 50, 116, 91)
     zone("church", "الكنيسة", 58, 38, 76, 49)
     zone("square", "ساحة القرية", 64, 12, 103, 38)
@@ -675,6 +702,80 @@ def scatter_decor():
             occupied[y, x] = True
 
 
+def village_polish():
+    """Cobbled lanes in the village, harbour clutter, lamps, wildflowers, light snow, grass."""
+    # lanes inside the village become laid stone; tracks out into the country stay dirt
+    lanes = []
+    for y in range(18, 64):
+        for x in range(54, 116):
+            if g[y, x] == "=":
+                g[y, x] = "k"
+                lanes.append((x, y))
+    # classic lamps along the lanes, never too close to each other
+    lit = []
+    for (x, y) in lanes:
+        if (x * 7 + y * 13) % 5:
+            continue
+        for (nx, ny) in ((x + 1, y), (x - 1, y), (x, y + 1)):
+            if g[ny, nx] in ".hg" and not occupied[ny, nx] and not covered[ny, nx] \
+                    and all(abs(nx - lx) + abs(ny - ly) > 9 for (lx, ly) in lit):
+                place("lamp", nx, ny, px=3, py=-14)
+                lit.append((nx, ny))
+                break
+
+    def sand_spot(cx, cy, w=3, h=2, r=5):
+        for d in sorted(((dx, dy) for dx in range(-r, r + 1) for dy in range(-r, r + 1)), key=lambda q: abs(q[0]) + abs(q[1])):
+            x0, y0 = cx + d[0], cy + d[1]
+            area = g[y0:y0 + h, x0:x0 + w]
+            if area.size == w * h and (area == "s").all() and not occupied[y0:y0 + h, x0:x0 + w].any():
+                occupied[y0:y0 + h, x0:x0 + w] = True
+                return x0, y0
+        return None
+
+    # nets drying by the piers, barrels and crates along the waterfront
+    for (cx, cy) in ((84, 60), (100, 61), (68, 60), (93, 62), (61, 64)):
+        p = sand_spot(cx, cy)
+        if p:
+            at("net_posts", p[0] + 1.3, p[1] + 1.8)
+    for (cx, cy) in ((89, 63), (76, 61), (105, 62), (64, 62)):
+        p = sand_spot(cx, cy, 2, 2)
+        if p:
+            at("barrel_stack", p[0] + 1, p[1] + 1.6)
+    # life in the market square: planters and barrels, never on anyone's spot
+    def clear_of_spots(x, y, r=1.8):
+        return all(abs(sp["x"] / TS - x) > r or abs(sp["y"] / TS - y) > r for sp in spots.values())
+    for (sprite, x, y) in (("plant_pot", 79.6, 31.2), ("plant_pot", 84.4, 31.2), ("plant_pot", 88.6, 32.0),
+                           ("plant_pot", 91.4, 32.0), ("barrel_stack", 70.8, 27.6), ("barrel_stack", 97.6, 35.2),
+                           ("plant_pot", 75.0, 36.4), ("plant_pot", 96.0, 26.4)):
+        if g[int(y), int(x)] in "pk" and clear_of_spots(x, y):
+            at(sprite, x, y)
+            occupied[int(y), int(x)] = True
+    # nature: tufts around trunks and along lanes, wildflowers, a dusting of old snow
+    trees = [o for o in objects if SPR.get(o.get("sprite", ""), {}).get("tree")]
+    for o in trees:
+        m = SPR[o["sprite"]]
+        bx, by = (o["x"] + m["w"] * 0.5) / TS, (o["y"] + m["oy"]) / TS
+        for k in range(rng.randrange(2, 5)):
+            x, y = bx + rng.uniform(-2.2, 2.2), by + rng.uniform(-0.2, 1.4)
+            tx, ty = int(x), int(y)
+            if 0 <= tx < 150 and 0 <= ty < H and g[ty, tx] in ".hg":
+                at(f"grass_tuft_{rng.randrange(3)}", x, y, reserve=False)
+    for _ in range(1400):
+        x, y = rng.randrange(0, 150), rng.randrange(2, 80)
+        if g[y, x] not in ".hg" or occupied[y, x] or covered[y, x]:
+            continue
+        near_lane = np.isin(g[max(0, y - 1):y + 2, max(0, x - 1):x + 2], list("=kp")).any()
+        r = rng.random()
+        if near_lane and r < 0.5:
+            at(f"grass_tuft_{rng.randrange(3)}", x + rng.random(), y + rng.random(), reserve=False)
+        elif r < 0.16:
+            at(f"wildflowers_{rng.randrange(3)}", x + rng.random(), y + rng.random(), reserve=False)
+        elif r < 0.30:
+            at(f"grass_tuft_{rng.randrange(3)}", x + rng.random(), y + rng.random(), reserve=False)
+        elif r < 0.30 + (0.08 if y < 20 else 0.025):
+            place(f"snow_{rng.randrange(3)}", x, y, reserve=False, px=rng.randrange(-6, 6), py=rng.randrange(-4, 4))
+
+
 def hidden_collectibles():
     coins = [(9, 15), (45, 30), (73, 40), (113, 40), (24, 57), (52, 12), (140, 50), (130, 20), (100, 57), (6, 46), (146, 14), (33, 66)]
     for k, (x, y) in enumerate(coins):
@@ -706,6 +807,7 @@ def build(sprite_meta, out_root):
     vegetable_gardens()
     scatter_trees()
     scatter_decor()
+    village_polish()
     for name, s in spots.items():
         tx, ty = s["x"] // TS, s["y"] // TS
         if g[ty, tx] in BLOCKED:

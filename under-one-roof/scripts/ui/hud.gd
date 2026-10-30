@@ -182,6 +182,15 @@ func _ready() -> void:
 				player.zoom_step(dir))
 		zoom.add_child(b)
 
+	# --- compact HUD: smaller, slightly see-through panels -----------------------
+	left.scale = Vector2.ONE * 0.8
+	left.modulate.a = 0.93
+	right.pivot_offset = Vector2(right.offset_right - right.offset_left, 0)
+	right.scale = Vector2.ONE * 0.8
+	right.modulate.a = 0.93
+	hb_panel.pivot_offset = Vector2(hb_panel.offset_right - hb_panel.offset_left, hb_panel.offset_bottom - hb_panel.offset_top) * Vector2(0.5, 1.0)
+	hb_panel.scale = Vector2.ONE * 0.85
+
 	# --- toasts & prompt -------------------------------------------------------
 	_toasts = VBoxContainer.new()
 	_toasts.set_anchors_preset(Control.PRESET_CENTER_TOP)

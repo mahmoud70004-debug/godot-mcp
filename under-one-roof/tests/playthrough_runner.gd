@@ -178,13 +178,18 @@ func _validate_reachability(w) -> void:
 			targets[o["interact"]] = Vector2(o["x"] + m["w"] / 2.0, o["y"] + m["oy"] + 6)
 	for k in targets:
 		var p: Vector2 = targets[k]
+		var from := start
 		if not out.has_point(p):
-			continue
+			# inside a room: walk from that room's entrance
+			var z: Dictionary = w.zone_at(p)
+			if not z["indoor"] or not Story.INTERIOR_EXITS.has(z["id"]):
+				continue
+			from = Vector2i(w.spot_pos(Story.INTERIOR_EXITS[z["id"]]) / 16.0)
 		var t := Vector2i(p / 16.0)
 		var ok := false
 		for d in [Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, -1), Vector2i(0, 2), Vector2i(0, -2)]:
 			var c: Vector2i = t + d
-			if a.is_in_boundsv(c) and not a.is_point_solid(c) and a.get_id_path(start, c).size() > 0:
+			if a.is_in_boundsv(c) and not a.is_point_solid(c) and a.get_id_path(from, c).size() > 0:
 				ok = true
 				break
 		expect(ok, "reachable on foot: %s %s" % [k, t])

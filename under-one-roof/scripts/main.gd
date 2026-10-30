@@ -77,9 +77,10 @@ func _process(_delta: float) -> void:
 			c = a[1].lerp(b[1], (h - a[0]) / (b[0] - a[0]))
 			break
 	if _indoor:
-		c = Color(1.0, 0.95, 0.88).lerp(c, 0.25)
+		# warm, slightly dim interiors so hearths and candles glow
+		c = Color(0.9, 0.82, 0.72).lerp(c, 0.2)
 		if h >= 20.0 or h < 6.0:
-			c = Color(0.86, 0.78, 0.70)
+			c = Color(0.66, 0.56, 0.5)
 	day_night.color = c
 	_lantern.visible = not _indoor and (h >= 19.5 or h < 5.5) and Game.count("lantern") > 0
 

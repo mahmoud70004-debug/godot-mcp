@@ -33,6 +33,7 @@ var reflections: Node2D
 var _conditional: Array = []   # [{cond, nodes:[...], shapes:[...]}]
 var _animated: Array = []      # [Sprite2D, fps, frames]
 var _glows: Array = []
+var _flickers: Array = []      # [Sprite2D, base alpha, phase] warm interior lights
 var _time := 0.0
 var _tex_cache := {}
 var _blocked := ""
@@ -270,6 +271,10 @@ func _build_object(o: Dictionary) -> void:
 			entry["areas"].append(area)
 		if o["sprite"] == "lamp":
 			_add_glow(root, Vector2(5, -oy + 6))
+		if m.has("light"):
+			_add_light(root, m["light"], oy)
+		if m.has("embers"):
+			_add_embers(root, m["embers"], oy)
 		if o.has("wander"):
 			_wander(root, spr, float(o["wander"]))
 	if entry["cond"] != null:
@@ -373,6 +378,61 @@ func _add_glow(root: Node2D, at: Vector2) -> void:
 	_glows.append(g)
 
 
+## Warm, gently flickering pool of light (hearths, candles, lanterns).
+func _add_light(root: Node2D, l: Array, oy: int) -> void:
+	var g := Sprite2D.new()
+	var tex := GradientTexture2D.new()
+	tex.width = 128
+	tex.height = 128
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(1.0, 0.5)
+	var grad := Gradient.new()
+	grad.set_color(0, Color(1, 1, 1, 1))
+	grad.add_point(0.45, Color(1, 1, 1, 0.45))
+	grad.set_color(grad.get_point_count() - 1, Color(1, 1, 1, 0))
+	tex.gradient = grad
+	g.texture = tex
+	var r := float(l[2])
+	g.scale = Vector2.ONE * (r * 2.0 / 128.0)
+	g.position = Vector2(float(l[0]), float(l[1]) - oy)
+	var col: Array = l[3]
+	g.modulate = Color8(int(col[0]), int(col[1]), int(col[2]), int(col[3]))
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	g.material = mat
+	g.z_index = 6
+	root.add_child(g)
+	_flickers.append([g, g.modulate.a, randf() * 10.0])
+
+
+## Sparks rising from an open fire.
+func _add_embers(root: Node2D, e: Array, oy: int) -> void:
+	var p := CPUParticles2D.new()
+	p.position = Vector2(float(e[0]), float(e[1]) - oy)
+	p.amount = 10
+	p.lifetime = 1.6
+	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	p.emission_rect_extents = Vector2(float(e[2]) * 0.5, 1.0)
+	p.direction = Vector2(0, -1)
+	p.spread = 22.0
+	p.gravity = Vector2(0, -10)
+	p.initial_velocity_min = 8.0
+	p.initial_velocity_max = 18.0
+	p.scale_amount_min = 1.0
+	p.scale_amount_max = 1.6
+	var ramp := Gradient.new()
+	ramp.set_color(0, Color(1.0, 0.85, 0.4, 1.0))
+	ramp.add_point(0.5, Color(1.0, 0.5, 0.15, 0.8))
+	ramp.set_color(ramp.get_point_count() - 1, Color(0.8, 0.2, 0.1, 0.0))
+	p.color_ramp = ramp
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	p.material = mat
+	p.z_index = 7
+	root.add_child(p)
+
+
 func _update_glows() -> void:
 	var on := Game.hour() >= 19 or Game.hour() < 6
 	for g in _glows:
@@ -399,6 +459,11 @@ func _process(delta: float) -> void:
 			var target := 0.45 if hide else 1.0
 			if not is_equal_approx(root.modulate.a, target):
 				root.modulate.a = move_toward(root.modulate.a, target, delta * 3.0)
+	for f in _flickers:
+		var g: Sprite2D = f[0]
+		if g.is_visible_in_tree():
+			var t: float = _time * 6.0 + f[2]
+			g.modulate.a = f[1] * (0.84 + 0.1 * sin(t) + 0.06 * sin(t * 2.7 + 1.3))
 	for a in _animated:
 		var spr: Sprite2D = a[0]
 		if spr.is_visible_in_tree():

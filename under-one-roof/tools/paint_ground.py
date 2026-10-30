@@ -82,6 +82,75 @@ def plank_floor(ys, xs, horizontal, base, dark, light, size):
     return out
 
 
+def _hash(ix, iy, seed):
+    h = (ix * 374761393 + iy * 668265263 + seed * 2147483647) & 0xFFFFFFFF
+    h = ((h ^ (h >> 13)) * 1274126177) & 0xFFFFFFFF
+    return (h & 0xFFFF) / 65535.0
+
+
+def cobblestones(ys, xs, cell, ref, seed=0, warm=False):
+    """Laid cobbles: rounded stones (Voronoi on a jittered grid) with dark mortar joints,
+    each stone its own tint of the reference's stone colour, lit from the upper left."""
+    fx, fy = xs / cell, ys / cell
+    ix, iy = np.floor(fx).astype(np.int64), np.floor(fy).astype(np.int64)
+    d1 = np.full(xs.shape, 9.0, np.float32)
+    d2 = np.full(xs.shape, 9.0, np.float32)
+    best = np.zeros(xs.shape, np.int64)
+    off = np.zeros(xs.shape + (2,), np.float32)
+    for oy in (-1, 0, 1):
+        for ox in (-1, 0, 1):
+            cx, cy = ix + ox, iy + oy
+            jx = 0.18 + 0.64 * _hash(cx, cy, seed)
+            jy = 0.18 + 0.64 * _hash(cx, cy, seed + 7)
+            dx, dy = (cx + jx) - fx, (cy + jy) - fy
+            d = np.sqrt(dx * dx * 0.85 + dy * dy * 1.15).astype(np.float32)
+            closer = d < d1
+            d2 = np.where(closer, d1, np.minimum(d2, d))
+            d1 = np.where(closer, d, d1)
+            best = np.where(closer, cx * 92821 + cy, best)
+            off[closer] = np.stack([dx, dy], -1)[closer]
+    edge = (d2 - d1).astype(np.float32)
+    tint = _hash(best, best // 92821, seed + 3)
+    base = ref.mean(axis=(0, 1), keepdims=True) if ref.ndim == 3 else ref
+    stone = np.empty(xs.shape + (3,), np.float32)
+    pal = np.array([[150, 146, 138], [132, 128, 122], [164, 156, 142], [122, 120, 118], [158, 150, 136]], np.float32)
+    if warm:
+        pal = pal * np.array([1.06, 1.0, 0.9])
+    k = (tint * len(pal)).astype(int).clip(0, len(pal) - 1)
+    stone[:] = pal[k]
+    stone = stone * 0.7 + ref * 0.3
+    # dome shading: lit on the upper-left side of each stone
+    light = 1.0 + 0.55 * np.clip(off[..., 0] * 0.7 + off[..., 1] * 0.9, -0.6, 0.6)
+    stone *= light[..., None]
+    mortar = np.clip((edge - 0.05) / 0.12, 0, 1)
+    joint = np.array([70, 64, 56], np.float32) if not warm else np.array([84, 70, 52], np.float32)
+    out = stone * mortar[..., None] + joint * (1 - mortar[..., None])
+    return out
+
+
+def cozy_planks(ys, xs, base, size, worn=False):
+    """Interior floor boards: each board its own tone, staggered joints, nails, wax sheen."""
+    row = (ys // size).astype(int)
+    out = np.empty(ys.shape + (3,), np.float32)
+    out[:] = base
+    tone = 0.86 + 0.22 * (((row * 2654435761) % 97) / 97.0)
+    out *= tone[..., None]
+    seg = ((xs + (row * 37 % 11) * size) // (size * 6)).astype(int)
+    out *= (0.95 + 0.1 * (((seg * 31 + row * 17) % 23) / 23.0))[..., None]
+    a = ys % size
+    out[a < max(1, RES // 2 + 1)] = np.array(base) * 0.48
+    out[a == RES] = np.minimum(np.array(base) * 1.18, 255)
+    joint = ((xs + (row * 37 % 11) * size) % (size * 6)) < RES
+    out[joint] = np.array(base) * 0.55
+    nail = (((xs + (row * 37 % 11) * size) % (size * 6)) == 2 * RES) & (a == size // 2)
+    out[nail] = (60, 50, 44)
+    grain = ((xs * 0.35 + row * 13 + a * 2.5) % 9) < 0.8
+    out[grain] *= 0.93
+    if worn:
+        out *= 0.92
+    return out
+
+
 def paint(g, TS, CRISP):
     H, W = g.shape
     PH, PW = H * TS * RES, W * TS * RES
@@ -141,6 +210,9 @@ def paint(g, TS, CRISP):
     dist_river = cv2.distanceTransform((~river).astype(np.uint8), cv2.DIST_L2, 5) / RES
     blk = np.isin(T, [idx[c] for c in "#^" if c in idx])
     dist_blk = cv2.distanceTransform((~blk).astype(np.uint8), cv2.DIST_L2, 5) / RES
+    walls = np.isin(T, [idx[c] for c in "WVYU" if c in idx])
+    isfloor = np.isin(T, [idx[c] for c in "oOcD" if c in idx])
+    dist_wall = cv2.distanceTransform((~walls).astype(np.uint8), cv2.DIST_L2, 5) / RES
 
     img = np.zeros((PH, PW, 4), np.uint8)
     for y0 in range(0, PH, STRIP):
@@ -175,9 +247,10 @@ def paint(g, TS, CRISP):
         sprout = ((ys % (8 * RES)) == 5 * RES) & ((xs % (6 * RES)) < 2 * RES)
         farm[sprout] = farm[sprout] * 0.4 + np.array([70, 120, 50]) * 0.6
         put("f", farm)
-        cob = sample(mats["cobble"], ys, xs) * (0.95 + 0.1 * dn)[..., None]
-        put("p", cob)
-        put("k", cob * np.array([1.05, 1.03, 1.0]))
+        ref_cob = sample(mats["cobble"], ys, xs)
+        cob = cobblestones(ys, xs, 7.0 * RES, ref_cob, seed=11)
+        put("p", cob * (0.96 + 0.08 * dn)[..., None])
+        put("k", cobblestones(ys, xs, 5.5 * RES, ref_cob, seed=23, warm=True))
         put("s", sample(mats["sand"], ys, xs) * (0.96 + 0.08 * mn)[..., None])
         cliff = sample(mats["cobble"], ys, xs, scale=0.6, ox=55) * np.array([0.82, 0.78, 0.72])
         put("#", cliff)
@@ -188,29 +261,43 @@ def paint(g, TS, CRISP):
         put("S", st)
         put("b", plank_floor(ys, xs, False, (128, 92, 58), (66, 46, 30), (160, 120, 80), 7 * RES))
         put("d", plank_floor(ys, xs, True, (122, 88, 56), (60, 42, 28), (150, 112, 74), 6 * RES))
-        put("o", plank_floor(ys, xs, True, (150, 108, 70), (100, 70, 46), (172, 128, 86), 6 * RES))
-        put("O", plank_floor(ys, xs, True, (112, 92, 72), (70, 56, 44), (130, 112, 88), 6 * RES))
+        put("o", cozy_planks(ys, xs, (166, 112, 66), 6 * RES))
+        put("O", cozy_planks(ys, xs, (118, 96, 74), 6 * RES, worn=True))
+        # parquet: herring-bone of warm oak for Elias' study
+        hb = ((xs // (4 * RES) + ys // (8 * RES)) % 2 == 0)
         parq = np.empty(ys.shape + (3,), np.float32)
-        parq[:] = (128, 70, 50)
-        parq[((xs // (4 * RES) + ys // (4 * RES)) % 2) == 0] = (146, 84, 58)
+        parq[:] = (150, 88, 56)
+        parq[hb] = (172, 106, 66)
+        parq[((xs + ys) % (8 * RES)) < RES] = (110, 62, 40)
+        parq *= (0.94 + 0.12 * dn)[..., None]
         put("c", parq)
         mat_ = np.empty(ys.shape + (3,), np.float32)
         mat_[:] = (150, 60, 50)
         mat_[(xs % (4 * RES)) < 2 * RES] = (170, 80, 60)
         put("D", mat_)
-        wall = np.empty(ys.shape + (3,), np.float32)
-        wall[:] = (206, 190, 150)
-        wall[(xs % (8 * RES)) < RES] = (180, 162, 124)
-        wall[(ys % (TS * RES)) > 10 * RES] = (120, 84, 56)
-        put("V", wall)
+        # walls seen from the front: horizontal logs over a skirting board
+        ty = ys % (TS * RES)
+        log_i = (ys // (5 * RES)).astype(int)
+        logw = np.empty(ys.shape + (3,), np.float32)
+        logw[:] = (176, 128, 80)
+        tone = 0.9 + 0.12 * (((log_i * 7919) % 13) / 13.0)
+        logw *= tone[..., None]
+        in_log = (ys % (5 * RES)).astype(np.float32) / (5 * RES)
+        logw *= (1.08 - 0.3 * np.abs(in_log - 0.35))[..., None]
+        logw[(ys % (5 * RES)) < RES] = (92, 60, 38)
+        logw[((xs + log_i * 53) % (40 * RES)) < RES] = (110, 74, 46)
+        put("V", logw)
+        # Elias: green panelled wallpaper with a gold rail
         fine = np.empty(ys.shape + (3,), np.float32)
-        fine[:] = (92, 108, 88)
-        fine[(xs % (8 * RES)) < RES] = (116, 132, 106)
-        fine[(ys % (TS * RES)) > 10 * RES] = (88, 52, 38)
+        fine[:] = (74, 98, 78)
+        fine[((xs // (2 * RES)) % 4) == 0] = (84, 110, 88)
+        fine[(xs % (12 * RES)) < RES] = (58, 78, 62)
+        fine[(ty > 5 * RES) & (ty < 6 * RES)] = (196, 160, 80)
         put("Y", fine)
-        plk = plank_floor(ys, xs, False, (104, 76, 54), (70, 50, 36), (124, 92, 64), 7 * RES)
+        plk = plank_floor(ys, xs, False, (120, 86, 58), (72, 50, 34), (142, 104, 70), 7 * RES)
+        plk *= (0.92 + 0.14 * dn)[..., None]
         put("U", plk)
-        put("W", np.zeros(ys.shape + (3,), np.float32) + (54, 38, 30))
+        put("W", np.zeros(ys.shape + (3,), np.float32) + (58, 40, 30))
         put("X", np.zeros(ys.shape + (3,), np.float32) + (14, 12, 16))
 
         # water
@@ -247,6 +334,10 @@ def paint(g, TS, CRISP):
         ao = land & (db > 0) & (db < 10)
         col[ao] = col[ao] * (0.78 + 0.22 * np.clip(db[ao] / 10.0, 0, 1))[..., None]
 
+        # interiors: soft shadow along the walls
+        dw = dist_wall[y0:y1]
+        near = isfloor[y0:y1] & (dw < 18)
+        col[near] = col[near] * (0.62 + 0.38 * np.clip(dw[near] / 18.0, 0, 1) ** 0.7)[..., None]
         img[y0:y1, :, :3] = np.clip(col, 0, 255).astype(np.uint8)
         img[y0:y1, :, 3] = np.where(wm & (dl > 2.5), 150, 255)
     return img

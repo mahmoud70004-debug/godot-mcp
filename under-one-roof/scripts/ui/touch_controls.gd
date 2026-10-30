@@ -6,6 +6,8 @@ signal action_pressed
 signal menu_pressed
 
 const STICK_RADIUS := 34.0
+const SCALE := 0.72              # compact controls that leave the scene visible
+const IDLE_ALPHA := 0.6          # semi-transparent until touched
 
 var _root: Control
 var _stick: Control
@@ -25,9 +27,9 @@ func _ready() -> void:
 	_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_root)
 
-	_stick = _make(Control.PRESET_BOTTOM_LEFT, Vector2(18, -112), Vector2(96, 96), _draw_stick)
+	_stick = _make(Control.PRESET_BOTTOM_LEFT, Vector2(12, -106), Vector2(96, 96), _draw_stick)
 	_stick.gui_input.connect(_stick_input)
-	_action = _make(Control.PRESET_BOTTOM_RIGHT, Vector2(-86, -96), Vector2(64, 64), _draw_action)
+	_action = _make(Control.PRESET_BOTTOM_RIGHT, Vector2(-76, -78), Vector2(64, 64), _draw_action)
 	_action.gui_input.connect(func(e):
 		if _pressed(e):
 			_action_down = true
@@ -36,15 +38,29 @@ func _ready() -> void:
 		elif _released(e):
 			_action_down = false
 			_action.queue_redraw())
-	_run = _make(Control.PRESET_BOTTOM_RIGHT, Vector2(-140, -60), Vector2(46, 46), _draw_run)
+	_run = _make(Control.PRESET_BOTTOM_RIGHT, Vector2(-112, -52), Vector2(46, 46), _draw_run)
 	_run.gui_input.connect(func(e):
 		if _pressed(e):
 			Game.touch_run = not Game.touch_run
 			_run.queue_redraw())
-	_menu = _make(Control.PRESET_BOTTOM_RIGHT, Vector2(-50, -148), Vector2(40, 40), _draw_menu)
+	_menu = _make(Control.PRESET_BOTTOM_RIGHT, Vector2(-50, -112), Vector2(40, 40), _draw_menu)
 	_menu.gui_input.connect(func(e):
 		if _pressed(e):
 			menu_pressed.emit())
+	# shrink each control towards its screen corner
+	for c in [_stick]:
+		c.pivot_offset = Vector2(0, c.size.y)
+		c.scale = Vector2.ONE * SCALE
+	for c in [_action, _run, _menu]:
+		c.pivot_offset = c.size
+		c.scale = Vector2.ONE * SCALE
+	_root.modulate.a = IDLE_ALPHA
+	for c in [_stick, _action, _run, _menu]:
+		c.gui_input.connect(func(e):
+			if _pressed(e):
+				_root.modulate.a = 0.92
+			elif _released(e):
+				_root.modulate.a = IDLE_ALPHA)
 
 
 func _make(preset: int, offset: Vector2, size: Vector2, drawer: Callable) -> Control:

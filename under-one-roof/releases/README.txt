@@ -1,5 +1,5 @@
-UnderOneRoof-v2.3.apk  (46.7 MB)
-sha256 66c60c5849daa38ec76ae14e14c49a63fc2d81da86843f7f9ec9fcdabbe1f59c
-package com.underoneroof.game, versionCode 6 (2.3), minSdk 21, targetSdk 34, arm64-v8a
+UnderOneRoof-v2.4.apk  (77 MB)
+sha256 ea0ac2a8ba24260ee5a6672d5f9f1b077df5f63829e4b259d04bfcda44ea8db7
+package com.underoneroof.game, versionCode 7 (2.4), minSdk 21, targetSdk 34, arm64-v8a + armeabi-v7a
 signed v1+v2+v3 (self-signed key, CN=Android Debug); verified with apksigner --min-sdk-version 33 (Android 13)
-Smaller download: 64-bit ARM only (every Android 13 phone), music compressed (IMA-ADPCM).
+Cozy interiors, polished village, compact touch UI.

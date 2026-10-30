@@ -34,10 +34,10 @@ func _ready() -> void:
 	_box.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_box.anchor_left = 0.5
 	_box.anchor_right = 0.5
-	_box.offset_left = -290
-	_box.offset_right = 290
-	_box.offset_top = -96
-	_box.offset_bottom = -8
+	_box.offset_left = -250
+	_box.offset_right = 250
+	_box.offset_top = -80
+	_box.offset_bottom = -6
 	_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_box)
 
@@ -48,21 +48,21 @@ func _ready() -> void:
 	_box.add_child(row)
 
 	_portrait_frame = UI.panel(UI.PAPER_DARK)
-	_portrait_frame.custom_minimum_size = Vector2(72, 72)
+	_portrait_frame.custom_minimum_size = Vector2(58, 58)
 	_portrait_frame.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(_portrait_frame)
 	_portrait = TextureRect.new()
 	_portrait.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_portrait.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	_portrait.custom_minimum_size = Vector2(60, 64)
+	_portrait.custom_minimum_size = Vector2(48, 52)
 	_portrait.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_portrait_frame.add_child(_portrait)
 
-	_text = UI.label("", 15)
+	_text = UI.label("", 14)
 	_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_text.custom_minimum_size = Vector2(300, 60)
+	_text.custom_minimum_size = Vector2(280, 50)
 	row.add_child(_text)
 
 	_name_plate = UI.panel(UI.WOOD)
@@ -72,8 +72,8 @@ func _ready() -> void:
 	_name_plate.anchor_right = 0.5
 	_name_plate.offset_right = 196
 	_name_plate.offset_left = 70
-	_name_plate.offset_top = -116
-	_name_plate.offset_bottom = -92
+	_name_plate.offset_top = -98
+	_name_plate.offset_bottom = -76
 	_name_plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(_name_plate)
 	_name = UI.label("", 14, UI.PAPER)
@@ -85,8 +85,8 @@ func _ready() -> void:
 	_more.anchor_right = 0.5
 	_more.offset_left = -282
 	_more.offset_right = -262
-	_more.offset_top = -30
-	_more.offset_bottom = -12
+	_more.offset_top = -26
+	_more.offset_bottom = -10
 	_root.add_child(_more)
 
 	_choices = VBoxContainer.new()
@@ -95,8 +95,8 @@ func _ready() -> void:
 	_choices.anchor_right = 0.5
 	_choices.offset_left = -200
 	_choices.offset_right = 200
-	_choices.offset_top = -230
-	_choices.offset_bottom = -104
+	_choices.offset_top = -206
+	_choices.offset_bottom = -88
 	_choices.alignment = BoxContainer.ALIGNMENT_END
 	_choices.add_theme_constant_override("separation", 6)
 	_root.add_child(_choices)
@@ -104,8 +104,8 @@ func _ready() -> void:
 	_skip_btn.set_anchors_preset(Control.PRESET_CENTER_BOTTOM)
 	_skip_btn.anchor_left = 0.5
 	_skip_btn.anchor_right = 0.5
-	_skip_btn.offset_top = -124
-	_skip_btn.offset_bottom = -100
+	_skip_btn.offset_top = -104
+	_skip_btn.offset_bottom = -82
 	_skip_btn.pressed.connect(func():
 		Director.skip_lines = true
 		_skip = true
@@ -116,12 +116,12 @@ func _ready() -> void:
 
 func _apply_layout() -> void:
 	var rtl := Loc.rtl()
-	_name_plate.offset_left = 70 if rtl else -196
-	_name_plate.offset_right = 196 if rtl else -70
-	_more.offset_left = -282 if rtl else 262
-	_more.offset_right = -262 if rtl else 282
-	_skip_btn.offset_left = -290 if rtl else 200
-	_skip_btn.offset_right = -200 if rtl else 290
+	_name_plate.offset_left = 40 if rtl else -166
+	_name_plate.offset_right = 166 if rtl else -40
+	_more.offset_left = -242 if rtl else 222
+	_more.offset_right = -222 if rtl else 242
+	_skip_btn.offset_left = -250 if rtl else 166
+	_skip_btn.offset_right = -166 if rtl else 250
 	_skip_btn.text = Loc.t("تخطي الحوار")
 	_text.horizontal_alignment = UI.flow(HORIZONTAL_ALIGNMENT_RIGHT)
 	_text.text_direction = Loc.dir()

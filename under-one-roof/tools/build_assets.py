@@ -22,12 +22,18 @@ from PIL import Image
 import gen_characters
 import gen_people
 import family_sheets
+import gen_interiors
 import gen_sprites
 import gen_world
 import gen_audio
 import gen_materials
 import ref_assets
 from stylize import painted, painted_frames, RES
+
+
+# procedural props used indoors: kept crisp like the characters instead of painted
+CRISP_PROPS = {"easel", "bucket", "cabinet", "cabinet_open", "desk", "wall_map", "wall_painting", "old_chair",
+               "hay_pile", "crates", "crate", "wood_box", "floorboard", "papers", "chair", "lantern_prop"}
 
 
 def clean(folder, keep_ext=(".import",)):
@@ -99,6 +105,11 @@ def main():
     sprites, icons = gen_sprites.build(tmp)
     for name, m in sprites.items():
         src = Image.open(os.path.join(tmp, "sprites", f"{name}.png"))
+        if name in CRISP_PROPS:
+            # indoor furniture keeps the crisp pixel density of the characters
+            src.resize((src.width * RES, src.height * RES), Image.NEAREST).save(os.path.join(a, "sprites", f"{name}.png"))
+            m["res"] = RES
+            continue
         if m.get("frames"):
             out = painted_frames(src, m["w"], m["h"], seed=len(name))
         else:
@@ -106,6 +117,9 @@ def main():
         out.save(os.path.join(a, "sprites", f"{name}.png"))
         m["res"] = RES
     painted_frames(Image.open(os.path.join(tmp, "ui", "icons.png")), 16, 16).save(os.path.join(a, "ui", "icons.png"))
+
+    # cozy interior props (crisp pixel art with light sources)
+    sprites.update(gen_interiors.build(os.path.join(a, "sprites")))
 
     # reference cut-outs (buildings, trees, boats)
     gen_materials.build()
