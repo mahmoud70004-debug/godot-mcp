@@ -40,6 +40,34 @@ for _ in $(seq 1 30); do
   sleep 1
 done
 
+# Ensure a local admin account exists, then fetch the unified API key.
+# Both files are private to this container and are never committed.
+# Failures here do not block the session; the server still runs without them.
+ADMIN_FILE="$HOME/.freellmapi-admin"
+KEY_FILE="$HOME/.fl-unified"
+if [ ! -f "$ADMIN_FILE" ]; then
+  umask 077
+  PW="$(node -e 'console.log(require("crypto").randomBytes(18).toString("base64url"))')"
+  printf 'email=admin@freellmapi.local\npassword=%s\n' "$PW" > "$ADMIN_FILE"
+fi
+(
+  umask 077
+  EMAIL="$(sed -n 's/^email=//p' "$ADMIN_FILE")"
+  PASSWORD="$(sed -n 's/^password=//p' "$ADMIN_FILE")"
+  BASE="http://localhost:$PORT"
+  curl -s -m 10 -o /dev/null -X POST "$BASE/api/auth/setup" -H 'Content-Type: application/json' \
+    -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}" || true
+  TOKEN="$(curl -s -m 10 -X POST "$BASE/api/auth/login" -H 'Content-Type: application/json' \
+    -d "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}" | node -pe 'try{JSON.parse(require("fs").readFileSync(0)).token||""}catch(e){""}')"
+  if [ -n "$TOKEN" ]; then
+    curl -s -m 10 "$BASE/api/settings/api-key" -H "Authorization: Bearer $TOKEN" \
+      | node -pe 'try{JSON.parse(require("fs").readFileSync(0)).apiKey||""}catch(e){""}' > "$KEY_FILE" || true
+  fi
+) || true
+
 if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   echo "export OPENAI_BASE_URL=\"http://localhost:$PORT/v1\"" >> "$CLAUDE_ENV_FILE"
+  if [ -s "$KEY_FILE" ]; then
+    echo "export FREELLMAPI_API_KEY=\"$(cat "$KEY_FILE")\"" >> "$CLAUDE_ENV_FILE"
+  fi
 fi
