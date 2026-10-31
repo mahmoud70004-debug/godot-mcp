@@ -35,13 +35,13 @@ static func build(root: Node3D) -> TerrainBuilder:
 		if region and region.get_parent() == null:
 			root.add_child(region)
 		if region:
-			MeshMerger.merge_static(region, 20.0, REGION_RANGE)
+			MeshMerger.merge_static(region, MeshMerger.cell_for(REGION_RANGE), REGION_RANGE)
 	var shared := Node3D.new()
 	shared.name = "Plains"
 	root.add_child(shared)
 	_signposts(shared, terrain, rng)
 	MeadowBuilder.build(shared, terrain, rng)
-	MeshMerger.merge_static(shared, 20.0, REGION_RANGE)
+	MeshMerger.merge_static(shared, MeshMerger.cell_for(REGION_RANGE), REGION_RANGE)
 	return terrain
 
 

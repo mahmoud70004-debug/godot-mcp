@@ -8,6 +8,8 @@ extends RefCounted
 
 const WHEAT_SHADER := preload("res://assets/shaders/thornfield_wheat.gdshader")
 const GRASS_CHUNK := 12.0
+## Chunks drawn together (3x3 per draw call; see MeshMerger.merge_grass_chunks).
+const GRASS_MERGE := 3
 
 static var _wheat: ShaderMaterial
 
@@ -341,6 +343,7 @@ static func grass_chunks(parent: Node3D, tufts: Array, range_end: float) -> Node
 		mi.visibility_range_end = range_end
 		mi.set_meta(MeshMerger.SKIP_META, true)
 		group.add_child(mi)
+	MeshMerger.merge_grass_chunks(group, GRASS_CHUNK, GRASS_MERGE)
 	return group
 
 
