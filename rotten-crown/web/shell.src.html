@@ -123,6 +123,8 @@ h1 span { display: block; }
 	transition: background-color var(--t-hover) ease, transform var(--t-press) var(--ease-out);
 }
 .wake:hover:not(:disabled) { background: #b9cf5f; }
+.apk { margin-top: 14px; font-size: 13px; color: rgba(214, 208, 186, 0.62); }
+.apk a { color: #b9cf5f; text-underline-offset: 3px; }
 .wake:active:not(:disabled) { transform: scale(0.97); }
 .wake:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .wake:disabled { background: var(--surface); color: var(--muted); cursor: progress; }
@@ -217,6 +219,7 @@ $GODOT_HEAD_INCLUDE
 		<p class="turn" id="turn">Turn your phone sideways to play.</p>
 		<button class="wake rise rise-3" id="rc-wake" type="button" disabled aria-describedby="caption">Waking 0%</button>
 		<p id="status-notice" role="alert"></p>
+		<p class="apk rise rise-3"><a href="rotten_crown.apk" download>Android app (APK)</a> &middot; smoother than the browser</p>
 	</div>
 	<figure class="eye rise rise-4">
 		<div class="lens" id="lens">

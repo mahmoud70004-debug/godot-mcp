@@ -42,8 +42,8 @@ func _ready() -> void:
 	_scratch.resize(RING_SIZE)
 	_stamps.resize(RING_SIZE)
 	if OS.has_feature("web"):
-		var search: Variant = JavaScriptBridge.eval("window.location.search", true)
-		forced = str(search).contains("fps=1")
+		var flag: Variant = JavaScriptBridge.eval("new URLSearchParams(window.location.search).get('fps') || ''", true)
+		forced = str(flag) == "1"
 	_build()
 	get_viewport().size_changed.connect(_place)
 	refresh_enabled()

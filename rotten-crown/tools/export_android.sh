@@ -23,5 +23,11 @@ OUT="build/android/rotten_crown.apk"
 mkdir -p build/android
 rm -f "$OUT" "$OUT.idsig"
 "$GODOT" --headless --path . --import >/dev/null 2>&1 || true
+# Every build gets a higher version code (the commit count) so it can install as an update
+# (Android also requires the same signing key as the installed copy).
+CODE="$(git rev-list --count HEAD)"
+cp export_presets.cfg build/android/export_presets.cfg.bak
+trap 'mv build/android/export_presets.cfg.bak export_presets.cfg' EXIT
+sed -i "s/^version\/code=.*/version\/code=${CODE}/" export_presets.cfg
 "$GODOT" --headless --path . "--export-${MODE}" "Android" "$OUT"
 ls -la build/android

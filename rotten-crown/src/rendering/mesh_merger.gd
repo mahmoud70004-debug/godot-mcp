@@ -103,12 +103,26 @@ static func merge_static(root: Node3D, cell_size: float = 20.0, range_end: float
 			out.mesh = _commit(acc)
 			out.material_override = g["material"]
 			out.cast_shadow = g["cast"] as GeometryInstance3D.ShadowCastingSetting
-			out.visibility_range_end = range_end
+			out.visibility_range_end = _spread_range(out.mesh, members, range_end)
 			root.add_child(out)
 			for m in members:
 				(m[0] as MeshInstance3D).visible = false
 				merged += 1
 	return merged
+
+
+## A merged chunk is culled from its own centre: extend its range so every member stays
+## visible as far as it did on its own (members culled from their own centres).
+static func _spread_range(mesh: Mesh, members: Array, range_end: float) -> float:
+	if range_end <= 0.0:
+		return 0.0
+	var mid := mesh.get_aabb().get_center()
+	var spread := 0.0
+	for m in members:
+		var mi := m[0] as MeshInstance3D
+		var centre: Vector3 = (m[1] as Transform3D) * mi.mesh.get_aabb().get_center()
+		spread = maxf(spread, mid.distance_to(centre))
+	return range_end + spread + 0.5
 
 
 ## [[MeshInstance3D, Transform3D, Color], ...] -> list of member lists whose merged box

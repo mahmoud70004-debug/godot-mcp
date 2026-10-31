@@ -12,6 +12,8 @@ var _tween: Tween
 
 
 func _init() -> void:
+	# Grows by tween in idle time: keep it out of physics interpolation (it would trail the blow).
+	physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	var disc := CylinderMesh.new()
 	disc.top_radius = 1.0
 	disc.bottom_radius = 1.0

@@ -34,6 +34,10 @@ void vertex() {
 	float gust = sin(TIME * wind_speed + world_pos.x * 0.35 + world_pos.z * 0.25) * 0.6 + sin(TIME * wind_speed * 2.3 + world_pos.z) * 0.4;
 	VERTEX.x += (gust * gust_strength * wind_strength + lean) * h * h;
 	v_culled = chunk_range > 0.0 && distance(CAMERA_POSITION_WORLD, INSTANCE_CUSTOM.xyz) > chunk_range ? 1.0 : 0.0;
+	// A culled tuft collapses to a point: no pixels are rasterised for it at all.
+	if (v_culled > 0.5) {
+		VERTEX = vec3(0.0);
+	}
 }
 
 void fragment() {

@@ -76,6 +76,10 @@ void vertex() {
 	v_light = mix(1.0 - cloud_shadow, 1.0, smoothstep(-0.45, 0.35, c));
 	v_gust = gust;
 	v_culled = chunk_range > 0.0 && distance(CAMERA_POSITION_WORLD, CUSTOM0.xyz) > chunk_range ? 1.0 : 0.0;
+	// A culled tuft collapses to a point: no pixels are rasterised for it at all.
+	if (v_culled > 0.5) {
+		VERTEX = vec3(0.0);
+	}
 }
 
 void fragment() {

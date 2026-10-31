@@ -343,6 +343,7 @@ func _on_died() -> void:
 
 func _spawn_ooze() -> void:
 	var puddle := MeshInstance3D.new()
+	puddle.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(2.4, 2.4)
 	puddle.mesh = plane

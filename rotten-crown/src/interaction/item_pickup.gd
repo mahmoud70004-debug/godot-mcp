@@ -16,6 +16,8 @@ func _ready() -> void:
 	_time = randf() * TAU
 	_visual = _build_visual()
 	if _visual:
+		# Bobs in _process: interpolating it against physics ticks would make it stutter.
+		_visual.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 		add_child(_visual)
 	var glint := OmniLight3D.new()
 	glint.light_color = item.tint.lerp(Color(0.9, 0.85, 0.6), 0.5) if item else Color.WHITE

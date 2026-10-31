@@ -7,6 +7,8 @@ extends Sprite3D
 signal animation_finished(anim: StringName)
 
 const SHADER := preload("res://assets/shaders/pixel_sprite.gdshader")
+## Closer than this (squared metres) a sprite updates even while reported off screen.
+const NEAR_UPDATE_SQ := 20.0 * 20.0
 
 ## (index texture id, palette texture id, variant, full billboard) -> ShaderMaterial. The material keeps
 ## both textures alive, so ids are never reused while cached.
@@ -71,11 +73,18 @@ func _process(delta: float) -> void:
 			_finished = true
 			_time = (_frames - 1) / maxf(_fps, 0.001)
 			animation_finished.emit(anim)
-	if _notifier != null and not _notifier.is_on_screen():
+	if _notifier != null and not _notifier.is_on_screen() and _far_from_camera():
 		return
 	if sheet.is_v2() and _material_billboard != billboard:
 		_refresh_material()
 	_update_region()
+
+
+## Near sprites always update: the notifier only reports "on screen" a frame after the first
+## draw, so a hard camera cut onto a close sprite would show one stale pose.
+func _far_from_camera() -> bool:
+	var cam := get_viewport().get_camera_3d()
+	return cam == null or cam.global_position.distance_squared_to(global_position) > NEAR_UPDATE_SQ
 
 
 func _on_screen_entered() -> void:

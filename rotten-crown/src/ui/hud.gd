@@ -173,6 +173,10 @@ func _sync_fps_toggle() -> void:
 	var on: bool = Settings.show_fps or FpsOverlay.forced
 	%FpsToggle.set_pressed_no_signal(on)
 	%FpsToggle.hint = "on" if on else "off"
+	# The page link forces it on: the toggle cannot turn it off, so say why.
+	if FpsOverlay.forced:
+		%FpsToggle.disabled = true
+		%FpsToggle.disabled_hint = "on (link)"
 
 
 func _toggle_menu(menu: Control) -> void:
