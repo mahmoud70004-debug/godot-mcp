@@ -80,7 +80,7 @@ static func build(root: Node3D, terrain: TerrainBuilder, _shared_rng: RandomNumb
 	_night_tint(poi)
 	_small_no_shadow(floor_props, 1.6)
 	_small_no_shadow(poi, 1.0)
-	_merge(trunks, RANGE_TREES, 30.0)
+	_merge(trunks, RANGE_TREES, MeshMerger.cell_for(RANGE_TREES), 30.0)
 	_merge(far, RANGE_TREES, 60.0)
 	_merge(poi, RANGE_POI, 30.0)
 	_merge(floor_props, RANGE_PROPS, 30.0)
@@ -104,9 +104,10 @@ static func _small_no_shadow(group: Node3D, size: float) -> void:
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 
-static func _merge(group: Node3D, range_end: float, cell: float) -> void:
+## shadow_cell: see MeshMerger.merge_static (the cell this group used to merge with).
+static func _merge(group: Node3D, range_end: float, cell: float, shadow_cell := 0.0) -> void:
 	var before := group.get_children()
-	MeshMerger.merge_static(group, cell, range_end)
+	MeshMerger.merge_static(group, cell, range_end, false, shadow_cell if shadow_cell > 0.0 else cell)
 	for child in group.get_children():
 		if child is MeshInstance3D and not before.has(child):
 			child.set_meta(MeshMerger.SKIP_META, true)

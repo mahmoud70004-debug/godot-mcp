@@ -21,6 +21,9 @@ const WALL_THICKNESS := CastleProps.WALL_THICKNESS
 const GATE_HALF_WIDTH := CastleProps.GATE_HALF_WIDTH
 const WARM_LIGHT := Color(1.0, 0.6, 0.3)
 const GRASS_CHUNK := 12.0
+## Overworld merge cell, centred on the ward: walls at +-40 m, keep at -52, meadow
+## edge pieces to z ~ +60 all fall in one cell.
+const WARD_CELL := 140.0
 const CURSED_LIGHT := Color(0.55, 1.0, 0.3)
 
 @export var seed := 1337
@@ -95,7 +98,10 @@ func _build() -> void:
 		_build_festival()
 	else:
 		_scatter_rot()
-	MeshMerger.merge_static(self, 20.0, 0.0 if festive else 140.0)
+	# The overworld ward is one cell per material (its lights stay within the budget,
+	# tools/bake_world.gd checks); the prologue (festive) keeps 20 m cells for its many
+	# feast lights.
+	MeshMerger.merge_static(self, 20.0 if festive else WARD_CELL, 0.0 if festive else 140.0, not festive)
 
 
 func _make_materials() -> void:

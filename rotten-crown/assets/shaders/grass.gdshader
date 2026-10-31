@@ -16,7 +16,13 @@ uniform float lean = 0.0;
 uniform float gust_strength = 1.0;
 uniform float sheen = 0.0;
 
+// Merged chunks (GrassScatter.merge_chunks): INSTANCE_CUSTOM.xyz is the centre of the
+// 12 m chunk a tuft was scattered in; beyond chunk_range from it the tuft is discarded,
+// exactly as that chunk's own visibility range used to cull it. 0 = off.
+uniform float chunk_range = 0.0;
+
 varying vec3 world_pos;
+varying float v_culled;
 
 float hash(float n) {
 	return fract(sin(n) * 43758.5453);
@@ -27,9 +33,13 @@ void vertex() {
 	float h = 1.0 - UV.y;
 	float gust = sin(TIME * wind_speed + world_pos.x * 0.35 + world_pos.z * 0.25) * 0.6 + sin(TIME * wind_speed * 2.3 + world_pos.z) * 0.4;
 	VERTEX.x += (gust * gust_strength * wind_strength + lean) * h * h;
+	v_culled = chunk_range > 0.0 && distance(CAMERA_POSITION_WORLD, INSTANCE_CUSTOM.xyz) > chunk_range ? 1.0 : 0.0;
 }
 
 void fragment() {
+	if (v_culled > 0.5) {
+		discard;
+	}
 	vec2 uv = floor(UV * pixel_size) / pixel_size;
 	float column = floor(uv.x * blades);
 	float seed = hash(column + floor(world_pos.x * 3.0) * 17.0 + floor(world_pos.z * 3.0) * 31.0);

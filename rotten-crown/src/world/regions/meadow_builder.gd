@@ -463,7 +463,7 @@ static func _blocked(p: Vector2, keep_out: Array[Vector3]) -> bool:
 ## Merges a group here (so it keeps its own cull distance) and shields the
 ## result from the merge the caller runs over the whole Plains node.
 static func _merge(group: Node3D, range_end: float) -> void:
-	MeshMerger.merge_static(group, 20.0, range_end)
+	MeshMerger.merge_static(group, MeshMerger.cell_for(range_end), range_end)
 	for node in group.find_children("*", "MeshInstance3D", true, false):
 		var mi := node as MeshInstance3D
 		if mi.visible:

@@ -124,6 +124,12 @@ func _apply_grass(level: int) -> void:
 		var original: float = mmi.get_meta(&"q_range_end")
 		mmi.multimesh.visible_instance_count = mmi.multimesh.instance_count / 2 if level == LOW else -1
 		mmi.visibility_range_end = original * 1.4 if level == HIGH else original
+		# Merged chunks cull their old chunks in the shader (GrassScatter.merge_chunks).
+		if mmi.has_meta(GrassScatter.RANGE_META) and mmi.multimesh.mesh:
+			var mat := mmi.multimesh.mesh.surface_get_material(0) as ShaderMaterial
+			if mat:
+				var chunk_range: float = mmi.get_meta(GrassScatter.RANGE_META)
+				mat.set_shader_parameter("chunk_range", chunk_range * 1.4 if level == HIGH else chunk_range)
 
 
 func _apply_post(scene: Node, level: int) -> void:

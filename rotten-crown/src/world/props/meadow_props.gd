@@ -15,6 +15,8 @@ const FAR_SHADER := preload("res://assets/shaders/meadow_far.gdshader")
 const MIST_SHADER := preload("res://assets/shaders/wood_mist.gdshader")
 const OOZE_SHADER := preload("res://assets/shaders/ooze.gdshader")
 const GRASS_CHUNK := 12.0
+## Chunks drawn together (3x3 per draw call; see MeshMerger.merge_grass_chunks).
+const GRASS_MERGE := 3
 ## Grass tuft kinds (vertex COLOR.a, see meadow_grass.gdshader).
 const KIND_GRASS := 1.0
 const KIND_WEED := 0.66
@@ -197,6 +199,7 @@ static func grass_chunks(parent: Node3D, tufts: Array, range_end: float) -> Node
 		mi.visibility_range_end = range_end
 		mi.set_meta(MeshMerger.SKIP_META, true)
 		group.add_child(mi)
+	MeshMerger.merge_grass_chunks(group, GRASS_CHUNK, GRASS_MERGE)
 	return group
 
 

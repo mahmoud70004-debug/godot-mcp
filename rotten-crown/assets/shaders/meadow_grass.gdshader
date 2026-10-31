@@ -39,7 +39,14 @@ uniform float sheen = 0.32;
 uniform float fade_start = 44.0;
 uniform float fade_end = 58.0;
 
+// Merged chunks (MeshMerger.merge_grass_chunks): CUSTOM0.xyz is the centre of the 12 m
+// chunk a tuft was built in; beyond chunk_range from it the tuft is hidden, exactly as
+// that chunk's own visibility range used to cull it (discarded, not moved: the wind
+// math stays untouched). 0 = off.
+uniform float chunk_range = 0.0;
+
 varying float v_light;
+varying float v_culled;
 varying float v_gust;
 
 float hash(float n) {
@@ -68,9 +75,13 @@ void vertex() {
 	c += 0.5 * sin((wp.x + wp.z) * cloud_scale * 2.3 + 1.7 + t * 1.3);
 	v_light = mix(1.0 - cloud_shadow, 1.0, smoothstep(-0.45, 0.35, c));
 	v_gust = gust;
+	v_culled = chunk_range > 0.0 && distance(CAMERA_POSITION_WORLD, CUSTOM0.xyz) > chunk_range ? 1.0 : 0.0;
 }
 
 void fragment() {
+	if (v_culled > 0.5) {
+		discard;
+	}
 	vec2 px = vec2(pixel_size, pixel_size * 1.4);
 	vec2 uv = floor(UV * px) / px;
 	float y = 1.0 - uv.y;

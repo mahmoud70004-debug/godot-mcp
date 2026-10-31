@@ -101,13 +101,13 @@ static func _group(parent: Node3D, group_name: String) -> Node3D:
 	return node
 
 
-## Merges a group's static meshes per material and 20 m cell with its own range; the
+## Merges a group's static meshes per material and cell (MeshMerger.cell_for) with its own range; the
 ## results are flagged so the overworld's merge leaves them alone.
 static func _merge(group: Node3D, range_end: float) -> void:
 	var before := {}
 	for c in group.get_children():
 		before[c] = true
-	MeshMerger.merge_static(group, 20.0, range_end)
+	MeshMerger.merge_static(group, MeshMerger.cell_for(range_end), range_end)
 	for c in group.get_children():
 		if not before.has(c) and c is MeshInstance3D:
 			c.set_meta(MeshMerger.SKIP_META, true)

@@ -9,6 +9,14 @@ const OUT_DIR := "res://src/levels/valdron/baked/"
 ## Overworld meshes left unmerged (single props, shafts, gore) stop drawing
 ## beyond this; the fog hides them long before.
 const OVERWORLD_DEFAULT_RANGE := 110.0
+## Shadow stand-ins (MeshMerger.build_shadow_proxies): square size, and the longest moon
+## shadow distance any quality level uses (QualityManager High, valdron_overworld.tscn).
+const SHADOW_PROXY_CELL := 40.0
+const SHADOW_MAX_DISTANCE := 40.0
+## Grass MultiMesh chunks drawn together (3x3 per draw call, GrassScatter.merge_chunks).
+const GRASS_MERGE := 3
+## Ground chunks are joined 2x2 (64 -> 128 m) where the light budget allows.
+const TERRAIN_CELL := 128.0
 
 
 func _ready() -> void:
@@ -47,8 +55,8 @@ func _finish(root: Node3D, path: String, default_range := 0.0) -> void:
 	var err := packed.pack(root)
 	if err == OK:
 		err = ResourceSaver.save(packed, path, ResourceSaver.FLAG_COMPRESS)
-	print("%s: %s | %d mesh instances, %d triangle verts, %d grass instances, %d lights" % [
-		path, error_string(err), stats["meshes"], stats["verts"], stats["grass"], stats["lights"]])
+	print("%s: %s | %d mesh instances, %d triangle verts, %d grass instances, %d lights, %d casters in shadow proxies" % [
+		path, error_string(err), stats["meshes"], stats["verts"], stats["grass"], stats["lights"], stats.get("shadow_proxied", 0)])
 	root.queue_free()
 
 
@@ -75,10 +83,43 @@ func _finalize(root: Node3D, default_range: float) -> Dictionary:
 		if mi.mesh:
 			stats["meshes"] = int(stats["meshes"]) + 1
 			stats["verts"] = int(stats["verts"]) + mi.mesh.get_faces().size()
+	if default_range > 0.0:
+		var lights := root.find_children("*", "OmniLight3D", true, false)
+		for terrain in root.find_children("Terrain", "Node3D", false, false):
+			MeshMerger.merge_children_by_cell(terrain as Node3D, TERRAIN_CELL, lights, MeshMerger.LIGHT_BUDGET)
+		GrassScatter.merge_chunks(root, GRASS_MERGE)
+		stats["shadow_proxied"] = MeshMerger.build_shadow_proxies(root, SHADOW_PROXY_CELL, SHADOW_MAX_DISTANCE)
 	for node in root.find_children("*", "MultiMeshInstance3D", true, false):
+		if node.is_queued_for_deletion():
+			continue
 		stats["grass"] = int(stats["grass"]) + (node as MultiMeshInstance3D).multimesh.instance_count
 	stats["lights"] = root.find_children("*", "Light3D", true, false).size()
+	_check_light_budget(root)
 	return stats
+
+
+## The Compatibility renderer shades each mesh with at most 8 omni/spot lights
+## (rendering/limits/opengl/max_lights_per_object); more and some silently drop out.
+## Baked meshes keep room for the moving ones (MeshMerger.LIGHT_BUDGET).
+func _check_light_budget(root: Node3D) -> void:
+	var limit := MeshMerger.LIGHT_BUDGET
+	var lights := root.find_children("*", "OmniLight3D", true, false)
+	var worst := 0
+	for node in root.find_children("*", "GeometryInstance3D", true, false):
+		var gi := node as GeometryInstance3D
+		if not gi.is_visible_in_tree() or gi.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_SHADOWS_ONLY:
+			continue
+		var box := gi.global_transform * gi.get_aabb()
+		var touching := 0
+		for l in lights:
+			var light := l as OmniLight3D
+			var p := light.global_position
+			if p.clamp(box.position, box.end).distance_to(p) < light.omni_range:
+				touching += 1
+		worst = maxi(worst, touching)
+		if touching > limit:
+			push_warning("light budget: %s touched by %d lights (budget %d)" % [root.get_path_to(gi), touching, limit])
+	print("light budget: at most %d baked omni lights on one mesh (budget %d)" % [worst, limit])
 
 
 ## Alpha-cut cards (canopy leaves, ferns) stack in many layers and defeat early-z on

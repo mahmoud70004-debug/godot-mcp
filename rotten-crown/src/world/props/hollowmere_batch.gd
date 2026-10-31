@@ -17,11 +17,13 @@ class Group:
 	var n := PackedVector3Array()
 	var c := PackedColorArray()
 	var i := PackedInt32Array()
+	## Palette colour of the material the next vertices belong to (alpha < 0: none).
+	var tint := Color(0.0, 0.0, 0.0, -1.0)
 
 	func vert(p: Vector3, nrm: Vector3, col: Color) -> int:
 		v.append(p - origin)
 		n.append(nrm)
-		c.append(col)
+		c.append(tint if tint.a >= 0.0 else col)
 		return v.size() - 1
 
 	## Godot front faces are clockwise: the winding follows the vertex normals.
@@ -64,17 +66,22 @@ func at(anchor: Vector3, range_end: float, shadow := false, range_begin := 0.0) 
 	_range = Vector2(range_begin, range_end)
 	_shadow = shadow
 
+## Group for `mat` in the current cell. Final batches put colour variants of one material
+## in one group (MeshMerger.palette_family: the colour goes into the vertices).
 func g(mat: Material) -> Group:
-	var key := "%d|%d|%d|%.1f|%.1f|%s" % [mat.get_instance_id(), _cell.x, _cell.y, _range.x, _range.y, _shadow]
+	var family := MeshMerger.palette_family(mat) if final else []
+	var group_mat: Material = family[0] if family else mat
+	var key := "%d|%d|%d|%.1f|%.1f|%s" % [group_mat.get_instance_id(), _cell.x, _cell.y, _range.x, _range.y, _shadow]
 	var grp: Group = groups.get(key)
 	if grp == null:
 		grp = Group.new()
-		grp.material = mat
+		grp.material = group_mat
 		grp.range_begin = _range.x
 		grp.range_end = _range.y
 		grp.shadow = _shadow
 		grp.origin = Vector3((_cell.x + 0.5) * cell, 0.0, (_cell.y + 0.5) * cell)
 		groups[key] = grp
+	grp.tint = family[1] if family else Color(0.0, 0.0, 0.0, -1.0)
 	return grp
 
 func box(mat: Material, xf: Transform3D, size: Vector3, col: Color) -> void:
