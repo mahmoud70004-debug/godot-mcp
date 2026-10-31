@@ -81,3 +81,13 @@
 | D6 runtime | H (me) | done | Witness (src/npc/witness.gd), 3 lines, placed in valdron_overworld.tscn; populator uses the new creatures |
 | review | router-reviewer | done | 12 findings, all fixed (5a55da9) |
 | D7 | H | done | smoke PASS, touch PASS (1 flake on slow software GL), perf ~ previous (spawn 4.0 vs 4.5, Hollowmere 1 vs 1 software) |
+
+## Phase 3e
+| task | tier | status | note |
+|---|---|---|---|
+| E1 | H | done | Godot 4.4.1 -> 4.7.1; VirtualJoystick -> TouchJoystick (4.7 native class); re-bake; parity ~0.5/255; steady web fps +35% |
+| E6 | N | done | Android toolchain (JDK 21, SDK 36), arm64 APK ~58 MB; Compatibility renderer on Android too (Mobile/Vulkan changed the look) |
+| E2 | N | done | FPS overlay: fps, 1% low, ms, draws; pause toggle + ?fps=1 |
+| E5 | N | done | physics 30 Hz + interpolation, top-level camera rig, far enemies/witnesses parked, sprites idle off screen; physics ~3 ms -> ~0.6 ms/frame |
+| E3+E4 | H (rate-limited once, resumed) | done | draws -21..-68% per pose (spawn 429->135); 6/8 poses <= 150; shadow stand-ins, colour-variant merge, range-sized cells, grass 3x3. DEVIATION: no vertex-colour light bake - measured unshadowed omni lights cost 0 extra draw calls in 4.7.1 |
+| review | router-reviewer | done | 9 findings: fixed interpolation of tweened nodes, merged-chunk range spread, grass cull collapsed in vertex(), near sprites update, ?fps parse, APK link + version code. Not fixed: fixed signing key (committing a keystore was blocked) -> uninstall old APK before installing a new one |
