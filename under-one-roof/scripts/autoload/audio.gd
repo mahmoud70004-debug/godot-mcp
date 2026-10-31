@@ -13,7 +13,6 @@ var _duck := 1.0                  # 1 = full, lower while people talk (no extra 
 var _duck_tween: Tween
 var _fade := {}                   # player -> 0..1 crossfade level
 var _unlocked := false            # browsers only allow sound after the first touch / click
-const VOWELS := ["a", "e", "i", "o", "u"]
 
 
 func _ready() -> void:
@@ -25,10 +24,9 @@ func _ready() -> void:
 		_sfx.append(_player())
 	_voice = _player()
 	# preload the small sounds so the first line of dialogue never stutters (web)
-	for v in ["man", "deep", "woman", "child", "old", "oldwoman"]:
-		for vw in VOWELS:
-			_stream("voice_%s_%s" % [v, vw], false)
-	for n in ["blip", "select", "page", "discover", "reveal", "clue", "pickup"]:
+	for i in 8:
+		_stream("dlg_tick_%d" % i, false)
+	for n in ["dlg_open", "dlg_next", "dlg_close", "blip", "select", "discover", "reveal", "clue", "pickup"]:
 		_stream(n, false)
 
 
@@ -67,16 +65,29 @@ func sfx(name: String, pitch := 1.0) -> void:
 			return
 
 
-## One spoken syllable of a character's voice (see Story.voice_of).
-func voice(kind: String, letter: String, pitch := 1.0) -> void:
-	var vw: String = VOWELS[absi(letter.unicode_at(0)) % VOWELS.size()] if letter != "" else "a"
-	var s := _stream("voice_%s_%s" % [kind, vw], false)
+## Dialogue sound design: a soft pentatonic click per few letters. The notes walk up
+## and down the scale a step at a time (driven by the letters), so a line sounds like
+## a quiet little melody; each kind of voice sits higher or lower.
+const VOICE_PITCH := {"child": 1.26, "woman": 1.12, "oldwoman": 1.06, "man": 1.0, "old": 0.89, "deep": 0.84}
+var _tick_i := 3
+
+
+func voice(kind: String, letter: String, _pitch := 1.0) -> void:
+	var code := letter.unicode_at(0) if letter != "" else 0
+	_tick_i = clampi(_tick_i + [-1, 0, 1, 1, -1, 2, -2][code % 7], 0, 7)
+	var s := _stream("dlg_tick_%d" % _tick_i, false)
 	if s == null:
 		return
 	_voice.stream = s
-	_voice.pitch_scale = pitch * randf_range(0.96, 1.05)
-	_voice.volume_db = linear_to_db(max(0.001, Game.settings["sfx"] * 0.75))
+	_voice.pitch_scale = float(VOICE_PITCH.get(kind, 1.0))
+	_voice.volume_db = linear_to_db(max(0.001, Game.settings["sfx"] * 0.8))
 	_voice.play()
+
+
+## Start of a conversation: the melody starts from the middle of the scale.
+func dialogue_open() -> void:
+	_tick_i = 3
+	sfx("dlg_open")
 
 
 ## Lowers music and ambience while people talk, and brings them back after.

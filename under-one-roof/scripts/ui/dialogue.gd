@@ -204,6 +204,7 @@ func close() -> void:
 	_last_speaker = ""
 	if visible:
 		Audio.duck(false)
+		Audio.sfx("dlg_close")
 	visible = false
 
 
@@ -215,7 +216,7 @@ func say(speaker: String, text: String) -> void:
 	var opening := not visible
 	if opening:
 		Audio.duck(true)
-		Audio.sfx("page", randf_range(0.95, 1.05))
+		Audio.dialogue_open()
 	visible = true
 	_apply_layout()
 	_animate_line(opening, speaker)
@@ -263,7 +264,7 @@ func say(speaker: String, text: String) -> void:
 		_waiting = false
 	else:
 		await advanced
-	Audio.sfx("select")
+	Audio.sfx("dlg_next")
 
 
 func choose(options: Array) -> int:

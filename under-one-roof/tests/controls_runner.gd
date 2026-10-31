@@ -282,17 +282,23 @@ func _world_features() -> void:
 	await _wait(0.4)
 	_expect(p.target != null and p.target.has_meta("npc"), "a person beside Gideon is targeted even with his back to her")
 	_press("interact")
+	await get_tree().process_frame
+	await get_tree().process_frame
+	var chime := false
+	for pl in Audio._sfx:
+		if pl.playing and pl.stream == Audio._cache.get("dlg_openfalse"):
+			chime = true
+	_expect(chime, "the dialogue opens with its soft chime")
 	await _wait(0.6)
 	_expect(Director.main.dialogue.visible, "the action opens the conversation (faced: %s)" % p.facing)
 	_expect(p.facing == "left", "Gideon turns to face the person he talks to")
 	# voices and music ducking while the line types
-	var voiced := false
-	for i in 30:
+	var notes := {}
+	for i in 90:
 		if Audio._voice.playing:
-			voiced = true
-			break
+			notes[Audio._tick_i] = true
 		await get_tree().process_frame
-	_expect(voiced, "the speaker's voice plays while the line types")
+	_expect(notes.size() >= 2, "soft clicks walk along the scale while the line types (%d notes)" % notes.size())
 	await _wait(0.6)
 	_expect(Audio.is_ducked() and AudioServer.bus_count == 1, "music is ducked under the dialogue (no extra bus: web samples)")
 	for i in 40:
