@@ -1,0 +1,104 @@
+name: Prepare isolated Rotten Crown test tools
+
+# Temporary tool bootstrap for the Arena branch only. It does not deploy Pages,
+# edit either game branch, or change the checked-in game. The resulting blobs
+# are unreferenced Git objects, not commits or release assets.
+on:
+  push:
+    branches:
+      - arena/29bc081f-godot-mcp
+    paths:
+      - .github/workflows/arena-rc-tool-bootstrap.yml
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 35
+    steps:
+      - name: Fetch and verify the official Godot editor
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/rc-tools"
+          cd "$RUNNER_TEMP/rc-tools"
+          curl -fL --retry 3 -o godot.zip 'https://github.com/godotengine/godot/releases/download/4.7.1-stable/Godot_v4.7.1-stable_linux.x86_64.zip'
+          echo 'c7ff14fd28472c8d4f193043de30278dcf7e5241a1dcf7566b02e27addaa33ba  godot.zip' | sha256sum -c -
+          unzip -q godot.zip
+      - name: Package Debian 12 software rendering dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm -v "$RUNNER_TEMP/rc-tools:/out" debian:bookworm-slim sh -euxc '
+            export DEBIAN_FRONTEND=noninteractive
+            apt-get update -qq
+            apt-get install -y --no-install-recommends xvfb xauth x11-xkb-utils xkb-data xfonts-base libgl1-mesa-dri libgl1 libglx-mesa0 libx11-6 libxcursor1 libxi6 libxinerama1 libxrandr2 libxss1 libxrender1 libxkbcommon0 libpulse0 libfontconfig1
+            mkdir -p /out/runtime/bin /out/runtime/lib/dri /out/runtime/share/X11 /out/runtime/share/fonts /out/runtime/etc/fonts
+            cp -L /usr/bin/Xvfb /usr/bin/xauth /usr/bin/xkbcomp /out/runtime/bin/
+            cp /usr/bin/xvfb-run /out/runtime/bin/
+            cp -a /usr/share/X11/xkb /out/runtime/share/X11/
+            cp -a /usr/share/fonts/X11 /out/runtime/share/fonts/
+            cp -a /etc/fonts/. /out/runtime/etc/fonts/
+            cp -L /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so /out/runtime/lib/dri/
+            for obj in /usr/bin/Xvfb /usr/bin/xauth /usr/bin/xkbcomp \
+              /out/Godot_v4.7.1-stable_linux.x86_64 \
+              /usr/lib/x86_64-linux-gnu/libGL.so.1 \
+              /usr/lib/x86_64-linux-gnu/libGLX_mesa.so.0 \
+              /usr/lib/x86_64-linux-gnu/dri/swrast_dri.so \
+              /usr/lib/x86_64-linux-gnu/libXcursor.so.1 \
+              /usr/lib/x86_64-linux-gnu/libXinerama.so.1 \
+              /usr/lib/x86_64-linux-gnu/libXrandr.so.2 \
+              /usr/lib/x86_64-linux-gnu/libXi.so.6 \
+              /usr/lib/x86_64-linux-gnu/libXss.so.1 \
+              /usr/lib/x86_64-linux-gnu/libxkbcommon.so.0; do
+              case "$obj" in
+                /usr/lib/*/dri/*) ;;
+                /usr/lib/*) cp -L "$obj" "/out/runtime/lib/$(basename "$obj")" ;;
+              esac
+              ldd "$obj" | awk "/=> \\// {print \$3}" | while read -r lib; do
+                case "$(basename "$lib")" in
+                  libc.so.*|libm.so.*|libdl.so.*|libpthread.so.*|librt.so.*|ld-linux*) continue ;;
+                esac
+                cp -L "$lib" "/out/runtime/lib/$(basename "$lib")"
+              done
+            done
+            cp -L /usr/lib/x86_64-linux-gnu/libGL.so.1 /out/runtime/lib/libGL.so.1
+            cp -L /usr/lib/x86_64-linux-gnu/libGLX_mesa.so.0 /out/runtime/lib/libGLX_mesa.so.0
+            tar -C /out -czf /out/runtime.tar.gz runtime
+          '
+          ls -lh "$RUNNER_TEMP/rc-tools/godot.zip" "$RUNNER_TEMP/rc-tools/runtime.tar.gz"
+      - name: Store verified tool chunks as temporary Git objects
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import base64, hashlib, json, math, os, pathlib, urllib.request
+          root = pathlib.Path(os.environ['RUNNER_TEMP']) / 'rc-tools'
+          repository = os.environ['GITHUB_REPOSITORY']
+          token = os.environ['GH_TOKEN']
+          chunk_size = 8 * 1024 * 1024
+          for name in ('godot.zip', 'runtime.tar.gz'):
+              path = root / name
+              size = path.stat().st_size
+              total = math.ceil(size / chunk_size)
+              digest = hashlib.sha256()
+              with path.open('rb') as checksum_source:
+                  for block in iter(lambda: checksum_source.read(chunk_size), b''):
+                      digest.update(block)
+              print('TOOLFILE', name, size, digest.hexdigest(), flush=True)
+              with path.open('rb') as source:
+                  for i in range(total):
+                      part = source.read(chunk_size)
+                      body = json.dumps({'encoding': 'base64', 'content': base64.b64encode(part).decode()}).encode()
+                      request = urllib.request.Request(
+                          f'https://api.github.com/repos/{repository}/git/blobs', data=body, method='POST',
+                          headers={'Authorization': f'Bearer {token}', 'Accept': 'application/vnd.github+json',
+                                   'X-GitHub-Api-Version': '2022-11-28', 'Content-Type': 'application/json'})
+                      with urllib.request.urlopen(request, timeout=120) as response:
+                          sha = json.load(response)['sha']
+                      print('TOOLPART', name, i, total, sha, len(part), hashlib.sha256(part).hexdigest(), flush=True)
+          PY
