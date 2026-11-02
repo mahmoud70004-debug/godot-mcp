@@ -15,6 +15,8 @@ rm -rf -- "$OUT"
 mkdir -p "$OUT"
 cp "$SITE"/index.* "$OUT/"
 cp "$SITE/build.txt" "$SITE/rotten_crown.apk" "$OUT/"
+# Also works for manual Netlify CLI deployments that do not run a build.
+cp "$ROOT/rotten-crown/web/independent_host_headers" "$OUT/_headers"
 python3 - "$OUT" <<'PY'
 from pathlib import Path
 import re

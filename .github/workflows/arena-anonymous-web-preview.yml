@@ -72,10 +72,14 @@ jobs:
           let url;
           try { url = new URL(d.site_url); }
           catch { console.error('CLI output lacked a valid site URL'); process.exit(1); }
-          if (url.protocol !== 'https:' || !url.hostname.endsWith('.netlify.app')) {
-            console.error('The site URL did not match the expected Netlify host'); process.exit(1);
+          if (!['https:', 'http:'].includes(url.protocol) || !url.hostname.endsWith('.netlify.app')) {
+            const hostname = /^[a-z0-9.-]{1,120}$/i.test(url.hostname) ? url.hostname : 'invalid-host';
+            console.error('Unexpected public host or scheme: ' + hostname + ' ' + url.protocol);
+            process.exit(1);
           }
-          process.stdout.write(url.origin);
+          // An unclaimed site can first be returned with an http URL. Require
+          // HTTPS when checking and sharing it, regardless of the API response.
+          process.stdout.write('https://' + url.hostname);
           JS
           )"; then
             echo "::error title=Temporary preview response::$(cat "$parse_error")"

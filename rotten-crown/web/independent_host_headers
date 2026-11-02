@@ -1,0 +1,13 @@
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+  Cross-Origin-Resource-Policy: same-origin
+
+/index.html
+  Cache-Control: no-cache, must-revalidate
+
+/index.service.worker.js
+  Cache-Control: no-cache, must-revalidate
+
+/index.pck
+  Cache-Control: no-cache, must-revalidate

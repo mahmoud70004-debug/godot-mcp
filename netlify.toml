@@ -5,25 +5,3 @@
   base = "rotten-crown"
   command = "bash tools/prepare_web_host.sh"
   publish = "build/netlify"
-
-[[headers]]
-  for = "/*"
-  [headers.values]
-    Cross-Origin-Opener-Policy = "same-origin"
-    Cross-Origin-Embedder-Policy = "require-corp"
-    Cross-Origin-Resource-Policy = "same-origin"
-
-[[headers]]
-  for = "/index.html"
-  [headers.values]
-    Cache-Control = "no-cache, must-revalidate"
-
-[[headers]]
-  for = "/index.service.worker.js"
-  [headers.values]
-    Cache-Control = "no-cache, must-revalidate"
-
-[[headers]]
-  for = "/index.pck"
-  [headers.values]
-    Cache-Control = "no-cache, must-revalidate"
