@@ -1,0 +1,27 @@
+# Independent Rotten Crown hosting from the selected Git branch.
+# Netlify should be connected to arena/29bc081f-godot-mcp, not the default branch.
+[build]
+  command = "bash rotten-crown/tools/prepare_web_host.sh"
+  publish = "rotten-crown/build/netlify"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Cross-Origin-Opener-Policy = "same-origin"
+    Cross-Origin-Embedder-Policy = "require-corp"
+    Cross-Origin-Resource-Policy = "same-origin"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/index.service.worker.js"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"
+
+[[headers]]
+  for = "/index.pck"
+  [headers.values]
+    Cache-Control = "no-cache, must-revalidate"

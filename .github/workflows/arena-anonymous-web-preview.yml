@@ -1,0 +1,79 @@
+name: Temporary independent Rotten Crown preview
+
+# A disposable, one-hour anonymous preview for immediate testing. This does NOT
+# deploy to GitHub Pages or write to another branch. It is not a replacement
+# for connecting an owned Netlify site to the Arena branch for auto-updates.
+on:
+  push:
+    branches:
+      - arena/29bc081f-godot-mcp
+    paths:
+      - .github/workflows/arena-anonymous-web-preview.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare only the Rotten Crown export
+        run: bash rotten-crown/tools/prepare_web_host.sh
+      - name: Publish a temporary anonymous snapshot
+        id: deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          output="$RUNNER_TEMP/netlify-anonymous-output.json"
+          errors="$RUNNER_TEMP/netlify-anonymous-errors.txt"
+          trap 'rm -f "$output" "$errors"' EXIT
+          if ! npx --yes netlify-cli@27.16.2 deploy --dir=rotten-crown/build/netlify \
+            --no-build --allow-anonymous --created-via=cli --json >"$output" 2>"$errors"; then
+            echo 'Anonymous publishing failed. Netlify may have rejected the temporary deployment.' >&2
+            exit 1
+          fi
+          # The JSON can also contain a one-time claim token. Never print or save it.
+          site_url="$(node -e 'const fs=require("fs");const d=JSON.parse(fs.readFileSync(process.argv[1]));if(d.password)throw new Error("Temporary preview unexpectedly requires a password");if(!/^https:\/\/[a-z0-9-]+\.netlify\.app\/?$/i.test(d.site_url))throw new Error("Unexpected site URL");process.stdout.write(d.site_url.replace(/\/$/,""))' "$output")"
+          echo "site_url=$site_url" >> "$GITHUB_OUTPUT"
+          echo "PUBLIC_PREVIEW_URL=$site_url"
+          echo 'This anonymous site expires after one hour unless claimed; it does not auto-update.'
+      - name: Verify HTTP responses and isolation headers
+        env:
+          SITE_URL: ${{ steps.deploy.outputs.site_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          for file in index.html index.js index.wasm index.pck index.service.worker.js; do
+            curl --fail --location --silent --show-error --head --max-time 60 "$SITE_URL/$file" > "$RUNNER_TEMP/headers"
+            echo "HTTP_OK $file"
+          done
+          curl --fail --location --silent --show-error --head --max-time 60 "$SITE_URL/index.html" > "$RUNNER_TEMP/index-headers"
+          grep -qi 'cross-origin-opener-policy: same-origin' "$RUNNER_TEMP/index-headers"
+          grep -qi 'cross-origin-embedder-policy: require-corp' "$RUNNER_TEMP/index-headers"
+          echo 'HTTP_ISOLATION_HEADERS_PASS'
+      - name: Run browser smoke test on the public URL
+        env:
+          SITE_URL: ${{ steps.deploy.outputs.site_url }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/browser" --no-audit --no-fund playwright@1.64.1 >/dev/null
+          export NODE_PATH="$RUNNER_TEMP/browser/node_modules"
+          export PREVIEW_CHROME="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium)"
+          cat > "$RUNNER_TEMP/browser-patch.cjs" <<'JS'
+          const pw = require('playwright');
+          const original = pw.chromium.launch.bind(pw.chromium);
+          pw.chromium.launch = opts => original({
+            ...opts,
+            executablePath: process.env.PREVIEW_CHROME,
+            args: [...(opts.args || []), '--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+          });
+          JS
+          node -r "$RUNNER_TEMP/browser-patch.cjs" rotten-crown/tools/web_smoke_test.cjs "$SITE_URL/index.html" "$RUNNER_TEMP/screenshots"
+          echo 'PUBLIC_BROWSER_SMOKE_PASS'
