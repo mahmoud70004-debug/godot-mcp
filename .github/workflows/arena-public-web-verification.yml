@@ -1,0 +1,66 @@
+name: Verify temporary public game preview
+on:
+  push:
+    branches: [arena/29bc081f-godot-mcp]
+    paths: [.github/workflows/arena-public-web-verification.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      SITE_URL: https://storied-mousse-1ba0ae.netlify.app
+    steps:
+      - uses: actions/checkout@v4
+      - name: Inspect public responses
+        id: http
+        shell: bash
+        run: |
+          set -uo pipefail
+          failed=0
+          for file in index.html index.js index.wasm index.pck index.service.worker.js; do
+            status="$(curl --silent --show-error --location --head --max-time 60 -o "$RUNNER_TEMP/headers-$file" -w '%{http_code}' "$SITE_URL/$file")" || status=curl_error
+            echo "::notice title=HTTP $file::$status"
+            if [ "$status" != 200 ]; then failed=1; fi
+          done
+          for header in cross-origin-opener-policy cross-origin-embedder-policy; do
+            if grep -qi "^$header:" "$RUNNER_TEMP/headers-index.html"; then
+              echo "::notice title=Public header::$header present"
+            else
+              echo "::warning title=Public header::$header absent"
+            fi
+          done
+          if [ "$failed" -ne 0 ]; then echo '::error::At least one required public asset returned an error'; exit 1; fi
+      - name: Verify publicly served game data
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location --max-time 180 "$SITE_URL/index.pck" -o "$RUNNER_TEMP/game.pck"
+          diff <(sha256sum docs/index.pck | cut -d' ' -f1) <(sha256sum "$RUNNER_TEMP/game.pck" | cut -d' ' -f1)
+          echo '::notice title=Public game data::PCK SHA256 matches Arena branch'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test public game in Chromium
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/browser" --no-audit --no-fund playwright@1.64.1 >/dev/null
+          export NODE_PATH="$RUNNER_TEMP/browser/node_modules"
+          export PREVIEW_CHROME="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium)"
+          cat > "$RUNNER_TEMP/browser-patch.cjs" <<'JS'
+          const pw = require('playwright');
+          const original = pw.chromium.launch.bind(pw.chromium);
+          pw.chromium.launch = opts => original({
+            ...opts,
+            executablePath: process.env.PREVIEW_CHROME,
+            args: [...(opts.args || []), '--no-sandbox', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'],
+          });
+          JS
+          if node -r "$RUNNER_TEMP/browser-patch.cjs" rotten-crown/tools/web_smoke_test.cjs "$SITE_URL/index.html" "$RUNNER_TEMP/screenshots"; then
+            echo '::notice title=Public browser test::Game reached overworld and completed smoke interactions'
+          else
+            echo '::error title=Public browser test::Game smoke test failed'
+            exit 1
+          fi
