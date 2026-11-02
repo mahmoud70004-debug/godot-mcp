@@ -62,7 +62,27 @@ jobs:
             exit 1
           fi
           # The JSON can also contain a one-time claim token. Never log or retain it.
-          site_url="$(node -e 'try {const fs=require("fs");const d=JSON.parse(fs.readFileSync(process.argv[1]));if(d.password)throw 0;if(!/^https:\/\/[a-z0-9-]+\.netlify\.app\/?$/i.test(d.site_url))throw 0;process.stdout.write(d.site_url.replace(/\/$/,""))}catch{console.error("Invalid or password-protected preview response");process.exit(1)}' "$output")"
+          parse_error="$RUNNER_TEMP/netlify-parse-error.txt"
+          if ! site_url="$(node - "$output" 2>"$parse_error" <<'JS'
+          const fs = require('fs');
+          let d;
+          try { d = JSON.parse(fs.readFileSync(process.argv[2], 'utf8')); }
+          catch { console.error('CLI output was not valid JSON'); process.exit(1); }
+          if (d.password) { console.error('The temporary site requires a password'); process.exit(1); }
+          let url;
+          try { url = new URL(d.site_url); }
+          catch { console.error('CLI output lacked a valid site URL'); process.exit(1); }
+          if (url.protocol !== 'https:' || !url.hostname.endsWith('.netlify.app')) {
+            console.error('The site URL did not match the expected Netlify host'); process.exit(1);
+          }
+          process.stdout.write(url.origin);
+          JS
+          )"; then
+            echo "::error title=Temporary preview response::$(cat "$parse_error")"
+            rm -f "$parse_error"
+            exit 1
+          fi
+          rm -f "$parse_error"
           echo "site_url=$site_url" >> "$GITHUB_OUTPUT"
           echo "PUBLIC_PREVIEW_URL=$site_url"
           echo "::notice title=Temporary preview URL::$site_url"
