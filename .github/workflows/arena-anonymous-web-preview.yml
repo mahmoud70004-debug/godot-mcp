@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  statuses: write # Publish only a sanitized test result and public preview URL.
 
 jobs:
   preview:
@@ -27,19 +28,46 @@ jobs:
         run: bash rotten-crown/tools/prepare_web_host.sh
       - name: Publish a temporary anonymous snapshot
         id: deploy
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
           output="$RUNNER_TEMP/netlify-anonymous-output.json"
           errors="$RUNNER_TEMP/netlify-anonymous-errors.txt"
           trap 'rm -f "$output" "$errors"' EXIT
-          if ! npx --yes netlify-cli@27.16.2 deploy --dir=rotten-crown/build/netlify \
+          if ! npx --yes netlify-cli@27.16.2 deploy --dir="$GITHUB_WORKSPACE/rotten-crown/build/netlify" \
             --no-build --allow-anonymous --created-via=cli --json >"$output" 2>"$errors"; then
-            echo 'Anonymous publishing failed. Netlify may have rejected the temporary deployment.' >&2
+            echo 'Anonymous publishing failed; reporting only sanitized error categories.' >&2
+            diagnostic="$RUNNER_TEMP/preview-diagnostic.txt"
+            python3 - "$output" "$errors" "$diagnostic" <<'PY'
+          from pathlib import Path
+          import re
+          import sys
+          text = '\n'.join(Path(p).read_text(errors='replace') for p in sys.argv[1:3] if Path(p).exists())
+          checks = {
+              'rate limited': r'\b429\b|rate.?limit|daily.limit',
+              'not authorized': r'\b40[13]\b|unauthori[sz]ed|forbidden|not logged in',
+              'file or deploy too large': r'\b413\b|too large|size.limit|file size',
+              'missing path': r'ENOENT|directory (?:does not exist|not found)|no such file',
+              'network or TLS error': r'ENOTFOUND|ECONN|ETIMEDOUT|fetch failed|certificate|TLS',
+              'npm installation error': r'npm (?:ERR!|error)|ERR_PNPM|EBADENGINE',
+              'service failure': r'\b50[0234]\b|service unavailable',
+          }
+          labels = [label for label, pattern in checks.items() if re.search(pattern, text, flags=re.I)]
+          codes = sorted(set(re.findall(r'\b(?:ERR_[A-Z_]+|E(?:ACCES|AGAIN|CONNRESET|CONNREFUSED|HOSTUNREACH|NOTFOUND|TIMEDOUT))\b', text)))
+          safe = ', '.join(labels + codes) or 'unclassified anonymous deploy error'
+          print('DIAGNOSTIC:', safe, file=sys.stderr)
+          Path(sys.argv[3]).write_text(safe[:120])
+          PY
+            gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+              -f state=failure -f context=arena/temporary-web-preview \
+              -f description="$(cat "$diagnostic")" >/dev/null 2>&1 || true
+            rm -f "$diagnostic"
             exit 1
           fi
-          # The JSON can also contain a one-time claim token. Never print or save it.
-          site_url="$(node -e 'const fs=require("fs");const d=JSON.parse(fs.readFileSync(process.argv[1]));if(d.password)throw new Error("Temporary preview unexpectedly requires a password");if(!/^https:\/\/[a-z0-9-]+\.netlify\.app\/?$/i.test(d.site_url))throw new Error("Unexpected site URL");process.stdout.write(d.site_url.replace(/\/$/,""))' "$output")"
+          # The JSON can also contain a one-time claim token. Never log or retain it.
+          site_url="$(node -e 'try {const fs=require("fs");const d=JSON.parse(fs.readFileSync(process.argv[1]));if(d.password)throw 0;if(!/^https:\/\/[a-z0-9-]+\.netlify\.app\/?$/i.test(d.site_url))throw 0;process.stdout.write(d.site_url.replace(/\/$/,""))}catch{console.error("Invalid or password-protected preview response");process.exit(1)}' "$output")"
           echo "site_url=$site_url" >> "$GITHUB_OUTPUT"
           echo "PUBLIC_PREVIEW_URL=$site_url"
           echo 'This anonymous site expires after one hour unless claimed; it does not auto-update.'
@@ -77,3 +105,22 @@ jobs:
           JS
           node -r "$RUNNER_TEMP/browser-patch.cjs" rotten-crown/tools/web_smoke_test.cjs "$SITE_URL/index.html" "$RUNNER_TEMP/screenshots"
           echo 'PUBLIC_BROWSER_SMOKE_PASS'
+      - name: Record the public test result
+        if: always() && steps.deploy.outputs.site_url != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SITE_URL: ${{ steps.deploy.outputs.site_url }}
+          JOB_STATUS: ${{ job.status }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ "$JOB_STATUS" = success ]; then
+            state=success
+            description='Temporary site passed HTTP and browser checks; expires within one hour'
+          else
+            state=failure
+            description='Temporary site failed an HTTP or browser check'
+          fi
+          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
+            -f state="$state" -f context=arena/temporary-web-preview \
+            -f description="$description" -f target_url="$SITE_URL" >/dev/null

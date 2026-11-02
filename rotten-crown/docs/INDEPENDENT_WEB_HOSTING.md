@@ -6,7 +6,7 @@
 
 1. في Netlify اختر **Add new project → Import an existing project** واربط المستودع `mahmoud70004-debug/godot-mcp` من واجهة الخدمة نفسها. لا ترسل كلمات مرور أو رموز وصول في المحادثة.
 2. عيّن **Production branch** إلى `arena/29bc081f-godot-mcp` تحديدًا، لا الفرع الافتراضي. عندها يبني Netlify تحديثات هذا الفرع فقط.
-3. يقرأ Netlify ملف `netlify.toml` في الفرع: أمر البناء هو `bash rotten-crown/tools/prepare_web_host.sh` والمجلد المنشور `rotten-crown/build/netlify`. ينشئ الأمر نسخة من ملفات Rotten Crown اللازمة في `docs/` فقط، ويتحقق من حجم PCK؛ لا ينشر Under One Roof.
+3. يقرأ Netlify ملف `netlify.toml` في الفرع: المجلد الأساسي `rotten-crown`، وأمر البناء `bash tools/prepare_web_host.sh`، والمجلد المنشور `build/netlify` نسبةً إلى المجلد الأساسي. ينشئ الأمر نسخة من ملفات Rotten Crown اللازمة في `docs/` فقط، ويتحقق من حجم PCK؛ لا ينشر Under One Roof ولا يثبت تبعيات خادم MCP.
 4. بعد إنشاء الموقع ونجاح النشر، استخدم رابط `netlify.app` الذي يظهر لك. يُحدَّث الموقع تلقائيًا عند دفع تغييرات إلى فرع Arena. ملفات `docs/` هي تصدير الويب؛ بعد تغيير اللعبة يجب إعادة تصديرها قبل الدفع، وإلا سينشر المضيف النسخة المخبوزة السابقة.
 
 يتضمّن `netlify.toml` ترويسات COOP/COEP وعدم تخزين HTML وservice worker وPCK مؤقتًا على CDN. لا يغيّر هذا إعدادات Godot أو المصيّر. الـAPK المتاح حاليًا هو الإصدار السابق، وتوضح صفحة اللعبة ذلك.

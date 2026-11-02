@@ -1,8 +1,10 @@
 # Independent Rotten Crown hosting from the selected Git branch.
 # Netlify should be connected to arena/29bc081f-godot-mcp, not the default branch.
 [build]
-  command = "bash rotten-crown/tools/prepare_web_host.sh"
-  publish = "rotten-crown/build/netlify"
+  # Avoid installing the unrelated MCP server's Node dependencies at the root.
+  base = "rotten-crown"
+  command = "bash tools/prepare_web_host.sh"
+  publish = "build/netlify"
 
 [[headers]]
   for = "/*"
