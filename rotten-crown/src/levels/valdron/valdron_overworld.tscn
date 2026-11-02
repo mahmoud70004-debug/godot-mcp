@@ -119,7 +119,7 @@ world = NodePath("../World")
 [node name="RegionTriggers" type="Node3D" parent="."]
 
 [node name="OuterWard" type="Area3D" parent="RegionTriggers"]
-position = Vector3(0, 2, 7)
+position = Vector3(0, 4.880607, 413)
 collision_layer = 0
 collision_mask = 2
 script = ExtResource("8_trigger")
@@ -135,60 +135,62 @@ position = Vector3(2.4, 0.25, 29.6)
 item = ExtResource("14_i_invite")
 
 [node name="CooksNote" parent="Pickups" instance=ExtResource("6_pickup")]
-position = Vector3(3.2, 1.05, -3.0)
+position = Vector3(-3.2, 3.930607, 423.0)
 item = ExtResource("15_i_cook")
 
 [node name="WellScratching" parent="Pickups" instance=ExtResource("6_pickup")]
-position = Vector3(-6.75, 0.6, -18.0)
+position = Vector3(6.75, 3.480607, 438.0)
 item = ExtResource("16_i_well")
 
 [node name="FeastWine" parent="Pickups" instance=ExtResource("6_pickup")]
-position = Vector3(-3.2, 1.1, -2.4)
+position = Vector3(3.2, 3.980607, 422.4)
 item = ExtResource("18_i_wine")
 
 [node name="GraveMossHouse" parent="Pickups" instance=ExtResource("6_pickup")]
-position = Vector3(-18.5, 0.35, 1.0)
+position = Vector3(18.5, 3.230607, 419.0)
 item = ExtResource("17_i_moss")
 quantity = 2
 
 [node name="GraveMossHighTable" parent="Pickups" instance=ExtResource("6_pickup")]
-position = Vector3(1.5, 1.05, -11.5)
+position = Vector3(-1.5, 3.930607, 431.5)
 item = ExtResource("17_i_moss")
 
 [node name="WoodsmanAxe" parent="Pickups" instance=ExtResource("6_pickup")]
-position = Vector3(15.5, 1.1, -11.7)
+position = Vector3(-15.5, 3.980607, 431.7)
 item = ExtResource("19_i_axe")
 
 [node name="SaintOrsaEye" parent="Pickups" instance=ExtResource("6_pickup")]
-position = Vector3(-8.0, 1.1, -16.95)
+position = Vector3(8.0, 3.980607, 436.95)
 item = ExtResource("20_i_eye")
 
 [node name="Enemies" type="Node3D" parent="."]
 
 [node name="FeastGrinner" parent="Enemies" instance=ExtResource("5_hollow")]
-position = Vector3(0, 0, -7.5)
+position = Vector3(0, 2.880607, 427.5)
+rotation = Vector3(0, 3.141593, 0)
 data = ExtResource("27_grinner")
 start_dormant = true
 
 [node name="HouseSteeple" parent="Enemies" instance=ExtResource("5_hollow")]
-position = Vector3(-19.6, 0, -12.4)
-rotation = Vector3(0, -1.4, 0)
+position = Vector3(19.6, 2.880607, 432.4)
+rotation = Vector3(0, 1.741593, 0)
 data = ExtResource("13_steeple")
 start_dormant = true
 
 [node name="DoorwayGrinner" parent="Enemies" instance=ExtResource("5_hollow")]
-position = Vector3(14.2, 0, 0.6)
-rotation = Vector3(0, 1.2, 0)
+position = Vector3(-14.2, 2.880607, 419.4)
+rotation = Vector3(0, -1.941593, 0)
 data = ExtResource("27_grinner")
 
 [node name="WellSteeple" parent="Enemies" instance=ExtResource("5_hollow")]
-position = Vector3(-8, 0, -20.6)
+position = Vector3(8, 2.880607, 440.6)
+rotation = Vector3(0, 3.141593, 0)
 data = ExtResource("13_steeple")
 
 [node name="Witnesses" type="Node3D" parent="."]
 
 [node name="StarEyed" type="Node3D" parent="Witnesses"]
-position = Vector3(3.4, 0, 25.6)
+position = Vector3(-1.0, 0, 32.4)
 script = ExtResource("28_witness")
 id = "star"
 sheet = ExtResource("29_w_star")
@@ -213,6 +215,7 @@ line = ExtResource("34_l_chair")
 
 [node name="Player" parent="." instance=ExtResource("3_player")]
 position = Vector3(1.2, 0.05, 29.0)
+rotation = Vector3(0, 3.141593, 0)
 
 [node name="PostProcess" parent="." instance=ExtResource("4_post")]
 

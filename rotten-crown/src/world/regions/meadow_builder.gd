@@ -1,16 +1,12 @@
 @tool
 class_name MeadowBuilder
 extends RefCounted
-## The Moonlit Meadows outside the walls of Valdron and the plains between the
-## villages (task U10). Two hero views from the spawn (WAKE, player feet):
-##   - towards the castle (-Z): the meadow runs up to the cursed walls, the
-##     feast spilling out of the smashed gate (OuterWardBlockout), a great dead
-##     tree with crows framing the left, the planted swords of the fallen;
-##   - down the road (+Z): long silver-green grass under the moon, the wayside
-##     shrine with one candle still burning, a lone dead tree, the ruined
-##     shepherd's hut, a ring of standing stones, low dry-stone field walls
-##     leading the eye to the gibbet at the crossroads, low mist, and far beyond
-##     the painted silhouettes of Hollowmere's spire and the Thornfield farm.
+## The Moonlit Meadows and the plains between the villages (task U10).
+## From the wake-up point the knight faces the great outer gate (+Z), framed by
+## the wayside shrine and the dead tree; beyond it are the shepherd's hut, the
+## standing stones, field walls and the old roads to the villages. The planted
+## swords of the fallen and the overturned cart remain behind the wake-up.
+## The feast itself is in the separately placed inner ward, deeper in Valdron.
 ## The plains add believable fields (grass patches, rushes, weeds, walls and
 ## hedges) and landmarks along the roads: milestones, a cairn, broken carts.
 ## Output: Node3D "Meadow" with Landmarks (merged, culled at 110 m), Details
@@ -21,7 +17,8 @@ const WAKE := Vector2(1.2, 29.0)
 const SHRINE := Vector2(3.9, 40.5)
 const GREAT_TREE := Vector2(-8.5, 47.0)
 const FRAME_TREE := Vector2(-11.5, 20.5)
-const STONES := Vector2(17.5, 55.0)
+## Moved wholly inside the new perimeter, clear of the gatehouse and wall.
+const STONES := Vector2(18.0, 75.0)
 const HUT := Vector2(-15.5, 70.0)
 const GIBBET := Vector2(-5.6, 67.0)
 const SWORDS := Vector2(-15.0, 22.0)

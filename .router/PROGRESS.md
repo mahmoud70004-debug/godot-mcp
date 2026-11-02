@@ -91,3 +91,11 @@
 | E5 | N | done | physics 30 Hz + interpolation, top-level camera rig, far enemies/witnesses parked, sprites idle off screen; physics ~3 ms -> ~0.6 ms/frame |
 | E3+E4 | H (rate-limited once, resumed) | done | draws -21..-68% per pose (spawn 429->135); 6/8 poses <= 150; shadow stand-ins, colour-variant merge, range-sized cells, grass 3x3. DEVIATION: no vertex-colour light bake - measured unshadowed omni lights cost 0 extra draw calls in 4.7.1 |
 | review | router-reviewer | done | 9 findings: fixed interpolation of tweened nodes, merged-chunk range spread, grass cull collapsed in vertex(), near sprites update, ?fps parse, APK link + version code. Not fixed: fixed signing key (committing a keystore was blocked) -> uninstall old APK before installing a new one |
+
+## User-directed kingdom restructuring (Arena, 2026-11-02)
+
+| task | status | note |
+|---|---|---|
+| World layout only | implemented on Arena | Large kingdom walls around existing regions, outer gate and relocated palace/feast; existing gameplay and light properties retained. |
+| Verification | Godot layout, OpenGL bake and browser smoke/touch passed | Real phone/GPU performance and all legacy saves remain unverified; the prologue has a pre-existing 7/6 light-budget warning. |
+| Handoff | documented | See `rotten-crown/docs/ARENA_HANDOFF_2026-11-02.md` for scope, results, save/APK caveats, and explicit Git synchronization. |
