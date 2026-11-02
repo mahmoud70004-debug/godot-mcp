@@ -13,7 +13,6 @@ on:
 
 permissions:
   contents: read
-  statuses: write # Publish only a sanitized test result and public preview URL.
 
 jobs:
   preview:
@@ -28,8 +27,6 @@ jobs:
         run: bash rotten-crown/tools/prepare_web_host.sh
       - name: Publish a temporary anonymous snapshot
         id: deploy
-        env:
-          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
@@ -60,9 +57,7 @@ jobs:
           print('DIAGNOSTIC:', safe, file=sys.stderr)
           Path(sys.argv[3]).write_text(safe[:120])
           PY
-            gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-              -f state=failure -f context=arena/temporary-web-preview \
-              -f description="$(cat "$diagnostic")" >/dev/null 2>&1 || true
+            echo "::error title=Temporary hosting diagnosis::$(cat "$diagnostic")"
             rm -f "$diagnostic"
             exit 1
           fi
@@ -70,6 +65,7 @@ jobs:
           site_url="$(node -e 'try {const fs=require("fs");const d=JSON.parse(fs.readFileSync(process.argv[1]));if(d.password)throw 0;if(!/^https:\/\/[a-z0-9-]+\.netlify\.app\/?$/i.test(d.site_url))throw 0;process.stdout.write(d.site_url.replace(/\/$/,""))}catch{console.error("Invalid or password-protected preview response");process.exit(1)}' "$output")"
           echo "site_url=$site_url" >> "$GITHUB_OUTPUT"
           echo "PUBLIC_PREVIEW_URL=$site_url"
+          echo "::notice title=Temporary preview URL::$site_url"
           echo 'This anonymous site expires after one hour unless claimed; it does not auto-update.'
       - name: Verify HTTP responses and isolation headers
         env:
@@ -108,19 +104,12 @@ jobs:
       - name: Record the public test result
         if: always() && steps.deploy.outputs.site_url != ''
         env:
-          GH_TOKEN: ${{ github.token }}
           SITE_URL: ${{ steps.deploy.outputs.site_url }}
           JOB_STATUS: ${{ job.status }}
         shell: bash
         run: |
-          set -euo pipefail
           if [ "$JOB_STATUS" = success ]; then
-            state=success
-            description='Temporary site passed HTTP and browser checks; expires within one hour'
+            echo "::notice title=Verified temporary preview::$SITE_URL"
           else
-            state=failure
-            description='Temporary site failed an HTTP or browser check'
+            echo '::error title=Temporary preview::HTTP or browser validation failed'
           fi
-          gh api --method POST "repos/$GITHUB_REPOSITORY/statuses/$GITHUB_SHA" \
-            -f state="$state" -f context=arena/temporary-web-preview \
-            -f description="$description" -f target_url="$SITE_URL" >/dev/null
