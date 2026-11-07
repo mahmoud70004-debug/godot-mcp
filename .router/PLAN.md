@@ -374,7 +374,7 @@ ring along the walls, trails as the readable spine. Dread systems (breathing tre
 |---|---|---|---|
 | 1 | Moonlit-blue palette: environment, moon, region fogs, post grade | whole game looks blue/violet at night | user go |
 | 2 | World bible: one top-down map (walls, gate, hub ward, villages, clearings, tiers) as data + PNG | a map image to approve, then frozen | user go |
-| 3 | Forest spike near the gate: density field + MultiMesh trees + fog tuning; measure | dense forest at the entrance | user go |
+| 3 | Forest across the whole kingdom interior (data-driven tiers) + fog tuning; measured | dense forest everywhere inside the walls | user go |
 | 4 | Merge arena walls (minus netlify/docs) + move ward to the hub per the map + fix signposts, south edge, region triggers, save guard | gate + walls + hub in place | user go |
 | 5 | Forest across the kingdom, clearings, trails, remove WhisperingWood pocket | full forest | user go |
 | 6 | Breathing forest (shader + fog pulse) + foreground leaf cards | trees breathe | user go |
@@ -382,3 +382,9 @@ ring along the walls, trails as the readable spine. Dread systems (breathing tre
 | 8 | Hallucinations + dread meter | peripheral figures, vanishing | user go |
 | 9 | Forest dwellings / guard posts from the reference cottages | cottages with lanterns | user go |
 Then: story path (three seals) on the stable world.
+
+## Phase 4a - Inc 3 spec (forest across the kingdom, data-driven)  [approved map: rotten-crown/data/world/kingdom_map.json]
+- ForestBuilder (src/world/regions/forest_builder.gd) reads kingdom_map.json (same tier rules as tools/render_world_map.py) and scatters trees inside the wall
+  rect x[-235,235] z[58,490] as MultiMesh chunks of WoodProps tree variants; WhisperingWoodBuilder is removed from OverworldBuilder (its enemies/lore re-homed to Forest markers).
+- Budget: no probe pose > 200 draws / 300k prims at Low; scene +<=6 MB; trunks keep >= 2.4 m spacing (2.0 in T3) so the player can always pass; roads and T0 stay clear.
+- Out of scope: kingdom walls and ward relocation (Inc 4), breathing/audio/hallucinations (Inc 6-8).
