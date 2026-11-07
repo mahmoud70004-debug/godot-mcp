@@ -4,11 +4,13 @@ extends RefCounted
 ## Assembles the semi-open kingdom (layout contract C9): terrain, the Outer
 ## Ward courtyard at the origin, the region builders, signposts and the
 ## Moonlit Meadows + plains between them (MeadowBuilder: grass, field walls,
-## landmarks, far village silhouettes). Used OFFLINE by tools/bake_world.gd; the game loads the
+## landmarks, far village silhouettes) and the forest that fills the kingdom inside
+## the walls (ForestBuilder, data/world/kingdom_map.json). Used OFFLINE by tools/bake_world.gd; the game loads the
 ## baked result (src/levels/valdron/baked/overworld_world.scn).
 
 ## Region builder classes, looked up by name so a missing one doesn't break the bake.
-const REGION_BUILDERS := ["ThornfieldBuilder", "HollowmereBuilder", "WhisperingWoodBuilder"]
+## (The Whispering Wood pocket is gone: the kingdom forest replaces it, Phase 4a inc 3.)
+const REGION_BUILDERS := ["ThornfieldBuilder", "HollowmereBuilder"]
 ## Merged region chunks are culled beyond this distance; fog makes them invisible already.
 const REGION_RANGE := 100.0
 
@@ -16,7 +18,10 @@ const REGION_RANGE := 100.0
 static func build(root: Node3D) -> TerrainBuilder:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 2026
-	var terrain := TerrainBuilder.new(OverworldSpec.make())
+	var spec := OverworldSpec.make()
+	ForestBuilder.fit_terrain(spec)
+	var terrain := TerrainBuilder.new(spec)
+	ForestBuilder.paint_ground(terrain)
 	terrain.build(root)
 	var ward := OuterWardBlockout.new()
 	ward.name = "OuterWard"
@@ -41,6 +46,8 @@ static func build(root: Node3D) -> TerrainBuilder:
 	root.add_child(shared)
 	_signposts(shared, terrain, rng)
 	MeadowBuilder.build(shared, terrain, rng)
+	# After everything solid is placed (the forest keeps clear of it), before the last merge.
+	ForestBuilder.build(root, terrain, rng)
 	MeshMerger.merge_static(shared, MeshMerger.cell_for(REGION_RANGE), REGION_RANGE)
 	return terrain
 

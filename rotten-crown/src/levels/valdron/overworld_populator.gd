@@ -6,22 +6,24 @@ extends Node
 
 const HOLLOW_SCENE := preload("res://src/enemies/hollow.tscn")
 const PICKUP_SCENE := preload("res://src/interaction/item_pickup.tscn")
+## The forest trigger covers the whole kingdom interior; it is created first so the
+## village triggers inside it are the more recently entered zones (Level: they win).
 const REGIONS := {
+	"Forest": "res://data/regions/whispering_wood.tres",
 	"Thornfield": "res://data/regions/thornfield.tres",
 	"Hollowmere": "res://data/regions/hollowmere.tres",
-	"WhisperingWood": "res://data/regions/whispering_wood.tres",
 }
 const ENEMIES := {
 	"Thornfield": ["res://data/enemies/steeple.tres", "res://data/enemies/grinner.tres"],
 	"Hollowmere": ["res://data/enemies/grinner.tres", "res://data/enemies/steeple.tres", "res://data/enemies/bent.tres"],
-	"WhisperingWood": ["res://data/enemies/grinner.tres", "res://data/enemies/steeple.tres", "res://data/enemies/bent.tres"],
+	"Forest": ["res://data/enemies/grinner.tres", "res://data/enemies/steeple.tres", "res://data/enemies/bent.tres"],
 }
 const PICKUPS := ["res://data/items/consumables/grave_moss.tres", "res://data/items/consumables/feast_wine.tres"]
 ## region -> lore items, in marker order (Lore_1, Lore_2...). Missing files are skipped.
 const LORE := {
 	"Thornfield": ["res://data/items/lore/farmers_ledger.tres"],
 	"Hollowmere": ["res://data/items/lore/harvest_hymn.tres", "res://data/items/lore/chapel_confession.tres"],
-	"WhisperingWood": ["res://data/items/lore/hunters_warning.tres"],
+	"Forest": ["res://data/items/lore/hunters_warning.tres"],
 }
 
 ## Enemies and witnesses further than this from the player (and idle) stop processing.
@@ -116,9 +118,15 @@ func _spawn_trigger(marker: Marker3D, region: RegionData) -> void:
 	var trigger := RegionTrigger.new()
 	trigger.region = region
 	var shape := CollisionShape3D.new()
-	var sphere := SphereShape3D.new()
-	sphere.radius = float(marker.get_meta("radius", 40.0))
-	shape.shape = sphere
+	if marker.has_meta("box"):
+		# A whole area (the kingdom forest): box size from the marker.
+		var box := BoxShape3D.new()
+		box.size = marker.get_meta("box") as Vector3
+		shape.shape = box
+	else:
+		var sphere := SphereShape3D.new()
+		sphere.radius = float(marker.get_meta("radius", 40.0))
+		shape.shape = sphere
 	trigger.add_child(shape)
 	add_child(trigger)
 	trigger.global_position = marker.global_position
