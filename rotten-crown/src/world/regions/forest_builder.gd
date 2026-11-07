@@ -29,8 +29,8 @@ const MAP_PATH := "res://data/world/kingdom_map.json"
 const SEED := 4004
 const CHUNK := 48.0
 ## Chunk-centre distances: detailed trunks up to NEAR_END, low-poly ones to FAR_END + spread.
-const NEAR_END := 46.0
-const FAR_END := 66.0
+const NEAR_END := 40.0
+const FAR_END := 62.0
 const ROAD_CLEAR := 3.5
 const SPACING := 2.4
 const SPACING_DEEP := 2.0

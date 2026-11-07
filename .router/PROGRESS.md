@@ -91,3 +91,10 @@
 | E5 | N | done | physics 30 Hz + interpolation, top-level camera rig, far enemies/witnesses parked, sprites idle off screen; physics ~3 ms -> ~0.6 ms/frame |
 | E3+E4 | H (rate-limited once, resumed) | done | draws -21..-68% per pose (spawn 429->135); 6/8 poses <= 150; shadow stand-ins, colour-variant merge, range-sized cells, grass 3x3. DEVIATION: no vertex-colour light bake - measured unshadowed omni lights cost 0 extra draw calls in 4.7.1 |
 | review | router-reviewer | done | 9 findings: fixed interpolation of tweened nodes, merged-chunk range spread, grass cull collapsed in vertex(), near sprites update, ?fps parse, APK link + version code. Not fixed: fixed signing key (committing a keystore was blocked) -> uninstall old APK before installing a new one |
+
+## Phase 4a
+| inc | tier | status | note |
+|---|---|---|---|
+| 1 | H (me) | done, published | moonlit-blue palette (runtime only) |
+| 2 | H (me) | done, approved | world bible v1: kingdom_map.json + render_world_map.py + WORLD_BIBLE.md + map PNG |
+| 3 | H (router-hard) | published, awaiting feedback | ForestBuilder + ForestTrees: ~2,800 trees (T1 0.8 / T2 2.2 / T3 3.0 per 100 m2), 3 silhouettes, MultiMesh 48 m chunks near/far, trunk colliders, WhisperingWood pocket removed (enemies/lore re-homed to Forest markers), fog 0.038. Probe (Low): draws <= 192 everywhere; prims <= 260k, deep_old 341k (over the 300k target). Scene 25.4 -> 15.9 MB, pck 32.7 -> 23.1 MB. I raised the agent's densities (1.4 -> 2.2 etc.) after the contact sheet read as open woodland. Weakness: dark, uniform blue; open look on the road itself (trunks keep 3.5 m from the centreline). |

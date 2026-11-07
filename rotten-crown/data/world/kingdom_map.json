@@ -48,9 +48,9 @@
   ],
   "tiers": {
     "T0": {"name": "Clearing", "trees_per_100m2": 0.0, "note": "settlements, citadel, gate, clearings"},
-    "T1": {"name": "Edge", "trees_per_100m2": 0.4, "note": "road 9 m each side, 10-12 m around clearings and sites, wall ring 14 m"},
-    "T2": {"name": "Wood", "trees_per_100m2": 1.4, "note": "default"},
-    "T3": {"name": "Deep", "trees_per_100m2": 2.2, "note": "hallucination-strong pockets, one per story site"}
+    "T1": {"name": "Edge", "trees_per_100m2": 0.8, "note": "road 9 m each side, 10-12 m around clearings and sites, wall ring 14 m"},
+    "T2": {"name": "Wood", "trees_per_100m2": 2.2, "note": "default"},
+    "T3": {"name": "Deep", "trees_per_100m2": 3.0, "note": "hallucination-strong pockets, one per story site"}
   },
   "deep_zones": [
     {"id": "cellar_hollow", "name": "Cellar Hollow (amber)", "pos": [170, 415], "r": 72, "palette": "amber"},
