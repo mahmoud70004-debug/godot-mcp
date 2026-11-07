@@ -21,8 +21,13 @@ static func build(root: Node3D) -> TerrainBuilder:
 	var spec := OverworldSpec.make()
 	ForestBuilder.fit_terrain(spec)
 	var terrain := TerrainBuilder.new(spec)
+	# The ground meshes get the forest floor and trails; the other builders keep reading
+	# the paint they were made for, so their layouts (and random streams) stay as they were.
+	var builder_paint := terrain.paint.duplicate()
 	ForestBuilder.paint_ground(terrain)
 	terrain.build(root)
+	var ground_paint := terrain.paint
+	terrain.paint = builder_paint
 	var ward := OuterWardBlockout.new()
 	ward.name = "OuterWard"
 	ward.build_ground = false
@@ -49,6 +54,7 @@ static func build(root: Node3D) -> TerrainBuilder:
 	# After everything solid is placed (the forest keeps clear of it), before the last merge.
 	ForestBuilder.build(root, terrain, rng)
 	MeshMerger.merge_static(shared, MeshMerger.cell_for(REGION_RANGE), REGION_RANGE)
+	terrain.paint = ground_paint
 	return terrain
 
 

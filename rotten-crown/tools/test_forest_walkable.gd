@@ -182,9 +182,10 @@ func _check_spacing(trees: Array, trunks: Array) -> void:
 	_check(tight == 0, "player fits between every two trunks: collider gap >= 0.8 m (smallest %.2f m, %d too tight)" % [worst_gap, tight])
 
 
-## No tree in T0 or outside the wall; per tier the count is within 15 % of
-## density x plantable area (the tier's 1 m cells minus the road and wall clearances
-## no trunk may use). Raw area x density is printed too.
+## No tree in T0 or outside the wall; per tier the count is within 15 % of area x
+## density (the tier's 1 m cells, as tools/render_world_map.py counts them). A cell whose
+## first spot is taken (road strip, spacing, a landmark) retries inside its lattice cell,
+## so the road and wall clearances move trees rather than drop them.
 func _check_tiers(trees: Array) -> void:
 	var counts := [0, 0, 0, 0]
 	var outside := 0
@@ -195,30 +196,15 @@ func _check_tiers(trees: Array) -> void:
 		else:
 			counts[tier] += 1
 	_check(outside == 0, "no tree outside the wall (%d)" % outside)
-	_check(counts[0] == 0, "T0 clearings are empty (%d trees)" % counts[0])
-	var wr := ForestBuilder.wall_rect()
-	var raw := [0, 0, 0, 0]
-	var plantable := [0, 0, 0, 0]
-	var grid := ForestBuilder.tier_grid()
-	var w := int(wr.size.x)
-	for iz in int(wr.size.y):
-		for ix in w:
-			var tier: int = grid[iz * w + ix]
-			raw[tier] += 1
-			if tier == 0:
-				continue
-			var p := wr.position + Vector2(ix + 0.5, iz + 0.5)
-			var d_wall := minf(minf(p.x - wr.position.x, wr.end.x - p.x), minf(p.y - wr.position.y, wr.end.y - p.y))
-			if d_wall < ForestBuilder.WALL_CLEAR + 0.5:
-				continue
-			if ForestBuilder.road_distance(p) < ForestBuilder.ROAD_CLEAR + 0.5:
-				continue
-			plantable[tier] += 1
+	_check(counts[0] == 0, "T0 areas are empty (%d trees)" % counts[0])
+	var area := [0, 0, 0, 0]
+	for tier: int in ForestBuilder.tier_grid():
+		area[tier] += 1
 	for tier in [1, 2, 3]:
-		var expected: float = plantable[tier] * ForestBuilder.density(tier)
+		var expected: float = area[tier] * ForestBuilder.density(tier)
 		var dev: float = (counts[tier] - expected) / maxf(expected, 1.0)
-		_check(absf(dev) <= COUNT_TOLERANCE, "T%d count %d vs expected %.0f (plantable %d m2; raw area %d m2 -> %.0f) deviation %+.1f%%" % [
-			tier, counts[tier], expected, plantable[tier], raw[tier], raw[tier] * ForestBuilder.density(tier), dev * 100.0])
+		_check(absf(dev) <= COUNT_TOLERANCE, "T%d count %d vs expected %.0f (%d m2 x %.1f/100 m2) deviation %+.1f%%" % [
+			tier, counts[tier], expected, area[tier], ForestBuilder.density(tier) * 100.0, dev * 100.0])
 
 
 func _hash(items: Array) -> Dictionary:
