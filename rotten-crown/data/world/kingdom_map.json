@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "note": "World bible v1 (Phase 4a, increment 2). Coordinates are metres (x, z); z grows away from the spawn. Single source of truth for later increments: edit here, then run tools/render_world_map.py.",
+  "bounds": {"min": [-260, -70], "max": [260, 500]},
+  "wall": {"min": [-235, 58], "max": [235, 490], "ring_width": 14},
+  "margins": {"road": 9, "clearing": 10, "site": 12, "gate": 12, "citadel": 10},
+  "gate": {"pos": [0, 58], "half_width": 8, "clearing_radius": 34},
+  "spawn": [1.2, 29],
+  "citadel": {
+    "rect": [65, 195, 185, 312],
+    "ward": {"rect": [85, 200, 165, 250]},
+    "keep": {"rect": [95, 262, 155, 308]},
+    "front_gate": [125, 198],
+    "old_ward_origin": [0, 0]
+  },
+  "settlements": [
+    {"id": "thornfield", "name": "Thornfield", "pos": [-122, 152], "r": 30, "status": "built"},
+    {"id": "hollowmere", "name": "Hollowmere", "pos": [22, 340], "r": 44, "status": "built", "fields": [[-14, 236, 46, 308]]}
+  ],
+  "future_sites": [
+    {"id": "cathedral", "name": "Weeping Cathedral", "pos": [-150, 390], "r": 38},
+    {"id": "cellar", "name": "Alister's Cellar", "pos": [170, 415], "r": 34},
+    {"id": "lower_town", "name": "Lower Town", "pos": [34, 196], "r": 22},
+    {"id": "forge", "name": "Ashen Forge", "pos": [210, 262], "r": 20},
+    {"id": "barracks", "name": "Barracks", "pos": [200, 135], "r": 28}
+  ],
+  "roads": [
+    {"id": "pumpkin_road", "kind": "built", "pts": [[0, 10], [0, 60], [-10, 120], [5, 200], [10, 270], [20, 322]]},
+    {"id": "farm_track", "kind": "built", "pts": [[-10, 120], [-60, 136], [-116, 148]]},
+    {"id": "kings_road", "kind": "new", "pts": [[0, 60], [45, 72], [100, 112], [140, 172], [128, 198]]},
+    {"id": "rear_lane", "kind": "new", "pts": [[125, 312], [82, 305], [34, 322]]},
+    {"id": "wine_trail", "kind": "new", "pts": [[28, 366], [90, 385], [128, 398], [140, 404]]},
+    {"id": "choir_path", "kind": "new", "pts": [[3, 349], [-60, 372], [-105, 386], [-112, 388]]}
+  ],
+  "guard_posts": [
+    [205, 85], [-205, 85], [-212, 200], [-205, 320], [-195, 455],
+    [-60, 468], [80, 468], [205, 455], [212, 330], [212, 200]
+  ],
+  "clearings": [
+    {"id": "crossroads", "pos": [-6, 124], "r": 11},
+    {"id": "hunters_camp", "pos": [72, 96], "r": 12},
+    {"id": "ruined_cart", "pos": [-92, 232], "r": 13},
+    {"id": "scarecrow_ring", "pos": [-58, 275], "r": 14},
+    {"id": "lantern_grove", "pos": [-62, 432], "r": 12},
+    {"id": "standing_stones", "pos": [95, 380], "r": 13},
+    {"id": "soldiers_hide", "pos": [-170, 90], "r": 12},
+    {"id": "well_glade", "pos": [196, 330], "r": 12}
+  ],
+  "tiers": {
+    "T0": {"name": "Clearing", "trees_per_100m2": 0.0, "note": "settlements, citadel, gate, clearings"},
+    "T1": {"name": "Edge", "trees_per_100m2": 0.4, "note": "road 9 m each side, 10-12 m around clearings and sites, wall ring 14 m"},
+    "T2": {"name": "Wood", "trees_per_100m2": 1.4, "note": "default"},
+    "T3": {"name": "Deep", "trees_per_100m2": 2.2, "note": "hallucination-strong pockets, one per story site"}
+  },
+  "deep_zones": [
+    {"id": "cellar_hollow", "name": "Cellar Hollow (amber)", "pos": [170, 415], "r": 72, "palette": "amber"},
+    {"id": "weeping_hollow", "name": "Weeping Hollow", "pos": [-150, 388], "r": 68, "palette": "moon"},
+    {"id": "old_wood", "name": "Old Wood", "pos": [-150, 262], "r": 62, "palette": "moon"}
+  ]
+}
