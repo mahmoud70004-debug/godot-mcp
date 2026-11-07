@@ -360,3 +360,25 @@ Witnesses (harmless, weirdcore; static + garbled speech + a line in a dialogue w
 | E5 | N | E1 | CPU: physics interpolation + 30 Hz, process culling for far enemies/Witnesses/sprites | process ms down, gameplay tests PASS |
 | E6 | H | E1 | Android APK export (SDK+JDK in container, debug keystore), APK in docs/ + link on launch page | APK builds, installs config valid (aapt dump), size noted |
 | E7 | H | all | verify (shots, turn/perf/touch/fit tests), router-reviewer, publish, push | public build.txt matches, smoke on public URL |
+
+---
+# Phase 4a — World foundation (incremental; each increment ends with a published test link and WAITS for the user's go)
+User decisions (2026-11-07): layout B (Outer Ward = hub inside the kingdom, Keep sealed behind it), but the knight SLEEPS OUTSIDE the kingdom wall
+(that is why the curse spared him): spawn stays outside the south wall; crossing the kingdom gate = entering the cursed fog.
+Palette: moonlit BLUE night, light violet haze + faint sickly-green curse accents; warm amber only at windows/lanterns. Refs: stone cottages
+with moss roofs and lanterns, a giant gnarled oak under storm clouds - take the mood, never copy.
+Forest everywhere inside the walls (replaces the Whispering Wood pocket), density tiers, clearings for gate/villages/ward/guard posts, a cleared
+ring along the walls, trails as the readable spine. Dread systems (breathing trees, positional audio, harmless hallucinations, dread meter) come before the story path.
+
+| inc | what | visible result | gate |
+|---|---|---|---|
+| 1 | Moonlit-blue palette: environment, moon, region fogs, post grade | whole game looks blue/violet at night | user go |
+| 2 | World bible: one top-down map (walls, gate, hub ward, villages, clearings, tiers) as data + PNG | a map image to approve, then frozen | user go |
+| 3 | Forest spike near the gate: density field + MultiMesh trees + fog tuning; measure | dense forest at the entrance | user go |
+| 4 | Merge arena walls (minus netlify/docs) + move ward to the hub per the map + fix signposts, south edge, region triggers, save guard | gate + walls + hub in place | user go |
+| 5 | Forest across the kingdom, clearings, trails, remove WhisperingWood pocket | full forest | user go |
+| 6 | Breathing forest (shader + fog pulse) + foreground leaf cards | trees breathe | user go |
+| 7 | Positional ambience audio system | strange sounds | user go |
+| 8 | Hallucinations + dread meter | peripheral figures, vanishing | user go |
+| 9 | Forest dwellings / guard posts from the reference cottages | cottages with lanterns | user go |
+Then: story path (three seals) on the stable world.
