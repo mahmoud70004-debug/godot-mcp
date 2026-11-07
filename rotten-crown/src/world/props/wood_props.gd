@@ -84,7 +84,7 @@ static func material(id: String) -> Material:
 			mat.metallic = 0.6
 		"forest_bark":
 			# Bark and moss in one surface (instanced forest): the moss tint is the
-			# albedo and bark faces carry bark/moss as vertex colour (forest_tree()).
+			# albedo and bark faces carry bark/moss as vertex colour (ForestTrees.tree()).
 			mat = _scan("bark_brown_02", 2.2, FOREST_MOSS)
 			mat.vertex_color_use_as_albedo = true
 			mat.rim_enabled = true
