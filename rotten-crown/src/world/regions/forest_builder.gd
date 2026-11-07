@@ -48,7 +48,9 @@ const STYLES := [WoodProps.Style.TALL, WoodProps.Style.BROAD, WoodProps.Style.BA
 const STYLE_NAMES := ["Tall", "Broad", "Bare"]
 ## Forest floor paint (terrain B) per tier, and the trail half width (paint R).
 const FLOOR_PAINT := [0.0, 0.3, 0.8, 1.0]
-const TRAIL_HALF := 1.2
+const TRAIL_HALF := 1.4
+## Per-tree brightness range (instance colour on bark and leaves).
+const TINT := Vector2(0.55, 0.8)
 ## Roads painted on the terrain that kingdom_map.json does not list (old forest path).
 const EXTRA_ROADS := [OverworldSpec.FOREST_PATH]
 
@@ -207,7 +209,11 @@ static func paint_ground(terrain: TerrainBuilder) -> void:
 				for pts: Array in trails:
 					d = minf(d, _polyline_distance(Vector2(x, z), pts))
 				var w := wobble.get_noise_2d(x, z) * 0.4
-				c.r = maxf(c.r, 1.0 - smoothstep(TRAIL_HALF * 0.6 + w, TRAIL_HALF * 1.3 + w, d))
+				var trail := 1.0 - smoothstep(TRAIL_HALF * 0.6 + w, TRAIL_HALF * 1.3 + w, d)
+				c.r = maxf(c.r, trail)
+				# Forest floor under the trail too: terrain.gdshader then draws it as the
+				# pale moonlit dirt it uses under trees, the readable spine of the forest.
+				c.b = maxf(c.b, trail)
 			terrain.paint[i] = c
 
 
@@ -468,7 +474,8 @@ static func _chunks(forest: Node3D, trees: Array) -> void:
 				var s: float = t[2]
 				var basis := Basis(Vector3.UP, float(t[1])).scaled(Vector3(s, s * color_rng.randf_range(0.92, 1.1), s))
 				xfs.append(Transform3D(basis, (t[0] as Vector3) - centre))
-				var v := color_rng.randf_range(0.82, 1.08)
+				# Darker than the moonlit haze they fade into (near trunks read as silhouettes).
+				var v := color_rng.randf_range(TINT.x, TINT.y)
 				tints.append(Color(v, v * color_rng.randf_range(0.96, 1.04), v * color_rng.randf_range(0.96, 1.06)))
 			if xfs.is_empty():
 				continue

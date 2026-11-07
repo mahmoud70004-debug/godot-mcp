@@ -604,6 +604,10 @@ static func _build_forest_tree(style: Style, far: bool) -> Dictionary:
 			rng.randf_range(length.x, length.y), rads[si] * float(p["lrad"]))
 		az += TAU / n_limbs + rng.randf_range(-0.5, 0.5)
 	var leaves: Array = ctx["leaves"]
+	# A fuller crown than the path trees: a second, smaller clump beside each one.
+	for lf: Array in leaves.duplicate():
+		var off := Vector3(rng.randf_range(-1.4, 1.4), rng.randf_range(-0.6, 0.4), rng.randf_range(-1.4, 1.4))
+		leaves.append([(lf[0] as Vector3) + off, float(lf[1]) * rng.randf_range(0.75, 0.95)])
 	var leaf_mesh: ArrayMesh = _leaf_mesh(leaves, rng) if float((p["leaf"] as Vector2).x) > 0.0 and not leaves.is_empty() else null
 	var base := spine[7]
 	return {
