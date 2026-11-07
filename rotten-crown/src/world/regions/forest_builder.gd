@@ -6,7 +6,7 @@ extends RefCounted
 ## sites and deep zones; tier_at() ports the tier rules of tools/render_world_map.py
 ## (T0 clearing: no trees, T1 edge, T2 wood, T3 deep; densities from the map).
 ##
-## Trees are WoodProps.forest_tree() silhouettes (tall straight, broad gnarled, bare
+## Trees are ForestTrees.tree() silhouettes (tall straight, broad gnarled, bare
 ## twisted) drawn as MultiMeshInstance3D chunks (CHUNK m squares): per chunk and
 ## style a detailed copy up to NEAR_END m (chunk centre) and a low-poly copy from
 ## there to FAR_END, so each chunk costs 2 draw calls per style either way. Trunks
@@ -44,7 +44,7 @@ const TRIES := 6
 ## Per tier: [style weights TALL, BROAD, BARE], scale range.
 const TIER_STYLE := {1: [0.25, 0.2, 0.55], 2: [0.42, 0.33, 0.25], 3: [0.22, 0.5, 0.28]}
 const TIER_SCALE := {1: Vector2(0.8, 1.1), 2: Vector2(0.85, 1.2), 3: Vector2(0.95, 1.35)}
-const STYLES := [WoodProps.Style.TALL, WoodProps.Style.BROAD, WoodProps.Style.BARE]
+const STYLES := [ForestTrees.Style.TALL, ForestTrees.Style.BROAD, ForestTrees.Style.BARE]
 const STYLE_NAMES := ["Tall", "Broad", "Bare"]
 ## Forest floor paint (terrain B) per tier, and the trail half width (paint R).
 const FLOOR_PAINT := [0.0, 0.3, 0.8, 1.0]
@@ -257,8 +257,8 @@ static func scatter(terrain: TerrainBuilder, blocked: PackedByteArray) -> Array:
 	var radii: Array[float] = []
 	var bases: Array[Vector2] = []
 	for st in STYLES:
-		radii.append(float(WoodProps.forest_tree(st, false)["radius"]))
-		bases.append(WoodProps.forest_tree(st, false)["base"] as Vector2)
+		radii.append(float(ForestTrees.tree(st, false)["radius"]))
+		bases.append(ForestTrees.tree(st, false)["base"] as Vector2)
 	for gz in nz:
 		for gx in nx:
 			var origin := wr.position + Vector2(gx, gz) * lattice
@@ -493,7 +493,7 @@ static func _chunks(forest: Node3D, trees: Array) -> void:
 				chunk.add_child(mmi)
 		for i: int in members:
 			var t: Array = trees[i]
-			var data := WoodProps.forest_tree(STYLES[int(t[3])], false)
+			var data := ForestTrees.tree(STYLES[int(t[3])], false)
 			var s: float = t[2]
 			var radius := snappedf(float(data["radius"]) * s, 0.05)
 			var height := snappedf(3.2 * s, 0.2)
@@ -513,8 +513,8 @@ static func _chunks(forest: Node3D, trees: Array) -> void:
 
 ## Detailed or low-poly mesh of a style: trunk surface (+ leaves surface), materials set.
 static func _style_mesh(k: int, far: bool) -> ArrayMesh:
-	var data := WoodProps.forest_tree(STYLES[k], far)
-	var near := WoodProps.forest_tree(STYLES[k], false)
+	var data := ForestTrees.tree(STYLES[k], far)
+	var near := ForestTrees.tree(STYLES[k], false)
 	var mesh := ArrayMesh.new()
 	var trunk := data["trunk"] as ArrayMesh
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, trunk.surface_get_arrays(0))
