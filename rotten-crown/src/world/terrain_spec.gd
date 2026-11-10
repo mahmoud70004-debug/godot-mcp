@@ -19,6 +19,9 @@ extends Resource
 @export var flat_falloff := 45.0
 ## Flattened ground for villages: Vector4(x, z, radius, falloff), height = hills at centre.
 @export var plateaus: Array[Vector4] = []
+## Like plateaus, but applied after the roads, so a road running onto it meets it level
+## (the citadel courtyard): Vector4(x, z, radius, falloff), height = raw hills at centre.
+@export var pads: Array[Vector4] = []
 ## Roads as xz polylines.
 @export var roads: Array[PackedVector2Array] = []
 @export var road_width := 3.2

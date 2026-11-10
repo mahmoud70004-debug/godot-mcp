@@ -117,6 +117,11 @@ func _generate() -> void:
 				var d := Vector2(x, z).distance_to(Vector2(f.x, f.y))
 				c.b = maxf(c.b, 1.0 - smoothstep(f.z * 0.75 + wobble * 6.0, f.z + wobble * 6.0, d))
 			paint[i] = c
+	# Pads (the citadel): flat ground that roads arrive on, levelled after the carving.
+	for p in spec.pads:
+		var target := _raw_height(p.x, p.y)
+		_apply_radial(Vector2(p.x, p.y), p.z, p.w, func(i: int, w: float) -> void:
+			heights[i] = lerpf(heights[i], target, w))
 
 
 func _raw_height(x: float, z: float) -> float:

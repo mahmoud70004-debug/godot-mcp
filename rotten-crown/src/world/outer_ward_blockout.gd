@@ -37,6 +37,9 @@ const CURSED_LIGHT := Color(0.55, 1.0, 0.3)
 @export var build_grass := true
 ## Off when MeadowBuilder dresses the meadow outside the walls (overworld).
 @export var build_meadow := true
+## The knight's own lantern in the grass at the wake-up spot (z = 31). Off when the ward
+## stands elsewhere (overworld: MeadowBuilder lays it at the wake-up spot itself).
+@export var build_dropped_lantern := true
 @export_group("Horizon")
 ## Distant silhouette layers, nearest first: base colour, top colour.
 @export var horizon_colors: Array[Color] = [
@@ -384,6 +387,8 @@ func _build_lanterns() -> void:
 	_lantern(lanterns, Vector3(0.0, 0.0, -15.5), WARM_LIGHT)
 	if festive:
 		_lantern(lanterns, Vector3(2.6, 0.0, 6.5), WARM_LIGHT)
+		return
+	if not build_dropped_lantern:
 		return
 	# The knight's own lantern, dropped in the grass where he slept.
 	var dropped := _box(lanterns, Vector3(0.22, 0.3, 0.22), Vector3(0.8, 0.12, 31.0), RetroMaterials.iron(), Vector3(0.0, 0.4, PI * 0.5), false)
