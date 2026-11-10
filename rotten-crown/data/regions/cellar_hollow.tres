@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="RegionData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://src/world/region_data.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+id = "cellar_hollow"
+display_name = "The Cellar Hollow"
+arabic_name = "جوف القبو"
+subtitle = "Something here is still fermenting"
+description = "The deep wood above Alister's cellar. The leaves fell and did not rot the way leaves should; the air is sweet and brown."
+fog_color = Color(0.2, 0.13, 0.08, 1)
+fog_density = 0.05
+ambient_color = Color(0.2, 0.15, 0.14, 1)
+rain = 0.0
+planned_phase = 4

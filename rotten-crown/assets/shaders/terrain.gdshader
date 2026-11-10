@@ -1,6 +1,9 @@
 // Kingdom ground: four small scanned textures (nearest-filtered) blended by
 // vertex paint (R road/mud, G pale dry field, B forest floor, remainder grass)
 // with a dithered, pixel-quantized transition so edges stay crisp and retro.
+// Inside the kingdom forest the paint alpha also carries the floor (ForestBuilder):
+// alpha 1 = untouched; 1 -> 0.5 = more moss in blotches over dark loam; below 0.5 =
+// the amber leaf litter of the Cellar Hollow.
 shader_type spatial;
 render_mode diffuse_lambert, specular_disabled;
 
@@ -17,13 +20,27 @@ uniform vec3 grass_tint : source_color = vec3(0.5, 0.55, 0.45);
 uniform vec3 dry_tint : source_color = vec3(0.75, 0.68, 0.5);
 uniform vec3 forest_tint : source_color = vec3(0.38, 0.4, 0.36);
 uniform vec3 road_tint : source_color = vec3(0.62, 0.56, 0.5);
+uniform vec3 loam_tint : source_color = vec3(0.27, 0.28, 0.3);
+uniform vec3 moss_tint : source_color = vec3(0.3, 0.46, 0.4);
+uniform vec3 amber_tint : source_color = vec3(0.62, 0.4, 0.24);
 
 varying vec3 world_pos;
 varying vec3 paint;
+varying float floor_mix;
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	paint = COLOR.rgb;
+	floor_mix = 1.0 - COLOR.a;
+}
+
+float blotch(vec2 p) {
+	vec2 i = floor(p);
+	vec2 f = fract(p);
+	vec2 u = f * f * (3.0 - 2.0 * f);
+	vec4 h = fract(sin(vec4(dot(i, vec2(127.1, 311.7)), dot(i + vec2(1.0, 0.0), vec2(127.1, 311.7)),
+		dot(i + vec2(0.0, 1.0), vec2(127.1, 311.7)), dot(i + vec2(1.0, 1.0), vec2(127.1, 311.7)))) * 43758.5453);
+	return mix(mix(h.x, h.y, u.x), mix(h.z, h.w, u.x), u.y);
 }
 
 float bayer4(vec2 p) {
@@ -41,6 +58,19 @@ void fragment() {
 	vec3 col = grass;
 	if (paint.b + d * 0.5 > 0.5) {
 		col = texture(forest_tex, uv * forest_scale).rgb * forest_tint;
+		if (floor_mix > 0.004) {
+			vec3 base = texture(forest_tex, uv * forest_scale).rgb;
+			float moss_amt = min(floor_mix * 2.0, 1.0);
+			float amber = clamp(floor_mix * 2.0 - 1.0, 0.0, 1.0);
+			float n = blotch(world_pos.xz * 0.11) * 0.7 + blotch(world_pos.xz * 0.43) * 0.3;
+			col = base * loam_tint;
+			if (n + d * 0.2 < moss_amt * 0.6) {
+				col = texture(grass_tex, uv * 0.23).rgb * moss_tint;
+			}
+			if (amber + d * 0.5 > 0.5 + n * 0.3) {
+				col = base * amber_tint;
+			}
+		}
 	}
 	if (paint.g + d * 0.5 > 0.5) {
 		col = texture(dry_tex, uv * dry_scale).rgb * dry_tint;

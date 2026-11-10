@@ -6,17 +6,20 @@ extends Node
 
 const HOLLOW_SCENE := preload("res://src/enemies/hollow.tscn")
 const PICKUP_SCENE := preload("res://src/interaction/item_pickup.tscn")
-## The forest trigger covers the whole kingdom interior; it is created first so the
-## village triggers inside it are the more recently entered zones (Level: they win).
+## Default region per region node (a Trigger marker may name its own in meta "region":
+## the forest has the Kingswood trigger and one per deep zone). Overlapping zones entered
+## together (spawning or teleporting inside a village) resolve smallest-last, so the
+## most specific zone wins (RegionTrigger).
 const REGIONS := {
-	"Forest": "res://data/regions/whispering_wood.tres",
+	"Forest": "res://data/regions/kingswood.tres",
 	"Thornfield": "res://data/regions/thornfield.tres",
 	"Hollowmere": "res://data/regions/hollowmere.tres",
 }
 const ENEMIES := {
 	"Thornfield": ["res://data/enemies/steeple.tres", "res://data/enemies/grinner.tres"],
 	"Hollowmere": ["res://data/enemies/grinner.tres", "res://data/enemies/steeple.tres", "res://data/enemies/bent.tres"],
-	"Forest": ["res://data/enemies/grinner.tres", "res://data/enemies/steeple.tres", "res://data/enemies/bent.tres"],
+	"Forest": ["res://data/enemies/grinner.tres", "res://data/enemies/steeple.tres", "res://data/enemies/grinner.tres",
+		"res://data/enemies/bent.tres"],
 }
 const PICKUPS := ["res://data/items/consumables/grave_moss.tres", "res://data/items/consumables/feast_wine.tres"]
 ## region -> lore items, in marker order (Lore_1, Lore_2...). Missing files are skipped.
@@ -67,8 +70,9 @@ func _ready() -> void:
 				var idx := id.get_slice("_", 1).to_int() - 1
 				if idx >= 0 and idx < list.size() and ResourceLoader.exists(list[idx]):
 					_spawn_pickup(marker, load(list[idx]) as ItemData)
-			elif id == "Trigger":
-				_spawn_trigger(marker, load(REGIONS[region_name]) as RegionData)
+			elif id == "Trigger" or id.begins_with("Trigger_"):
+				var path: String = marker.get_meta("region", REGIONS[region_name])
+				_spawn_trigger(marker, load(path) as RegionData)
 
 
 ## One cheap distance sweep for every actor; the actors park themselves (Enemy.set_far / Witness.set_far).
