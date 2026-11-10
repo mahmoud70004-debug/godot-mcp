@@ -105,8 +105,8 @@ static func _pave(parent: Node3D, terrain: TerrainBuilder) -> void:
 		var nrm := Vector2(-dir.y, dir.x)
 		var hi := -INF
 		var lo := INF
-		for t in [0.0, 0.5, 1.0]:
-			for k in [-1.0, 0.0, 1.0]:
+		for t: float in [0.0, 0.5, 1.0]:
+			for k: float in [-1.0, 0.0, 1.0]:
 				var q := a.lerp(b, t) + nrm * k * PAVE_HALF
 				var h := terrain.height_at(q.x, q.y)
 				hi = maxf(hi, h)
@@ -140,7 +140,7 @@ static func _kerbs(parent: Node3D, terrain: TerrainBuilder, rng: RandomNumberGen
 		var p := _at(line, s)
 		var dir := (_at(line, minf(s + 0.5, total)) - _at(line, maxf(s - 0.5, 0.0))).normalized()
 		var nrm := Vector2(-dir.y, dir.x)
-		for side in [-1.0, 1.0]:
+		for side: float in [-1.0, 1.0]:
 			if rng.randf() < 0.08:
 				continue
 			var q := p + nrm * side * (KERB_OFFSET + rng.randf_range(-0.06, 0.06))

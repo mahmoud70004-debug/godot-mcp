@@ -150,7 +150,7 @@ static func _world_edge(root: Node3D, terrain: TerrainBuilder) -> void:
 	body.name = "WorldEdge"
 	root.add_child(body)
 	var t := EDGE_THICKNESS
-	var north := KingdomWalls.SOUTH + KingdomWalls.THICKNESS
+	var north: float = KingdomWalls.SOUTH + KingdomWalls.THICKNESS
 	var boxes := [
 		[Vector3(r.position.x - t * 0.5, 0.0, (r.position.y + north) * 0.5), Vector3(t, EDGE_HEIGHT, north - r.position.y + t * 2.0)],
 		[Vector3(r.end.x + t * 0.5, 0.0, (r.position.y + north) * 0.5), Vector3(t, EDGE_HEIGHT, north - r.position.y + t * 2.0)],
