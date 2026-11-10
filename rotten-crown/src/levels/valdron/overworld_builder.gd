@@ -74,10 +74,11 @@ static func build(root: Node3D) -> TerrainBuilder:
 
 
 ## Signposts: [position, viewer to face, [label, direction to point]...]. None points to the
-## old "Valdron Gate"; the one inside the kingdom gate sends the King's Road to the citadel.
+## old "Valdron Gate"; the one inside the kingdom gate (in the fork, by the first lantern)
+## sends the King's Road to the citadel.
 static func _signposts(parent: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> void:
 	var posts := [
-		[Vector2(-4.2, 67.0), Vector2(0.0, 58.0), [["The Citadel", Vector2(45.0, 72.0)], ["Hollowmere", Vector2(-10.0, 120.0)],
+		[Vector2(5.0, 67.5), Vector2(0.0, 58.0), [["The Citadel", Vector2(45.0, 72.0)], ["Hollowmere", Vector2(-10.0, 120.0)],
 			["Thornfield", Vector2(-60.0, 136.0)]]],
 		[Vector2(-6.5, 124.0), Vector2(-10.0, 110.0), [["Thornfield", Vector2(-60.0, 136.0)], ["Hollowmere", Vector2(5.0, 200.0)],
 			["Kingdom Gate", Vector2(0.0, 60.0)]]],

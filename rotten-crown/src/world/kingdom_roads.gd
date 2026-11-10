@@ -24,7 +24,8 @@ const PAINT_HALF := 2.9
 const MARKER_STEP := 27.0
 const MARKER_FIRST := 14.0
 ## [distance along the road, side (-1 left, +1 right going in), colour key].
-const LANTERNS := [[7.0, -1.0, "warm"], [7.0, 1.0, "warm"], [82.0, -1.0, "cursed"], [178.0, -1.0, "warm"],
+## (The first two stand clear of the gatehouse: the wall is on the left just inside the gate.)
+const LANTERNS := [[10.0, 1.0, "warm"], [16.0, -1.0, "warm"], [82.0, -1.0, "cursed"], [178.0, -1.0, "warm"],
 	[178.0, 1.0, "warm"]]
 const WARM := Color(1.0, 0.6, 0.3)
 const CURSED := Color(0.55, 1.0, 0.3)
