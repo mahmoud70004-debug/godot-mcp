@@ -253,7 +253,7 @@ static func _card_mesh() -> ArrayMesh:
 ## Ground kinds: instances per m2 in [T1, T2, T3].
 const GROUND := {
 	"moss": [0.012, 0.03, 0.04], "litter": [0.02, 0.025, 0.02], "rot": [0.0, 0.003, 0.012],
-	"fern": [0.008, 0.045, 0.06], "bush": [0.02, 0.012, 0.004], "weeds": [0.03, 0.004, 0.0],
+	"fern": [0.01, 0.07, 0.08], "bush": [0.025, 0.025, 0.008], "weeds": [0.03, 0.004, 0.0],
 	"mound": [0.002, 0.007, 0.01], "roots": [0.0, 0.003, 0.006], "stump": [0.002, 0.003, 0.002],
 	"pustules": [0.0, 0.001, 0.006], "boulder": [0.002, 0.003, 0.004], "log": [0.0015, 0.003, 0.004],
 	"big_stump": [0.001, 0.002, 0.002],
@@ -580,11 +580,16 @@ func _trails() -> void:
 				var c := a + dir * d
 				d += 1.4
 				for sgn: float in [-1.0, 1.0]:
+					var out := side * sgn
 					if narrow:
-						_edge(c + side * sgn * _rng.randf_range(1.8, 2.8), "bramble", Vector2(_rng.randf_range(0.8, 1.3), _rng.randf_range(0.6, 1.0)), 0.5)
-						_edge(c + side * sgn * _rng.randf_range(1.1, 1.7), "tuft", Vector2(_rng.randf_range(0.5, 0.8), _rng.randf_range(0.35, 0.6)), 0.45)
-					if int(d / 1.4) % 3 == 0 and _rng.randf() < 0.6:
-						_overhang(c, side * sgn)
+						_edge(c + out * _rng.randf_range(1.8, 2.8), "bramble", Vector2(_rng.randf_range(0.8, 1.3), _rng.randf_range(0.6, 1.0)), 0.5)
+						_edge(c + out * _rng.randf_range(1.1, 1.7), "tuft", Vector2(_rng.randf_range(0.5, 0.8), _rng.randf_range(0.35, 0.6)), 0.45)
+					# The walls of the tunnel: bushes and ferns crowding in behind the edge.
+					var wall := _rng.randf_range(3.2, 6.5) if narrow else _rng.randf_range(4.5, 8.0)
+					var tile := "fern" if _rng.randf() < 0.35 else "bush"
+					_edge(c + out * wall, tile, Vector2(_rng.randf_range(1.3, 2.2), _rng.randf_range(1.0, 2.0)), 0.5)
+					if _rng.randf() < 0.55:
+						_overhang(c, out, narrow)
 
 
 func _edge(p: Vector2, tile: String, size: Vector2, chance: float) -> void:
@@ -597,12 +602,12 @@ func _edge(p: Vector2, tile: String, size: Vector2, chance: float) -> void:
 
 ## A leaf clump (and moss) high over the road edge, where a tree stands close enough
 ## to own it.
-func _overhang(c: Vector2, out: Vector2) -> void:
-	var p := c + out * _rng.randf_range(2.2, 3.6)
+func _overhang(c: Vector2, out: Vector2, narrow: bool) -> void:
+	var p := c + out * (_rng.randf_range(1.4, 3.2) if narrow else _rng.randf_range(3.5, 5.0))
 	var tier := ForestBuilder._tier_cached(p.x, p.y)
 	if tier <= 0 or ForestBuilder._in_settlement(p):
 		return
-	var owner := _nearest_tree(c + out * 6.0, 6.5)
+	var owner := _nearest_tree(c + out * 7.0, 9.0)
 	if owner < 0:
 		return
 	var t: Array = _trees[owner]
@@ -612,9 +617,9 @@ func _overhang(c: Vector2, out: Vector2) -> void:
 		_card(g + Vector3(0.0, _rng.randf_range(3.6, 5.0), 0.0), "hang", Vector2(_rng.randf_range(0.6, 1.0), _rng.randf_range(1.2, 2.4)), CARD_MODE_HANG, 0.0, _tint(0.6, 0.9))
 		return
 	var tile := "leaf_birch" if style == ForestTrees.Style.BIRCH else ("leaf_dying" if style == ForestTrees.Style.HOLLOW else "leaf_dark")
-	var size := _rng.randf_range(2.6, 3.8)
+	var size := _rng.randf_range(2.8, 4.2)
 	var g := _terrain.ground(p.x, p.y)
-	_card(g + Vector3(0.0, _rng.randf_range(4.0, 5.6), 0.0), tile, Vector2.ONE * size, CARD_MODE_UPRIGHT, 0.0, t[7] as Color)
+	_card(g + Vector3(0.0, _rng.randf_range(3.8, 5.4), 0.0), tile, Vector2.ONE * size, CARD_MODE_UPRIGHT, 0.0, t[7] as Color)
 	if tier >= 2 and _rng.randf() < 0.5:
 		_card(g + Vector3(0.0, _rng.randf_range(4.2, 5.4), 0.0), "hang", Vector2(_rng.randf_range(0.6, 1.1), _rng.randf_range(1.4, 2.8)), CARD_MODE_HANG, 0.0, _tint(0.6, 0.9))
 
@@ -635,8 +640,8 @@ func _nearest_tree(p: Vector2, within: float) -> int:
 
 # --- Output ---
 
-## Per cell: "Cards", "Small", "Large" MultiMeshInstance3D (centred on the cell, drawn up
-## to RANGE m from each instance) and an "Obstacles" StaticBody3D.
+## Per cell: "Cards", "Small", "Large" MultiMeshInstance3D (centred on what the cell
+## holds, drawn up to RANGE m from each instance) and an "Obstacles" StaticBody3D.
 func _output(node: Node3D) -> void:
 	var keys := _cells.keys()
 	keys.sort()
@@ -644,7 +649,15 @@ func _output(node: Node3D) -> void:
 		var data: Dictionary = _cells[key]
 		var cell := Node3D.new()
 		cell.name = "F_%d_%d" % [key.x, key.y]
-		var centre := (Vector2(key) + Vector2(0.5, 0.5)) * CELL
+		# At the centroid of what it holds: the visibility ranges count from there.
+		var centre := Vector2.ZERO
+		var n := 0
+		for family: String in ["cards", "small", "large"]:
+			for it: Array in data[family]:
+				var o := (it[0] as Transform3D).origin
+				centre += Vector2(o.x, o.z)
+				n += 1
+		centre = centre / maxi(n, 1) if n > 0 else (Vector2(key) + Vector2(0.5, 0.5)) * CELL
 		cell.position = _terrain.ground(centre.x, centre.y)
 		node.add_child(cell)
 		for family: String in ["cards", "small", "large"]:

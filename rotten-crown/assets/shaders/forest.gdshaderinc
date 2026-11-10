@@ -26,10 +26,10 @@ uniform float lod_begin = 0.0;
 uniform float lod_end = 10000.0;
 // Atlas tile size (UV units) for TILED cards.
 uniform vec2 tile_size = vec2(0.25, 0.25);
-uniform float bark_scale = 0.55;
+uniform float bark_scale = 0.9;
 uniform float bark_gain = 2.0;
 // How much of the bark scan shows (the rest is flat vertex colour).
-uniform float bark_detail = 0.55;
+uniform float bark_detail = 0.6;
 uniform vec3 rim_color : source_color = vec3(0.42, 0.52, 0.8);
 uniform float rim_strength = 0.9;
 uniform vec3 top_color : source_color = vec3(0.12, 0.15, 0.24);
@@ -86,7 +86,9 @@ void fragment() {
 	vec4 t;
 	if (v_uv.x < -0.5) {
 		vec2 buv = abs(v_wnormal.y) > 0.75 ? v_world.xz : vec2(v_world.x + v_world.z, v_world.y);
-		t = vec4(mix(vec3(0.7), texture(bark_tex, buv * bark_scale).rgb * bark_gain, bark_detail), 1.0);
+		// Grain only (grey): the colour (bark, moss, rot) is the vertex colour's.
+		float grain = dot(texture(bark_tex, buv * bark_scale).rgb, vec3(0.3, 0.59, 0.11)) * bark_gain;
+		t = vec4(vec3(mix(0.7, grain, bark_detail)), 1.0);
 	} else {
 		t = texture(atlas, v_uv);
 	}

@@ -24,7 +24,7 @@ const FLOOR_SHADER := preload("res://assets/shaders/forest_floor_card.gdshader")
 const BARK_TEX := "res://assets/textures/world/bark_brown_02.png"
 ## Marker UV of solid (non-atlas) vertices: the shader maps the bark scan in world space.
 const SOLID_UV := Vector2(-1.0, -1.0)
-const MOSS := Color(0.2, 0.38, 0.3)
+const MOSS := Color(0.2, 0.33, 0.28)
 const VEIN := Color(0.36, 0.6, 0.1)
 const VOID := Color(0.025, 0.025, 0.035)
 
@@ -402,7 +402,7 @@ static func _bark_colour(p: Dictionary, split: float) -> Callable:
 	return func(a: float, h: float, ny: float) -> Color:
 		var c := bark
 		var m := clampf((moss_h - h) / maxf(moss_h, 0.1), 0.0, 1.0) * (0.45 + 0.45 * sin(a * 2.0 + h * 1.7))
-		c = c.lerp(MOSS, clampf(m + maxf(ny, 0.0) * 0.45, 0.0, 1.0) * 0.7)
+		c = c.lerp(MOSS, clampf(m + maxf(ny, 0.0) * 0.4, 0.0, 1.0) * 0.55)
 		if birch and sin(h * 4.1 + a * 2.0) > 0.86:
 			c = c.darkened(0.75)
 		if split > 0.0 and h > 0.25 and h < split + 0.2 and absf(wrapf(a - PI * 0.5, -PI, PI)) < 0.7:
