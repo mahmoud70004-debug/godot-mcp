@@ -388,3 +388,19 @@ Then: story path (three seals) on the stable world.
   rect x[-235,235] z[58,490] as MultiMesh chunks of WoodProps tree variants; WhisperingWoodBuilder is removed from OverworldBuilder (its enemies/lore re-homed to Forest markers).
 - Budget: no probe pose > 200 draws / 300k prims at Low; scene +<=6 MB; trunks keep >= 2.4 m spacing (2.0 in T3) so the player can always pass; roads and T0 stay clear.
 - Out of scope: kingdom walls and ward relocation (Inc 4), breathing/audio/hallucinations (Inc 6-8).
+
+## Phase 4a - Inc 4 (user, 2026-11-10): denser + richer forest, forest floor, walls + ward move + clear road, empty plains outside
+User: raise density; forest must be varied and thick - not just trees: moss, green rot/curse growths; add the forest floor; everything forest lives inside the
+walls per the map; OUTSIDE the walls = empty plains only; a clear, marked road when the ward is merged/moved.
+Two parallel tasks (disjoint files), then I merge, re-bake once, verify, publish:
+- S4 (structure, worktree s4): cherry-pick arena commit 941b339 (walls/gate/test) WITHOUT netlify/docs/shell changes; ward -> citadel per kingdom_map.json
+  (front gate (125,198) facing south, rotate 180 deg, pickups/enemies/lights/trigger move with it); KINGS_ROAD as a real, clearly marked road gate->citadel;
+  MeadowBuilder = empty plains outside the wall only (grass + road), nothing of it inside; world-edge barriers; signposts; ward/citadel region trigger; save guard
+  (world_version); wall cost optimised. Files: kingdom_walls.gd, overworld_spec.gd, overworld_builder.gd, meadow_builder.gd, outer_ward_blockout.gd (only if needed),
+  valdron_overworld.tscn, level.gd/save_manager.gd/game_state.gd (save guard, barriers), tools/test_kingdom_layout.gd.
+- F4 (forest richness, worktree f4): densities up (T1 ~1.0, T2 ~3.0, T3 ~4.2) with cheaper trees/LOD so budgets hold; understory + floor as MultiMesh kits:
+  moss mounds, mossy boulders, ferns, fallen logs, stumps, root tangles, mushrooms, hanging moss, and the green rot (curse growths: pustules, creeping veins on
+  trunks/ground, glowing faintly); tint variety; region kingswood.tres for the forest + whispering_wood for the three deep zones (triggers via Forest/Markers).
+  Files: forest_builder.gd, forest_trees.gd, new src/world/props/forest_floor.gd (+shaders), wood_props.gd (additive), overworld_populator.gd, data/regions/*,
+  tools/test_forest_walkable.gd.
+Budgets (Low, probe): <= 200 draws and <= 300k primitives at every pose; pck growth <= +4 MB.
