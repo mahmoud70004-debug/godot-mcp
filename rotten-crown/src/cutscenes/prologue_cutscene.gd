@@ -427,6 +427,8 @@ func _launch_firework() -> void:
 	sfx.position = pos
 	add_child(sfx)
 	sfx.play()
-	get_tree().create_timer(3.5).timeout.connect(func() -> void:
-		burst.queue_free()
-		sfx.queue_free())
+	# Bound to the nodes themselves: if the prologue is skipped first they are already
+	# freed, and Godot drops the connection instead of calling a lambda with dead captures.
+	var done := get_tree().create_timer(3.5)
+	done.timeout.connect(burst.queue_free)
+	done.timeout.connect(sfx.queue_free)
