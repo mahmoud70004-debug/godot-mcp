@@ -15,6 +15,7 @@ extends CanvasLayer
 @onready var interact_button: TouchActionButton = %InteractButton
 @onready var inventory_menu: InventoryMenu = %InventoryMenu
 @onready var pause_menu: Control = %PauseMenu
+@onready var settings_panel: SettingsPanel = %SettingsPanel
 @onready var lore_reader: Control = %LoreReader
 @onready var lore_title: Label = %LoreTitle
 @onready var lore_author: Label = %LoreAuthor
@@ -30,7 +31,7 @@ var _insets := Vector4.ZERO
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	for menu in [inventory_menu, pause_menu, lore_reader, death_screen]:
+	for menu in [inventory_menu, pause_menu, settings_panel, lore_reader, death_screen]:
 		(menu as Control).hide()
 	prompt_label.text = ""
 	message_label.modulate.a = 0.0
@@ -52,9 +53,9 @@ func _ready() -> void:
 	Events.wake_up_started.connect(_play_eyelids)
 
 	inventory_menu.closed.connect(close_menu)
-	%QualityOption.item_selected.connect(_on_quality_selected)
-	Events.quality_changed.connect(_on_quality_changed)
-	%FpsToggle.toggled.connect(_on_fps_toggled)
+	settings_panel.handles_cancel = false
+	settings_panel.closed.connect(_on_settings_closed)
+	%SettingsButton.pressed.connect(_open_settings)
 	%ResumeButton.pressed.connect(close_menu)
 	%SaveButton.pressed.connect(_on_save_pressed)
 	%MainMenuButton.pressed.connect(_on_main_menu_pressed)
@@ -94,13 +95,16 @@ func _on_inset_poll() -> void:
 ## Screen rectangles (UI units) of the bottom-anchored elements, for browser tests (?debug=1).
 func _debug_rects() -> Dictionary:
 	var rects := {}
-	for control: Control in [prompt_label, message_label, touch_controls.joystick, %AttackButton, %BlockButton, interact_button, %PauseRegion]:
+	for control: Control in [prompt_label, message_label, touch_controls.joystick, %AttackButton, %BlockButton, interact_button, %PauseRegion,
+			%SettingsButton, %ResumeButton, settings_panel.find_child("ControlsButton", true, false), settings_panel.find_child("BackButton", true, false)]:
 		var r := control.get_global_rect()
 		rects[control.name] = [r.position.x, r.position.y, r.end.x, r.end.y]
 	var vs := get_viewport().get_visible_rect().size
 	rects["viewport"] = [0.0, 0.0, vs.x, vs.y]
 	rects["bottom_margin"] = UiSafeArea.bottom_margin()
 	rects["pause_open"] = pause_menu.visible
+	rects["settings_open"] = settings_panel.visible
+	rects["controls_swapped"] = Settings.swap_controls
 	return rects
 
 
@@ -112,6 +116,8 @@ func _process(_delta: float) -> void:
 	elif Input.is_action_just_pressed("pause"):
 		if _open_menu == lore_reader:
 			_close_lore()
+		elif _open_menu == settings_panel:
+			settings_panel.close()
 		elif _open_menu:
 			close_menu()
 		else:
@@ -129,8 +135,6 @@ func open_menu(menu: Control) -> void:
 		inventory_menu.open()
 	else:
 		if menu == pause_menu:
-			%QualityOption.select(Settings.quality)
-			_sync_fps_toggle()
 			%PauseRegion.text = _region_name
 			%SaveButton.hint = "save"
 		menu.show()
@@ -155,28 +159,17 @@ func _hide_region_card() -> void:
 	region_subtitle.modulate.a = 0.0
 
 
-func _on_quality_selected(index: int) -> void:
-	Settings.quality_manual = true
-	Settings.quality = index
-	Settings.save_settings()
-	Events.quality_changed.emit(index)
+## Pause menu -> settings panel (gameplay stays paused).
+func _open_settings() -> void:
+	pause_menu.hide()
+	_open_menu = settings_panel
+	settings_panel.open()
 
 
-func _on_fps_toggled(pressed: bool) -> void:
-	Settings.show_fps = pressed
-	Settings.save_settings()
-	FpsOverlay.refresh_enabled()
-	%FpsToggle.hint = "on" if pressed else "off"
-
-
-func _sync_fps_toggle() -> void:
-	var on: bool = Settings.show_fps or FpsOverlay.forced
-	%FpsToggle.set_pressed_no_signal(on)
-	%FpsToggle.hint = "on" if on else "off"
-	# The page link forces it on: the toggle cannot turn it off, so say why.
-	if FpsOverlay.forced:
-		%FpsToggle.disabled = true
-		%FpsToggle.disabled_hint = "on (link)"
+func _on_settings_closed() -> void:
+	_open_menu = pause_menu
+	pause_menu.show()
+	%SettingsButton.grab_focus()
 
 
 func _toggle_menu(menu: Control) -> void:
@@ -318,8 +311,3 @@ func _on_retry_pressed() -> void:
 	get_tree().paused = false
 	if not SaveManager.load_game():
 		SceneLoader.reload_current()
-
-
-## A method, not a lambda: Godot drops the connection when the HUD is freed.
-func _on_quality_changed(level: int) -> void:
-	%QualityOption.select(level)

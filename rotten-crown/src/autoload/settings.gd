@@ -3,10 +3,23 @@ extends Node
 
 const SETTINGS_PATH := "user://settings.cfg"
 
-## Degrees of rotation per viewport pixel dragged on the look area.
-var look_sensitivity_touch := 0.28
-## Degrees of rotation per pixel of captured mouse motion (desktop testing).
-var look_sensitivity_mouse := 0.12
+## Emitted when the controls layout or look options change (the HUD re-lays out at once).
+signal controls_changed
+
+## Look sensitivity steps (settings menu); step 2 is the original behaviour.
+const LOOK_STEPS: Array[float] = [0.5, 0.75, 1.0, 1.5, 2.0]
+const LOOK_STEP_DEFAULT := 2
+const BASE_LOOK_TOUCH := 0.28
+const BASE_LOOK_MOUSE := 0.12
+
+## Degrees of rotation per viewport pixel dragged on the look area (derived from look_step).
+var look_sensitivity_touch := BASE_LOOK_TOUCH
+## Degrees of rotation per pixel of captured mouse motion (derived from look_step).
+var look_sensitivity_mouse := BASE_LOOK_MOUSE
+## Index into LOOK_STEPS.
+var look_step := LOOK_STEP_DEFAULT
+## Mirror the touch layout: joystick bottom-right, buttons bottom-left, look zone on the left.
+var swap_controls := false
 ## Degrees per second at full right-stick deflection.
 var look_speed_gamepad := 140.0
 var invert_y := false
@@ -31,6 +44,12 @@ func _ready() -> void:
 	apply_audio()
 
 
+func set_look_step(step: int) -> void:
+	look_step = clampi(step, 0, LOOK_STEPS.size() - 1)
+	look_sensitivity_touch = BASE_LOOK_TOUCH * LOOK_STEPS[look_step]
+	look_sensitivity_mouse = BASE_LOOK_MOUSE * LOOK_STEPS[look_step]
+
+
 func uses_touch_controls() -> bool:
 	return force_touch_controls or OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()
 
@@ -44,8 +63,8 @@ func apply_audio() -> void:
 
 func save_settings() -> void:
 	var cfg := ConfigFile.new()
-	cfg.set_value("controls", "look_sensitivity_touch", look_sensitivity_touch)
-	cfg.set_value("controls", "look_sensitivity_mouse", look_sensitivity_mouse)
+	cfg.set_value("controls", "look_step", look_step)
+	cfg.set_value("controls", "swap_controls", swap_controls)
 	cfg.set_value("controls", "invert_y", invert_y)
 	cfg.set_value("controls", "force_touch_controls", force_touch_controls)
 	cfg.set_value("audio", "master", master_volume)
@@ -63,8 +82,8 @@ func load_settings() -> void:
 	var cfg := ConfigFile.new()
 	if cfg.load(SETTINGS_PATH) != OK:
 		return
-	look_sensitivity_touch = cfg.get_value("controls", "look_sensitivity_touch", look_sensitivity_touch)
-	look_sensitivity_mouse = cfg.get_value("controls", "look_sensitivity_mouse", look_sensitivity_mouse)
+	set_look_step(int(cfg.get_value("controls", "look_step", look_step)))
+	swap_controls = cfg.get_value("controls", "swap_controls", swap_controls)
 	invert_y = cfg.get_value("controls", "invert_y", invert_y)
 	force_touch_controls = cfg.get_value("controls", "force_touch_controls", force_touch_controls)
 	master_volume = cfg.get_value("audio", "master", master_volume)

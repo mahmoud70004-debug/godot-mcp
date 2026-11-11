@@ -45,6 +45,7 @@ func _ready() -> void:
 	_build()
 	_place()
 	get_viewport().size_changed.connect(_place)
+	Settings.controls_changed.connect(_place)
 	# Safe-area insets can change without a resize (a 180 degree flip, late browser bars).
 	var poll := Timer.new()
 	poll.wait_time = 1.0
@@ -63,6 +64,11 @@ func _place() -> void:
 	_thought.offset_top = _thought.offset_bottom - THOUGHT_HEIGHT
 	_panel.offset_bottom = -bottom - PANEL_GAP
 	_panel.offset_top = _panel.offset_bottom - PANEL_HEIGHT
+	# Mirrored touch layout: the buttons sit left and the stick right, so the band shifts with them.
+	var shift := 0.04 if Settings.swap_controls else 0.0
+	for node: Control in [_thought, _panel]:
+		node.anchor_left = 0.22 + shift
+		node.anchor_right = 0.74 + shift
 	_insets = UiSafeArea.insets()
 
 

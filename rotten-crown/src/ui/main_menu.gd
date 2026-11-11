@@ -8,6 +8,8 @@ const PROLOGUE := "res://src/cutscenes/prologue.tscn"
 @onready var continue_button: MenuItemButton = %ContinueButton
 @onready var quit_button: MenuItemButton = %QuitButton
 @onready var touch_toggle: MenuItemButton = %TouchToggle
+@onready var settings_button: MenuItemButton = %SettingsButton
+@onready var settings_panel: SettingsPanel = %SettingsPanel
 
 
 func _ready() -> void:
@@ -24,6 +26,8 @@ func _ready() -> void:
 	touch_toggle.set_pressed_no_signal(Settings.force_touch_controls)
 	touch_toggle.hint = "on" if Settings.force_touch_controls else "off"
 	touch_toggle.toggled.connect(_on_touch_toggled)
+	settings_button.pressed.connect(_open_settings)
+	settings_panel.closed.connect(_close_settings)
 	new_game_button.grab_focus()
 
 
@@ -40,3 +44,16 @@ func _on_touch_toggled(pressed: bool) -> void:
 	touch_toggle.hint = "on" if pressed else "off"
 	Settings.force_touch_controls = pressed
 	Settings.save_settings()
+
+
+## The panel covers the title menu; its items are hidden so focus cannot wander behind it.
+func _open_settings() -> void:
+	$Ui/Buttons.hide()
+	touch_toggle.hide()
+	settings_panel.open()
+
+
+func _close_settings() -> void:
+	$Ui/Buttons.show()
+	touch_toggle.visible = not OS.has_feature("mobile")
+	settings_button.grab_focus()

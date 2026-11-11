@@ -7,6 +7,7 @@
 [ext_resource type="Script" path="res://src/ui/touch_action_button.gd" id="5_btn"]
 [ext_resource type="PackedScene" path="res://src/ui/inventory_menu.tscn" id="6_inv"]
 [ext_resource type="Script" path="res://src/ui/menu_item_button.gd" id="7_item"]
+[ext_resource type="PackedScene" path="res://src/ui/settings_panel.tscn" id="8_settings"]
 
 [node name="HUD" type="CanvasLayer"]
 layer = 10
@@ -302,28 +303,13 @@ text = "Write Memories"
 script = ExtResource("7_item")
 hint = "save"
 
-[node name="QualityOption" type="OptionButton" parent="PauseMenu/PauseColumn"]
+[node name="SettingsButton" type="Button" parent="PauseMenu/PauseColumn"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
 layout_mode = 2
-size_flags_horizontal = 0
-item_count = 3
-selected = 1
-popup/item_0/text = "Quality: Low"
-popup/item_0/id = 0
-popup/item_1/text = "Quality: Medium"
-popup/item_1/id = 1
-popup/item_2/text = "Quality: High"
-popup/item_2/id = 2
-
-[node name="FpsToggle" type="Button" parent="PauseMenu/PauseColumn"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 36)
-layout_mode = 2
-toggle_mode = true
-text = "Show FPS"
+text = "Settings"
 script = ExtResource("7_item")
-hint = "off"
+hint = "controls, look, quality"
 
 [node name="MainMenuButton" type="Button" parent="PauseMenu/PauseColumn"]
 unique_name_in_owner = true
@@ -344,6 +330,9 @@ offset_right = 326.0
 offset_bottom = -10.0
 grow_vertical = 0
 theme_type_variation = &"MutedLabel"
+
+[node name="SettingsPanel" parent="." instance=ExtResource("8_settings")]
+unique_name_in_owner = true
 
 [node name="LoreReader" type="Control" parent="."]
 unique_name_in_owner = true

@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" path="res://src/rendering/post_process.tscn" id="2_post"]
 [ext_resource type="Script" path="res://src/ui/title_backdrop.gd" id="3_backdrop"]
 [ext_resource type="Script" path="res://src/ui/menu_item_button.gd" id="4_item"]
+[ext_resource type="PackedScene" path="res://src/ui/settings_panel.tscn" id="5_settings"]
 
 [node name="MainMenu" type="Control" groups=["full_resolution_ui"]]
 layout_mode = 3
@@ -74,6 +75,14 @@ script = ExtResource("4_item")
 hint = "continue"
 disabled_hint = "no memories yet"
 
+[node name="SettingsButton" type="Button" parent="Ui/Buttons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+text = "Settings"
+script = ExtResource("4_item")
+hint = "controls, look, quality"
+
 [node name="QuitButton" type="Button" parent="Ui/Buttons"]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 36)
@@ -100,5 +109,8 @@ toggle_mode = true
 text = "Touch controls"
 script = ExtResource("4_item")
 hint = "off"
+
+[node name="SettingsPanel" parent="Ui" instance=ExtResource("5_settings")]
+unique_name_in_owner = true
 
 [node name="PostProcess" parent="." instance=ExtResource("2_post")]

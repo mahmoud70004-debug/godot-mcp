@@ -73,6 +73,11 @@ static func inset_control(control: Control) -> void:
 	control.offset_bottom = base.w + _shift(control.anchor_bottom, ins.y, ins.w)
 
 
+## Forget the remembered scene offsets (call after rewriting a control's anchors/offsets on purpose).
+static func forget_base(control: Control) -> void:
+	control.remove_meta(_BASE_META)
+
+
 ## Offset shift for one edge: inward from the near side when anchored there, from the far side otherwise.
 static func _shift(anchor: float, near_inset: float, far_inset: float) -> float:
 	if anchor < 0.5:

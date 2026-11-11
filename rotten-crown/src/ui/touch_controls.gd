@@ -4,6 +4,7 @@ extends Control
 ##   left:  fixed virtual joystick
 ##   right: the whole right half drags the camera
 ##   right: action buttons (attack / block / interact) take priority
+## With Settings.swap_controls the whole layout is mirrored (stick and look zone swap sides).
 ## Godot's GUI is single-pointer, so this node tracks each finger itself.
 ##
 ## Look deltas are computed here from each finger's own previous position.
@@ -28,6 +29,8 @@ var _last_positions: Dictionary = {}
 ## (Quality switches content_scale_size): their next drag re-anchors instead of
 ## producing a delta, otherwise a resting thumb would fling the camera.
 var _reanchor: Dictionary = {}
+## Scene (unswapped) anchors and offsets of the mirrored controls: [anchor_l, anchor_r, off_l, off_r].
+var _base_layout: Dictionary = {}
 
 
 func _ready() -> void:
@@ -36,6 +39,10 @@ func _ready() -> void:
 	for node in find_children("*", "TouchActionButton", true, false):
 		_buttons.append(node as TouchActionButton)
 	visible = Settings.uses_touch_controls()
+	for control: Control in [joystick] + _buttons:
+		_base_layout[control] = [control.anchor_left, control.anchor_right, control.offset_left, control.offset_right]
+	apply_layout()
+	Settings.controls_changed.connect(apply_layout)
 	get_viewport().size_changed.connect(_on_view_rescaled)
 	Events.quality_changed.connect(_on_quality_changed)
 	DebugBridge.register("touch", func() -> Dictionary:
@@ -45,6 +52,32 @@ func _ready() -> void:
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
 		release_all()
+
+
+## Mirrors the stick and the buttons horizontally when controls are swapped, keeping the
+## safe-area insets. Anchors flip to the other edge, offsets mirror, so it fits every aspect ratio.
+func apply_layout() -> void:
+	for control: Control in _base_layout:
+		var base: Array = _base_layout[control]
+		if Settings.swap_controls:
+			control.anchor_left = 1.0 - base[1]
+			control.anchor_right = 1.0 - base[0]
+			control.offset_left = -base[3]
+			control.offset_right = -base[2]
+		else:
+			control.anchor_left = base[0]
+			control.anchor_right = base[1]
+			control.offset_left = base[2]
+			control.offset_right = base[3]
+		UiSafeArea.forget_base(control)
+		UiSafeArea.inset_control(control)
+	release_all()
+
+
+func _in_look_zone(pos: Vector2) -> bool:
+	if Settings.swap_controls:
+		return pos.x <= global_position.x + size.x * (1.0 - look_zone_start)
+	return pos.x >= global_position.x + size.x * look_zone_start
 
 
 func set_enabled(enabled: bool) -> void:
@@ -94,7 +127,7 @@ func _on_touch_down(finger: int, pos: Vector2) -> void:
 		# Only one thumb fits on the stick: the newest touch always owns it.
 		_joystick_finger = finger
 		joystick.begin_touch(pos)
-	elif pos.x >= global_position.x + size.x * look_zone_start:
+	elif _in_look_zone(pos):
 		_look_finger = finger
 
 
