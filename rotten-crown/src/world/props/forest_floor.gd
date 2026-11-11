@@ -722,6 +722,9 @@ func _wrong(forest: Node3D) -> void:
 	var hand_mat := ForestTrees.material("floor_solid").duplicate() as ShaderMaterial
 	hand_mat.set_shader_parameter("glow_base", 0.7)
 	var hand := _hand_mesh()
+	var face_mat := ForestTrees.material("floor_solid").duplicate() as ShaderMaterial
+	face_mat.set_shader_parameter("tint", Color(0.3, 0.32, 0.36))
+	face_mat.set_shader_parameter("force_bark", true)
 	var order := range(_trees.size())
 	for i in order.size():
 		var j := _rng.randi_range(i, order.size() - 1)
@@ -742,9 +745,13 @@ func _wrong(forest: Node3D) -> void:
 			holder.transform = Transform3D((t[6] as Basis).scaled(Vector3.ONE * float(t[2])), foot)
 			node.add_child(holder)
 			WoodProps.bark_face(holder, ForestTrees.tree(style, 0), _rng)
-			for mi in holder.find_children("*", "MeshInstance3D", true, false):
-				(mi as MeshInstance3D).visibility_range_end = 32.0
-				(mi as MeshInstance3D).cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			for part in holder.find_children("*", "MeshInstance3D", true, false):
+				var mi := part as MeshInstance3D
+				mi.visibility_range_end = 32.0
+				mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+				# Not a pale mask: the relief in the tree's own bark, only the hollows dark.
+				if mi.name == &"Relief":
+					mi.material_override = face_mat
 			_stats["wrong"] += 1
 		elif int(hands.get(zone, 0)) > 0:
 			hands[zone] = int(hands[zone]) - 1
@@ -755,7 +762,7 @@ func _wrong(forest: Node3D) -> void:
 			mi.name = "Hand_%d" % (int(_stats["wrong"]) + 1)
 			mi.mesh = hand
 			mi.material_override = hand_mat
-			mi.transform = Transform3D(Basis(Vector3.UP, -a).scaled(Vector3.ONE * _rng.randf_range(0.9, 1.2)), _terrain.ground(at.x, at.y))
+			mi.transform = Transform3D(Basis(Vector3.UP, -a).scaled(Vector3.ONE * _rng.randf_range(1.3, 1.7)), _terrain.ground(at.x, at.y))
 			mi.visibility_range_end = 30.0
 			mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			node.add_child(mi)

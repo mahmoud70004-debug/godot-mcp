@@ -40,6 +40,9 @@ uniform float glow_strength = 1.6;
 uniform float pulse = 0.025;
 // Glow used when there is no instance data (single MeshInstance3D growths).
 uniform float glow_base = 0.0;
+// Meshes without vertex colours or UVs (the bark faces): bark grain in this colour.
+uniform vec3 tint : source_color = vec3(1.0);
+uniform bool force_bark = false;
 
 varying vec3 v_world;
 varying vec3 v_wnormal;
@@ -84,7 +87,7 @@ void vertex() {
 
 void fragment() {
 	vec4 t;
-	if (v_uv.x < -0.5) {
+	if (v_uv.x < -0.5 || force_bark) {
 		vec2 buv = abs(v_wnormal.y) > 0.75 ? v_world.xz : vec2(v_world.x + v_world.z, v_world.y);
 		// Grain only (grey): the colour (bark, moss, rot) is the vertex colour's.
 		float grain = dot(texture(bark_tex, buv * bark_scale).rgb, vec3(0.3, 0.59, 0.11)) * bark_gain;
@@ -92,7 +95,7 @@ void fragment() {
 	} else {
 		t = texture(atlas, v_uv);
 	}
-	vec3 albedo = t.rgb * COLOR.rgb;
+	vec3 albedo = t.rgb * COLOR.rgb * tint;
 	ALBEDO = albedo;
 #ifdef CUTOUT
 	ALPHA = t.a;
