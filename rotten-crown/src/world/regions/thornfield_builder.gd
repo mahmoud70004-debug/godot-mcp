@@ -476,8 +476,10 @@ static func _world2(house: Node3D, local: Vector3) -> Vector2:
 
 ## Merges a group here (so it keeps its own cull distance) and shields the result
 ## from the region-wide merge in OverworldBuilder.
+## Cells are twice MeshMerger's default: the fog (ViewDistance, ~55 m here) culls long
+## before the wider cells' cut-off matters, and the farm is one compact site (V5: draws).
 static func _merge(group: Node3D, range_end: float) -> void:
-	MeshMerger.merge_static(group, MeshMerger.cell_for(range_end), range_end)
+	MeshMerger.merge_static(group, MeshMerger.cell_for(range_end) * 2.0, range_end)
 	for node in group.find_children("*", "MeshInstance3D", true, false):
 		var mi := node as MeshInstance3D
 		if mi.visible:

@@ -14,6 +14,8 @@ signal prewarmed
 @export var kill_height := -25.0
 ## Announce the region as soon as the level starts (otherwise use RegionTrigger).
 @export var announce_on_start := false
+## Optional: depth fog with view distances per region, and the draw ranges that follow it.
+@export var view_distance: ViewDistance
 ## The knight's inner voice after waking up here (DialogueUI subtitles).
 @export var wake_dialogue: DialogueSequence
 
@@ -162,7 +164,10 @@ func _blend_to(new_region: RegionData) -> void:
 		_blend_tween.kill()
 	_blend_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_SINE)
 	_blend_tween.tween_property(env, "fog_light_color", new_region.fog_color, region_blend_time)
-	_blend_tween.tween_property(env, "fog_density", new_region.fog_density, region_blend_time)
+	if view_distance:
+		view_distance.set_region(new_region, region_blend_time)
+	else:
+		_blend_tween.tween_property(env, "fog_density", new_region.fog_density, region_blend_time)
 	_blend_tween.tween_property(env, "ambient_light_color", new_region.ambient_color, region_blend_time)
 	if weather:
 		weather.set_rain(new_region.rain, region_blend_time)
@@ -182,7 +187,10 @@ func _apply_region_atmosphere() -> void:
 		return
 	var env := environment.environment
 	env.fog_light_color = region.fog_color
-	env.fog_density = region.fog_density
+	if view_distance:
+		view_distance.set_region(region, 0.0)
+	else:
+		env.fog_density = region.fog_density
 	env.ambient_light_color = region.ambient_color
 	if weather:
 		weather.rain = region.rain

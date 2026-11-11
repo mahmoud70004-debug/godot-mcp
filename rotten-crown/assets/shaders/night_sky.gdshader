@@ -32,6 +32,13 @@ uniform vec3 flare_direction = vec3(0.0, 0.75, -0.66);
 uniform vec3 flare_color : source_color = vec3(0.6, 0.75, 1.0);
 uniform float flare_strength = 0.0;
 uniform float flare_rays = 10.0;
+// The fog's own colour low in the sky (ViewDistance keeps haze_color = the fog colour), so
+// whatever the fog swallows at its far edge disappears into the same colour behind it.
+uniform vec3 haze_color : source_color = vec3(0.13, 0.14, 0.18);
+uniform float haze_amount = 0.0;
+// Elevation (sin) up to which the band is solid, and where it has faded out.
+uniform float haze_low = 0.12;
+uniform float haze_high = 0.5;
 
 float hash(vec3 p) {
 	p = fract(p * vec3(443.897, 441.423, 437.195));
@@ -112,5 +119,6 @@ void sky() {
 	float maria = noise2(vec2(atan(dir.x, dir.z), dir.y) * 90.0) * 0.18;
 	col = mix(col, moon_color * (1.15 - maria), disc * (1.0 - cloud * 0.75));
 
+	col = mix(col, haze_color, haze_amount * (1.0 - smoothstep(haze_low, haze_high, up)));
 	COLOR = col;
 }

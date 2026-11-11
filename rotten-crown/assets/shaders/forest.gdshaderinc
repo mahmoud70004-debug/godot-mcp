@@ -25,6 +25,12 @@ uniform sampler2D atlas : source_color, filter_nearest;
 uniform sampler2D bark_tex : source_color, filter_nearest, repeat_enable;
 uniform float lod_begin = 0.0;
 uniform float lod_end = 10000.0;
+// Dither dissolves (ViewDistance), widths in metres: an instance fades in over fade_in after
+// lod_begin and out over the fade_out before lod_end. The near trees fading out and their
+// cards fading in use the same distance and complementary dither, so the swap never pops,
+// and the far cards dissolve into the fog before they are cut.
+uniform float fade_in = 0.0;
+uniform float fade_out = 0.0;
 // Atlas tile size (UV units) for TILED cards.
 uniform vec2 tile_size = vec2(0.25, 0.25);
 uniform float bark_scale = 0.9;
@@ -51,6 +57,8 @@ varying vec3 v_world;
 varying vec3 v_wnormal;
 varying float v_glow;
 varying vec2 v_uv;
+varying float v_fade_in;
+varying float v_fade_out;
 
 void vertex() {
 	vec3 origin = MODEL_MATRIX[3].xyz;
@@ -79,6 +87,8 @@ void vertex() {
 		d = -1.0;
 	}
 #endif
+	v_fade_in = fade_in > 0.0 ? clamp((d - lod_begin) / fade_in, 0.0, 1.0) : 1.0;
+	v_fade_out = fade_out > 0.0 ? clamp((d - (lod_end - fade_out)) / fade_out, 0.0, 1.0) : 0.0;
 	if (d < lod_begin || d >= lod_end) {
 		VERTEX = vec3(0.0);
 	} else if (v_glow > 0.01) {
@@ -88,7 +98,20 @@ void vertex() {
 	v_wnormal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 }
 
+float dissolve_threshold(vec2 frag) {
+	ivec2 c = ivec2(mod(floor(frag), 4.0));
+	int i = c.y * 4 + c.x;
+	float m[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
+	return (m[i] + 0.5) / 16.0;
+}
+
 void fragment() {
+	if (v_fade_out > 0.0 || v_fade_in < 1.0) {
+		float b = dissolve_threshold(FRAGCOORD.xy);
+		if (b < v_fade_out || b >= v_fade_in) {
+			discard;
+		}
+	}
 	vec4 t;
 	if (v_uv.x < -0.5 || force_bark) {
 		vec2 buv = abs(v_wnormal.y) > 0.75 ? v_world.xz : vec2(v_world.x + v_world.z, v_world.y);

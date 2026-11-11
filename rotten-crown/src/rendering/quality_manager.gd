@@ -115,6 +115,7 @@ func _apply_shadows(scene: Node, level: int) -> void:
 
 
 func _apply_grass(level: int) -> void:
+	var managed := get_tree().get_first_node_in_group(&"view_distance") != null
 	for node in get_tree().get_nodes_in_group(&"grass_chunks"):
 		var mmi := node as MultiMeshInstance3D
 		if mmi == null or mmi.multimesh == null:
@@ -123,6 +124,9 @@ func _apply_grass(level: int) -> void:
 			mmi.set_meta(&"q_range_end", mmi.visibility_range_end)
 		var original: float = mmi.get_meta(&"q_range_end")
 		mmi.multimesh.visible_instance_count = mmi.multimesh.instance_count / 2 if level == LOW else -1
+		# Levels with depth fog (ViewDistance) set every grass range from the fog themselves.
+		if managed:
+			continue
 		mmi.visibility_range_end = original * 1.4 if level == HIGH else original
 		# Merged chunks cull their old chunks in the shader (GrassScatter.merge_chunks).
 		if mmi.has_meta(GrassScatter.RANGE_META) and mmi.multimesh.mesh:
