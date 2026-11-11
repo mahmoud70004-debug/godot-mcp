@@ -19,7 +19,7 @@ const DEFAULT_DISTANCE := 60.0
 ## Fog starts this far from the eye (fully clear before it).
 const FOG_BEGIN := 4.0
 ## >1 keeps the near ground clearer and closes the fog late (pow of the smoothstep).
-const FOG_CURVE := 1.3
+const FOG_CURVE := 1.5
 ## Dissolve band of the far tree cards before the fog line, and of the near/far tree swap.
 const FAR_FADE := 7.0
 const SWAP_FADE := 3.0
