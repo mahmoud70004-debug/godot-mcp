@@ -101,3 +101,8 @@
 | 4-S4 | H (router-hard) | done | kingdom walls + gate (from arena 941b339, cheaper), ward -> citadel (125,210) rot 180, Royal Keep sealed, paved King's Road (kerbs, 7 waymarkers, 5 lanterns), MeadowBuilder = empty plains outside only, world-edge colliders, signposts, save WORLD_VERSION 2, test_kingdom_layout 0 failures. Not taken from arena: netlify/hosting/docs/shell text. |
 | 4-F4 | H (router-hard, rate-limited once, resumed) | done | 3,677 trees (T1 1.0 / T2 3.0 / T3 4.2), 7 styles, mesh < 26 m then 4-tri impostors (256 px atlas), ForestFloor kits (28.6k cards, 2.8k small, 495 large with colliders), green rot (glow + pulse), bark faces/hands rare, kingswood/cellar_hollow regions + deep triggers, smallest zone wins. Probe Low: all poses <= 190 draws, <= 250k prims. pck 22.9 MB. |
 | 4 integrate | H (me) | published, awaiting feedback | merged both, brightened forest ambient/fill (content was unreadably dark), tests 0 failures, smoke OK, touch PASS |
+
+## V5 (phone report: colour clash, floating grass, forest/Thornfield fps)
+| task | tier | status | note |
+|---|---|---|---|
+| V5 | H | done (branch v5-work, not published) | root cause floating "grass": fog-free HorizonBackdrop seen between fogged trees (+289 unattached overhang clumps); depth fog ViewDistance (Kingswood 45 m, deep 34-36, villages 55, plains 70) drives all ranges; palette blue-grey; Low draws forest -55..-60%, Thornfield field 122 -> 91; tests 0 failures, smoke OK, touch PASS |
