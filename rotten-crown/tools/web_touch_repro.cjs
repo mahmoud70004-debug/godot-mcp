@@ -55,14 +55,16 @@ const WAKE_UP = { x: 60, y: 230 };
   for (let i = 0; i < 4; i++) { thumb = { ...thumb, x: thumb.x + (i % 2 ? -1 : 1) }; await send('touchMove', [thumb, stick]); await page.waitForTimeout(60); }
   await page.waitForTimeout(300);
   const after = (await state()).player;
-  const jitterTurn = Math.abs(after.yaw - before.yaw) + Math.abs(after.pitch - before.pitch);
+  // Yaw wraps at +-180 (the knight now wakes facing the gate, yaw 180): compare the short way round.
+  const dYaw = (a, b) => Math.abs(((a - b + 540) % 360) - 180);
+  const jitterTurn = dYaw(after.yaw, before.yaw) + Math.abs(after.pitch - before.pitch);
   const walked = Math.hypot(after.pos[0] - before.pos[0], after.pos[2] - before.pos[2]);
 
   // Deliberate 120px drag with the look thumb must still turn the camera.
   for (let i = 0; i < 12; i++) { thumb = { ...thumb, x: thumb.x - 10 * s }; await send('touchMove', [thumb, stick]); }
   await page.waitForTimeout(300);
   const turned = (await state()).player;
-  const lookTurn = Math.abs(turned.yaw - after.yaw);
+  const lookTurn = dYaw(turned.yaw, after.yaw);
   await send('touchEnd', []);
   await browser.close();
 
