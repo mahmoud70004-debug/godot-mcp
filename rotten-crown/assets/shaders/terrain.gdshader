@@ -16,10 +16,10 @@ uniform float grass_scale = 0.16;
 uniform float dry_scale = 0.2;
 uniform float forest_scale = 0.2;
 uniform float road_scale = 0.28;
-uniform vec3 grass_tint : source_color = vec3(0.5, 0.55, 0.45);
-uniform vec3 dry_tint : source_color = vec3(0.75, 0.68, 0.5);
-uniform vec3 forest_tint : source_color = vec3(0.38, 0.4, 0.36);
-uniform vec3 road_tint : source_color = vec3(0.62, 0.56, 0.5);
+uniform vec3 grass_tint : source_color = vec3(0.4, 0.46, 0.5);
+uniform vec3 dry_tint : source_color = vec3(0.5, 0.52, 0.57);
+uniform vec3 forest_tint : source_color = vec3(0.34, 0.37, 0.41);
+uniform vec3 road_tint : source_color = vec3(0.5, 0.5, 0.55);
 uniform vec3 loam_tint : source_color = vec3(0.27, 0.28, 0.3);
 uniform vec3 moss_tint : source_color = vec3(0.3, 0.46, 0.4);
 uniform vec3 amber_tint : source_color = vec3(0.62, 0.4, 0.24);
@@ -79,9 +79,9 @@ void fragment() {
 		vec3 road = texture(road_tex, uv * road_scale).rgb * road_tint;
 		float luma = dot(road, vec3(0.3, 0.59, 0.11));
 		// The same road changes with the land it crosses: a pale, moonlit dirt
-		// path under the trees, a worn olive track through the dry fields.
-		road = mix(road, vec3(luma) * vec3(1.5, 1.45, 1.35), smoothstep(0.2, 0.6, paint.b));
-		road = mix(road, mix(vec3(luma) * vec3(1.3, 1.25, 0.9), col, 0.35), smoothstep(0.2, 0.6, paint.g));
+		// path under the trees, a worn grey track through the dry fields.
+		road = mix(road, vec3(luma) * vec3(1.3, 1.36, 1.48), smoothstep(0.2, 0.6, paint.b));
+		road = mix(road, mix(vec3(luma) * vec3(1.12, 1.16, 1.26), col, 0.35), smoothstep(0.2, 0.6, paint.g));
 		col = road;
 	}
 	ALBEDO = col;

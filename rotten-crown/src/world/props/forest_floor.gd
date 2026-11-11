@@ -600,8 +600,7 @@ func _edge(p: Vector2, tile: String, size: Vector2, chance: float) -> void:
 	_card(_terrain.ground(p.x, p.y), tile, size, CARD_MODE_UPRIGHT, 0.0, _tint(0.6, 0.95))
 
 
-## A leaf clump (and moss) high over the road edge, where a tree stands close enough
-## to own it.
+## A leaf clump (and moss) high over the road edge, where a tree's limbs reach over it.
 func _overhang(c: Vector2, out: Vector2, narrow: bool) -> void:
 	var p := c + out * (_rng.randf_range(1.4, 3.2) if narrow else _rng.randf_range(3.5, 5.0))
 	var tier := ForestBuilder._tier_cached(p.x, p.y)
@@ -612,6 +611,11 @@ func _overhang(c: Vector2, out: Vector2, narrow: bool) -> void:
 		return
 	var t: Array = _trees[owner]
 	var style: int = t[3]
+	# Only where the owner's limbs really reach over the spot: a clump or a moss strand
+	# anywhere else hangs from nothing (V5: the "floating grass" over the roads).
+	var limbs: Vector2 = ForestTrees.STYLES[style]["len"]
+	if (t[5] as Vector2).distance_to(p) > limbs.y * float(t[2]) * 0.8:
+		return
 	if style in [ForestTrees.Style.BARE, ForestTrees.Style.SNAG]:
 		var g := _terrain.ground(p.x, p.y)
 		_card(g + Vector3(0.0, _rng.randf_range(3.6, 5.0), 0.0), "hang", Vector2(_rng.randf_range(0.6, 1.0), _rng.randf_range(1.2, 2.4)), CARD_MODE_HANG, 0.0, _tint(0.6, 0.9))

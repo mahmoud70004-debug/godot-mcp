@@ -11,9 +11,9 @@ const SILHOUETTE_SHADER := preload("res://assets/shaders/silhouette.gdshader")
 @export var seed := 1337
 ## Nearest layer first: base colour, top colour.
 @export var horizon_colors: Array[Color] = [
-	Color(0.025, 0.035, 0.025), Color(0.07, 0.085, 0.06),
-	Color(0.05, 0.06, 0.045), Color(0.12, 0.13, 0.1),
-	Color(0.09, 0.1, 0.08), Color(0.2, 0.21, 0.16),
+	Color(0.035, 0.04, 0.06), Color(0.08, 0.088, 0.12),
+	Color(0.055, 0.06, 0.085), Color(0.12, 0.128, 0.17),
+	Color(0.085, 0.09, 0.12), Color(0.17, 0.18, 0.235),
 ]
 @export var follow_camera := true
 ## Vertical offset applied to the rings (sink them below the terrain hills).

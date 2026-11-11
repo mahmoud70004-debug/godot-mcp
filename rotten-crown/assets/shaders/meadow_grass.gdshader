@@ -11,15 +11,15 @@ shader_type spatial;
 render_mode cull_disabled, unshaded;
 
 uniform vec4 root_color : source_color = vec4(0.025, 0.032, 0.027, 1.0);
-uniform vec4 stem_color : source_color = vec4(0.09, 0.125, 0.085, 1.0);
-uniform vec4 tip_color : source_color = vec4(0.23, 0.28, 0.21, 1.0);
-uniform vec4 dry_color : source_color = vec4(0.33, 0.31, 0.21, 1.0);
+uniform vec4 stem_color : source_color = vec4(0.075, 0.105, 0.105, 1.0);
+uniform vec4 tip_color : source_color = vec4(0.19, 0.245, 0.255, 1.0);
+uniform vec4 dry_color : source_color = vec4(0.26, 0.28, 0.31, 1.0);
 uniform vec4 rush_color : source_color = vec4(0.05, 0.075, 0.05, 1.0);
-uniform vec4 sheen_color : source_color = vec4(0.62, 0.68, 0.62, 1.0);
+uniform vec4 sheen_color : source_color = vec4(0.58, 0.65, 0.74, 1.0);
 // Multiplier in cloud shadow: shadows lean cold (art direction).
 uniform vec4 shade_tint : source_color = vec4(0.42, 0.46, 0.55, 1.0);
-uniform vec4 flower_a : source_color = vec4(0.62, 0.6, 0.52, 1.0);
-uniform vec4 flower_b : source_color = vec4(0.62, 0.55, 0.3, 1.0);
+uniform vec4 flower_a : source_color = vec4(0.58, 0.6, 0.65, 1.0);
+uniform vec4 flower_b : source_color = vec4(0.48, 0.52, 0.6, 1.0);
 uniform vec4 flower_c : source_color = vec4(0.36, 0.29, 0.42, 1.0);
 uniform vec2 wind_dir = vec2(0.35, 0.94);
 // Static bend along the wind, as a fraction of the tuft height.

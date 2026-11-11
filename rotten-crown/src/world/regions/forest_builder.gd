@@ -30,8 +30,10 @@ extends RefCounted
 
 const MAP_PATH := "res://data/world/kingdom_map.json"
 const SEED := 4004
-## Grid squares (m) of the near trees (+ colliders) and of the impostors.
-const NEAR_CELL := 32.0
+## Grid squares (m) of the near trees (+ colliders) and of the impostors. Near cells are
+## small: the fog (ViewDistance) draws detailed trees only ~16-24 m out, and every tree of a
+## drawn cell costs its triangles even where the shader collapses it.
+const NEAR_CELL := 24.0
 ## Impostors cost 4 triangles each: two cells hold them all (one draw each).
 const FAR_CELL := 1000.0
 const ROAD_CLEAR := 3.5

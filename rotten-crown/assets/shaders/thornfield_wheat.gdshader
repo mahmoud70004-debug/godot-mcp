@@ -9,10 +9,10 @@
 shader_type spatial;
 render_mode cull_disabled, unshaded;
 
-uniform vec4 root_color : source_color = vec4(0.03, 0.028, 0.022, 1.0);
-uniform vec4 stem_color : source_color = vec4(0.2, 0.17, 0.09, 1.0);
-uniform vec4 tip_color : source_color = vec4(0.47, 0.4, 0.21, 1.0);
-uniform vec4 ear_color : source_color = vec4(0.55, 0.47, 0.26, 1.0);
+uniform vec4 root_color : source_color = vec4(0.022, 0.024, 0.03, 1.0);
+uniform vec4 stem_color : source_color = vec4(0.11, 0.115, 0.12, 1.0);
+uniform vec4 tip_color : source_color = vec4(0.27, 0.28, 0.31, 1.0);
+uniform vec4 ear_color : source_color = vec4(0.33, 0.34, 0.37, 1.0);
 // Multiplier in cloud shadow: shadows lean cold (art direction).
 uniform vec4 shade_tint : source_color = vec4(0.36, 0.38, 0.42, 1.0);
 uniform vec2 wind_dir = vec2(0.55, 0.83);
@@ -36,6 +36,10 @@ varying vec3 world_pos;
 // that chunk's own visibility range used to cull it (discarded, not moved: the wind
 // math stays untouched). 0 = off.
 uniform float chunk_range = 0.0;
+// Tufts sink into the ground between these distances (ViewDistance: inside the fog, before
+// their chunk is culled, so the field never pops).
+uniform float fade_start = 1000.0;
+uniform float fade_end = 1001.0;
 
 varying float v_light;
 varying float v_culled;
@@ -57,6 +61,8 @@ void vertex() {
 	float bend = (lean + gust * gust_strength + fl) * h * h;
 	VERTEX.xz += wd * bend * tuft_h;
 	VERTEX.y -= bend * bend * tuft_h * 0.45;
+	float dist = length((MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz);
+	VERTEX.y -= smoothstep(fade_start, fade_end, dist) * h * tuft_h;
 	// Drifting cloud shadows: two crossed sine fields, cheap and per vertex.
 	float t = TIME * cloud_speed * 0.05;
 	float c = sin(wp.x * cloud_scale + t) * sin(wp.z * cloud_scale * 1.3 - t * 0.7);

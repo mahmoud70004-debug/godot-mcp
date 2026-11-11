@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://src/world/level.gd" id="1_level"]
 [ext_resource type="PackedScene" path="res://src/levels/valdron/baked/overworld_world.scn" id="2_world"]
 [ext_resource type="Script" path="res://src/world/horizon_backdrop.gd" id="23_horizon"]
+[ext_resource type="Script" path="res://src/rendering/view_distance.gd" id="35_view"]
 [ext_resource type="Script" path="res://src/levels/valdron/overworld_populator.gd" id="24_populator"]
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/night_wind.wav" id="25_wind"]
 [ext_resource type="PackedScene" path="res://src/player/player.tscn" id="3_player"]
@@ -36,7 +37,7 @@
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("10_moon_shader")
 shader_parameter/zenith_color = Color(0.012, 0.02, 0.055, 1)
-shader_parameter/horizon_color = Color(0.22, 0.28, 0.52, 1)
+shader_parameter/horizon_color = Color(0.15, 0.17, 0.25, 1)
 shader_parameter/ground_color = Color(0.02, 0.025, 0.055, 1)
 shader_parameter/horizon_sharpness = 3.2
 shader_parameter/moon_color = Color(0.8, 0.9, 1.0, 1)
@@ -54,6 +55,7 @@ shader_parameter/cloud_speed = 0.005
 shader_parameter/cloud_scale = 1.1
 shader_parameter/cloud_noise = ExtResource("21_cloud_noise")
 shader_parameter/flare_strength = 0.0
+shader_parameter/haze_amount = 1.0
 
 [sub_resource type="Sky" id="Sky_gloom"]
 sky_material = SubResource("ShaderMaterial_sky")
@@ -73,9 +75,12 @@ glow_intensity = 0.6
 glow_bloom = 0.06
 glow_hdr_threshold = 0.95
 fog_enabled = true
-fog_light_color = Color(0.09, 0.12, 0.25, 1)
+fog_light_color = Color(0.12, 0.13, 0.17, 1)
 fog_light_energy = 1.0
-fog_density = 0.022
+fog_mode = 1
+fog_density = 1.0
+fog_depth_begin = 2.0
+fog_depth_end = 60.0
 fog_sky_affect = 0.15
 adjustment_enabled = true
 adjustment_contrast = 1.05
@@ -84,12 +89,13 @@ adjustment_saturation = 0.8
 [sub_resource type="BoxShape3D" id="BoxShape3D_citadel"]
 size = Vector3(120, 40, 117)
 
-[node name="ValdronOverworld" type="Node3D" node_paths=PackedStringArray("player", "environment", "weather")]
+[node name="ValdronOverworld" type="Node3D" node_paths=PackedStringArray("player", "environment", "weather", "view_distance")]
 script = ExtResource("1_level")
 region = ExtResource("11_r_meadows")
 player = NodePath("Player")
 environment = NodePath("WorldEnvironment")
 weather = NodePath("WeatherController")
+view_distance = NodePath("ViewDistance")
 announce_on_start = true
 wake_dialogue = ExtResource("26_wake")
 kill_height = -40.0
@@ -111,6 +117,12 @@ directional_shadow_max_distance = 40.0
 [node name="Horizon" type="Node3D" parent="."]
 script = ExtResource("23_horizon")
 base_height = -6.0
+
+[node name="ViewDistance" type="Node" parent="." node_paths=PackedStringArray("environment", "world", "horizon")]
+script = ExtResource("35_view")
+environment = NodePath("../WorldEnvironment")
+world = NodePath("../World")
+horizon = NodePath("../Horizon")
 
 [node name="Populator" type="Node" parent="." node_paths=PackedStringArray("world")]
 script = ExtResource("24_populator")

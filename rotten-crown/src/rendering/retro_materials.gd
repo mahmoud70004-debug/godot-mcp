@@ -85,7 +85,7 @@ static func moss() -> StandardMaterial3D:
 
 
 static func straw() -> StandardMaterial3D:
-	return _cached("straw", [Color(0.4, 0.3, 0.1), Color(0.5, 0.4, 0.15), Color(0.62, 0.5, 0.2)], FastNoiseLite.TYPE_VALUE, 0.5, 0.8)
+	return _cached("straw", [Color(0.3, 0.27, 0.21), Color(0.37, 0.34, 0.27), Color(0.45, 0.42, 0.34)], FastNoiseLite.TYPE_VALUE, 0.5, 0.8)
 
 
 static func skin() -> StandardMaterial3D:

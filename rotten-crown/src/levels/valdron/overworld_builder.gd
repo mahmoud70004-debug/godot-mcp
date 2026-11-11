@@ -15,6 +15,9 @@ extends RefCounted
 const REGION_BUILDERS := ["ThornfieldBuilder", "HollowmereBuilder"]
 ## Merged region chunks are culled beyond this distance; fog makes them invisible already.
 const REGION_RANGE := 100.0
+## Merge squares per region where the default (MeshMerger.cell_for) splits a compact village
+## into too many draws: Thornfield fits in one 80 m square (V5, ~36 -> fewer draws).
+const REGION_CELL := {"ThornfieldBuilder": 80.0}
 ## Invisible world-edge barriers round the plains: thickness and height.
 const EDGE_THICKNESS := 2.0
 const EDGE_HEIGHT := 60.0
@@ -56,7 +59,7 @@ static func build(root: Node3D) -> TerrainBuilder:
 		if region and region.get_parent() == null:
 			root.add_child(region)
 		if region:
-			MeshMerger.merge_static(region, MeshMerger.cell_for(REGION_RANGE), REGION_RANGE)
+			MeshMerger.merge_static(region, float(REGION_CELL.get(class_id, MeshMerger.cell_for(REGION_RANGE))), REGION_RANGE)
 	var shared := Node3D.new()
 	shared.name = "Plains"
 	root.add_child(shared)
