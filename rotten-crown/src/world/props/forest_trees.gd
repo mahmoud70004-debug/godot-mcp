@@ -21,6 +21,7 @@ const FAR_END := 78.0
 const SOLID_SHADER := preload("res://assets/shaders/forest_solid.gdshader")
 const CARD_SHADER := preload("res://assets/shaders/forest_card.gdshader")
 const FLOOR_SHADER := preload("res://assets/shaders/forest_floor_card.gdshader")
+const FAR_SHADER := preload("res://assets/shaders/forest_far.gdshader")
 const BARK_TEX := "res://assets/textures/world/bark_brown_02.png"
 ## Marker UV of solid (non-atlas) vertices: the shader maps the bark scan in world space.
 const SOLID_UV := Vector2(-1.0, -1.0)
@@ -102,8 +103,10 @@ static func material(id: String) -> ShaderMaterial:
 	match id:
 		"floor_solid", "floor_small":
 			mat.shader = SOLID_SHADER
-		"floor", "far":
+		"floor":
 			mat.shader = FLOOR_SHADER
+		"far":
+			mat.shader = FAR_SHADER
 		_:
 			mat.shader = CARD_SHADER
 	mat.set_shader_parameter("atlas", ForestAtlas.texture())

@@ -453,7 +453,7 @@ func _ground() -> void:
 				for i in n:
 					var p := origin + Vector2(_rng.randf(), _rng.randf()) * cell
 					var roll := _rng.randf()
-					var tier := _usable(p, ForestBuilder.ROAD_CLEAR - 1.2)
+					var tier := _usable(p, ForestBuilder.ROAD_CLEAR - 0.2)
 					if tier == 0 or roll * top > _density(kind, tier):
 						continue
 					_place(kind, p, tier)
@@ -643,43 +643,95 @@ func _nearest_tree(p: Vector2, within: float) -> int:
 ## Per cell: "Cards", "Small", "Large" MultiMeshInstance3D (centred on what the cell
 ## holds, drawn up to RANGE m from each instance) and an "Obstacles" StaticBody3D.
 func _output(node: Node3D) -> void:
+	var lights := node.get_parent().get_parent().find_children("*", "OmniLight3D", true, false) if node.get_parent() else []
 	var keys := _cells.keys()
 	keys.sort()
 	for key: Vector2i in keys:
 		var data: Dictionary = _cells[key]
-		var cell := Node3D.new()
-		cell.name = "F_%d_%d" % [key.x, key.y]
-		# At the centroid of what it holds: the visibility ranges count from there.
-		var centre := Vector2.ZERO
-		var n := 0
-		for family: String in ["cards", "small", "large"]:
+		var base_name := "F_%d_%d" % [key.x, key.y]
+		if _lights_on(data, lights) <= MeshMerger.LIGHT_BUDGET:
+			_emit(node, base_name, data)
+			continue
+		# Lanterns close by (the King's Road, the ward): quarter the cell so no part is lit
+		# by more lights than the Compatibility renderer shades per object.
+		var mid := (Vector2(key) + Vector2(0.5, 0.5)) * CELL
+		var parts := [{}, {}, {}, {}]
+		for part: Dictionary in parts:
+			for family: String in ["cards", "small", "large", "shapes"]:
+				part[family] = []
+		for family: String in ["cards", "small", "large", "shapes"]:
 			for it: Array in data[family]:
 				var o := (it[0] as Transform3D).origin
-				centre += Vector2(o.x, o.z)
-				n += 1
-		centre = centre / maxi(n, 1) if n > 0 else (Vector2(key) + Vector2(0.5, 0.5)) * CELL
-		cell.position = _terrain.ground(centre.x, centre.y)
-		node.add_child(cell)
-		for family: String in ["cards", "small", "large"]:
-			var items: Array = data[family]
-			if items.is_empty():
-				continue
-			var mmi := _multimesh(mesh("card" if family == "cards" else family), items, cell.position,
-				SMALL_RANGE if family == "small" else RANGE)
-			mmi.name = family.capitalize()
-			cell.add_child(mmi)
-		var shapes: Array = data["shapes"]
-		if shapes.is_empty():
+				(parts[(1 if o.x > mid.x else 0) + (2 if o.z > mid.y else 0)][family] as Array).append(it)
+		for q in 4:
+			_emit(node, "%s_%d" % [base_name, q], parts[q])
+
+
+## Lights whose range reaches the cell's MultiMesh box (as _emit / _multimesh size it).
+func _lights_on(data: Dictionary, lights: Array) -> int:
+	var centre := Vector3.ZERO
+	var items: Array = []
+	for family: String in ["cards", "small", "large"]:
+		items.append_array(data[family])
+	if items.is_empty():
+		return 0
+	for it: Array in items:
+		centre += (it[0] as Transform3D).origin
+	centre /= items.size()
+	var half := 4.0
+	for it: Array in items:
+		var o := (it[0] as Transform3D).origin - centre
+		half = maxf(half, maxf(absf(o.x), absf(o.z)) + 4.0)
+	var box := AABB(centre - Vector3(half, 10.0, half), Vector3(half * 2.0, 20.0, half * 2.0))
+	var n := 0
+	for l in lights:
+		var light := l as OmniLight3D
+		var p := light.global_position
+		if p.clamp(box.position, box.end).distance_to(p) < light.omni_range:
+			n += 1
+	return n
+
+
+func _emit(node: Node3D, cell_name: String, data: Dictionary) -> void:
+	# At the centroid of what it holds: the visibility ranges count from there.
+	var centre := Vector2.ZERO
+	var n := 0
+	for family: String in ["cards", "small", "large"]:
+		for it: Array in data[family]:
+			var o := (it[0] as Transform3D).origin
+			centre += Vector2(o.x, o.z)
+			n += 1
+	var shapes: Array = data["shapes"]
+	if n == 0 and shapes.is_empty():
+		return
+	if n == 0:
+		var o := (shapes[0][0] as Transform3D).origin
+		centre = Vector2(o.x, o.z)
+		n = 1
+	centre /= n
+	var cell := Node3D.new()
+	cell.name = cell_name
+	cell.position = _terrain.ground(centre.x, centre.y)
+	node.add_child(cell)
+	for family: String in ["cards", "small", "large"]:
+		var items: Array = data[family]
+		if items.is_empty():
 			continue
-		var body := StaticBody3D.new()
-		body.name = "Obstacles"
-		cell.add_child(body)
-		for s: Array in shapes:
-			var cs := CollisionShape3D.new()
-			cs.shape = s[1]
-			var xf: Transform3D = s[0]
-			cs.transform = Transform3D(xf.basis, xf.origin - cell.position)
-			body.add_child(cs)
+		var mmi := _multimesh(mesh("card" if family == "cards" else family), items, cell.position,
+			SMALL_RANGE if family == "small" else RANGE)
+		mmi.name = family.capitalize()
+		cell.add_child(mmi)
+	if shapes.is_empty():
+		return
+	var body := StaticBody3D.new()
+	body.name = "Obstacles"
+	cell.add_child(body)
+	for s: Array in shapes:
+		var cs := CollisionShape3D.new()
+		cs.shape = s[1]
+		var xf: Transform3D = s[0]
+		cs.transform = Transform3D(xf.basis, xf.origin - cell.position)
+		body.add_child(cs)
 
 
 static func _multimesh(m: Mesh, items: Array, origin: Vector3, reach: float) -> MultiMeshInstance3D:

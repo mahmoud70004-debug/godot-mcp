@@ -1,7 +1,8 @@
 // Kingdom forest (ForestTrees / ForestFloor): one look for trunks, leaves, impostors
 // and the forest floor, drawn as MultiMesh instances. Included by forest_solid.gdshader
 // (floor kits: opaque), forest_card.gdshader (trees: alpha-cut, back faces culled) and
-// forest_floor_card.gdshader (tiled floor cards and impostors: alpha-cut, both sides).
+// forest_floor_card.gdshader (tiled floor cards: alpha-cut, both sides) and
+// forest_far.gdshader (impostors: the same, unshaded).
 //
 // - Per-vertex lit (the cheap path on phones), no shadows.
 // - LOD per INSTANCE: an instance whose origin is nearer than lod_begin or as far as
@@ -43,6 +44,8 @@ uniform float glow_base = 0.0;
 // Meshes without vertex colours or UVs (the bark faces): bark grain in this colour.
 uniform vec3 tint : source_color = vec3(1.0);
 uniform bool force_bark = false;
+// Unshaded impostors: the moonlight they would get, as a colour.
+uniform vec3 far_light = vec3(0.42, 0.48, 0.72);
 
 varying vec3 v_world;
 varying vec3 v_wnormal;
@@ -96,7 +99,11 @@ void fragment() {
 		t = texture(atlas, v_uv);
 	}
 	vec3 albedo = t.rgb * COLOR.rgb * tint;
+#ifdef UNSHADED
+	ALBEDO = albedo * far_light;
+#else
 	ALBEDO = albedo;
+#endif
 #ifdef CUTOUT
 	ALPHA = t.a;
 	ALPHA_SCISSOR_THRESHOLD = 0.5;
@@ -105,10 +112,12 @@ void fragment() {
 	// Moonlight on the forms: a cold rim on silhouette edges (strongest on upward faces)
 	// and a soft light from above; both follow the surface colour a little, so pale
 	// bark catches more than black bark.
+#ifndef UNSHADED
 	float edge = 1.0 - clamp(abs(dot(NORMAL, VIEW)), 0.0, 1.0);
 	float up = clamp(v_wnormal.y, 0.0, 1.0);
 	vec3 moon = rim_color * rim_strength * edge * edge * (0.4 + 0.6 * up) * (0.25 + albedo * 1.5)
 		+ top_color * up * up * (0.15 + albedo);
 	float beat = 0.8 + 0.2 * sin(TIME * 1.3 + v_world.x * 0.7 + v_world.z * 0.9);
 	EMISSION = moon + albedo * (fill + vec3(v_glow * glow_strength * beat));
+#endif
 }
