@@ -6,7 +6,8 @@ extends RefCounted
 ## it is drawn, on the main thread; turning the camera towards something new
 ## then stalls a frame or more on phones. warm() draws one tiny copy of every
 ## unique (material, vertex format) in front of the camera for a few frames,
-## lit by a temporary omni light so the per-light pass variants compile too.
+## lit by a temporary omni light so the per-light pass variants compile too, then
+## a few more frames without it (the no-omni-light variants).
 
 const DISTANCE := 1.2
 const CELL := 0.03
@@ -50,6 +51,12 @@ static func warm(root: Node, camera: Camera3D) -> void:
 		# Merged meshes sit at world coordinates: centre each copy on its slot.
 		c.position = slot - (c.get_meta(&"centre") as Vector3) * c.scale.x
 		holder.add_child(c)
+	for _i in FRAMES:
+		await RenderingServer.frame_post_draw
+	# Most of the world is drawn with no omni light in reach, which is another shader
+	# variant in the Compatibility renderer: compile that one too (the forest far from
+	# any lantern compiled on first sight before, mid-walk).
+	light.visible = false
 	for _i in FRAMES:
 		await RenderingServer.frame_post_draw
 	holder.queue_free()
