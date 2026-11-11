@@ -35,7 +35,7 @@ uniform vec3 rim_color : source_color = vec3(0.42, 0.52, 0.8);
 uniform float rim_strength = 0.9;
 uniform vec3 top_color : source_color = vec3(0.12, 0.15, 0.24);
 // Night fill on the side the moon does not reach (x albedo), so shapes never go black.
-uniform vec3 fill = vec3(0.13, 0.15, 0.25);
+uniform vec3 fill = vec3(0.2, 0.24, 0.39);
 uniform float glow_strength = 1.6;
 // Rot swelling in metres (vertex shader only).
 uniform float pulse = 0.025;
@@ -45,7 +45,7 @@ uniform float glow_base = 0.0;
 uniform vec3 tint : source_color = vec3(1.0);
 uniform bool force_bark = false;
 // Unshaded impostors: the moonlight they would get, as a colour.
-uniform vec3 far_light = vec3(0.42, 0.48, 0.72);
+uniform vec3 far_light = vec3(0.5, 0.58, 0.86);
 
 varying vec3 v_world;
 varying vec3 v_wnormal;
