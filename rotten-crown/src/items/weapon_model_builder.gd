@@ -1,7 +1,7 @@
 @tool
 class_name WeaponModelBuilder
 extends RefCounted
-## Builds low-poly placeholder weapon models from primitive boxes.
+## Builds weapon models: a modelled sword (SwordMesh); axe and mace are still primitive boxes.
 ## Models point "up" along +Y with the grip at the origin.
 
 const WOOD := Color(0.24, 0.15, 0.09)
@@ -24,12 +24,12 @@ static func build(weapon: WeaponData) -> Node3D:
 
 
 static func _build_sword(root: Node3D, metal: Color) -> void:
-	_part(root, Vector3(0.035, 0.2, 0.035), Vector3(0, 0.0, 0), LEATHER)
-	_part(root, Vector3(0.06, 0.05, 0.05), Vector3(0, -0.12, 0), metal.darkened(0.3), 0.7)
-	_part(root, Vector3(0.24, 0.035, 0.05), Vector3(0, 0.115, 0), metal.darkened(0.2), 0.7)
-	_part(root, Vector3(0.055, 0.82, 0.014), Vector3(0, 0.54, 0), metal, 0.8)
-	# Rust bloom near the tip.
-	_part(root, Vector3(0.057, 0.12, 0.016), Vector3(0, 0.82, 0), metal.lerp(Color(0.35, 0.16, 0.06), 0.6), 0.3)
+	# A real blade (see SwordMesh); `metal` tints the hilt: gilt on the ceremonial sword.
+	var mi := MeshInstance3D.new()
+	mi.name = "Sword"
+	mi.mesh = SwordMesh.mesh(metal)
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	root.add_child(mi)
 
 
 static func _build_axe(root: Node3D, metal: Color) -> void:
