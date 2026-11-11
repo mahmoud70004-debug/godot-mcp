@@ -1,7 +1,10 @@
 // Browser smoke test for the Web export, emulating a landscape phone with touch.
 //   node tools/web_smoke_test.cjs http://localhost:8765/index.html out_dir
-// Taps "Wake Up", walks through the gate with the virtual joystick, looks
-// around with the right-half drag, opens the bag, and saves screenshots.
+// Taps "Wake Up", walks from the wake-up spot through the kingdom gate with the
+// virtual joystick (the knight wakes facing it), looks around with the right-half
+// drag, opens the bag, then reloads with ?tp= into the Outer Ward courtyard at the
+// citadel (it lies ~200 m up the King's Road) and checks the player stands there.
+// Saves screenshots.
 // Exits non-zero if the page throws or Godot prints an ERROR / SCRIPT ERROR.
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -33,7 +36,8 @@ const WAKE_UP = { x: 60, y: 230 };
   page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}`));
   const cdp = await ctx.newCDPSession(page);
 
-  await page.goto(url + (url.includes('?') ? '&' : '?') + 'debug=1');
+  const query = (extra) => url + (url.includes('?') ? '&' : '?') + 'debug=1' + extra;
+  await page.goto(query(''));
   await page.waitForTimeout(1500);
   await page.screenshot({ path: `${out}/00_launch.png` });
   await tapBegin(page);
@@ -44,24 +48,30 @@ const WAKE_UP = { x: 60, y: 230 };
   const P = (ux, uy) => ({ x: box.x + ux * scale, y: box.y + uy * scale });
   const touch = (type, points) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map((p, i) => ({ x: p.x, y: p.y, id: p.id ?? i })) });
   const shot = (name) => page.screenshot({ path: `${out}/${name}.png` });
+  // Title menu -> "Wake Up" -> skip the prologue -> wait for the overworld.
+  const enterOverworld = async (prefix) => {
+    await page.touchscreen.tap(P(WAKE_UP.x, WAKE_UP.y).x, P(WAKE_UP.x, WAKE_UP.y).y); // "Wake Up"
+    await page.waitForTimeout(9000);
+    if (prefix) await shot(prefix);
+    const skip = P(uiW - 39, 16);
+    await page.touchscreen.tap(skip.x, skip.y); // "SKIP >>"
+    let scene = '';
+    for (let i = 0; i < 240 && scene !== 'ValdronOverworld'; i++) { // up to 60 s
+      scene = await page.evaluate(() => (window.rcState && window.rcState.scene) || '').catch(() => '');
+      if (scene !== 'ValdronOverworld') await page.waitForTimeout(250);
+    }
+    if (scene !== 'ValdronOverworld') logs.push(`[pageerror] expected scene ValdronOverworld after SKIP, got "${scene}"`);
+    await page.waitForTimeout(4000);
+  };
 
   await shot('01_menu');
-  await page.touchscreen.tap(P(WAKE_UP.x, WAKE_UP.y).x, P(WAKE_UP.x, WAKE_UP.y).y); // "Wake Up"
-  await page.waitForTimeout(9000);
-  await shot('02a_prologue');
-  const skip = P(uiW - 39, 16);
-  await page.touchscreen.tap(skip.x, skip.y); // "SKIP >>"
-  let scene = '';
-  for (let i = 0; i < 240 && scene !== 'ValdronOverworld'; i++) { // up to 60 s
-    scene = await page.evaluate(() => (window.rcState && window.rcState.scene) || '').catch(() => '');
-    if (scene !== 'ValdronOverworld') await page.waitForTimeout(250);
-  }
-  if (scene !== 'ValdronOverworld') logs.push(`[pageerror] expected scene ValdronOverworld after SKIP, got "${scene}"`);
-  await page.waitForTimeout(4000);
-  await shot('02_wake');      // eyes opening in the meadow
+  await enterOverworld('02a_prologue');
+  await shot('02_wake');      // eyes opening on the plains, facing the kingdom gate
   await page.waitForTimeout(8000); // wake-up animation keeps input locked
   await shot('02b_awake');
 
+  const awake = await page.evaluate(() => window.rcState && window.rcState.player).catch(() => null);
+  if (!awake || Math.abs(Math.abs(awake.yaw) - 180) > 5) logs.push(`[pageerror] expected to wake facing the kingdom gate (yaw 180), got ${JSON.stringify(awake)}`);
   // Walk forward: hold the joystick (centre 80, 280) pushed up.
   const stick = P(80, 280);
   await touch('touchStart', [{ ...stick, id: 1 }]);
@@ -70,7 +80,13 @@ const WAKE_UP = { x: 60, y: 230 };
   await shot('03_gate');
   await page.waitForTimeout(3000);
   await touch('touchEnd', []);
-  await shot('04_courtyard');
+  await shot('04_inside_gate'); // the fork: King's Road (right) and the pumpkin road
+  // The scripted push is not perfectly straight (the touch lands off the stick centre), so
+  // only require a real walk away from the wake-up spot (1.2, 29) towards the wall side.
+  const walked = await page.evaluate(() => window.rcState && window.rcState.player).catch(() => null);
+  const moved = walked ? Math.hypot(walked.pos[0] - 1.2, walked.pos[2] - 29) : 0;
+  console.log(`walk: ${JSON.stringify(walked)} moved ${moved.toFixed(1)} m`);
+  if (!walked || moved < 6 || walked.pos[2] < 31) logs.push(`[pageerror] expected the joystick walk to move >= 6 m towards the gate side, got ${JSON.stringify(walked)}`);
 
   // Look around: drag on the right half while standing still.
   const look = P(uiW * 0.75, 180);
@@ -90,6 +106,17 @@ const WAKE_UP = { x: 60, y: 230 };
   await page.touchscreen.tap(bag.x, bag.y);
   await page.waitForTimeout(1200);
   await shot('07_bag');
+
+  // The Outer Ward at the citadel: reload straight into its courtyard (?tp=x,y,z,yaw).
+  await page.goto(query('&tp=125,1,214,180'));
+  await page.waitForTimeout(1500);
+  await tapBegin(page);
+  await page.waitForTimeout(4000);
+  await enterOverworld('');
+  await page.waitForTimeout(8000); // wake-up animation
+  await shot('08_ward_court');
+  const ward = await page.evaluate(() => window.rcState && window.rcState.player && window.rcState.player.pos).catch(() => null);
+  if (!ward || Math.hypot(ward[0] - 125, ward[2] - 214) > 3) logs.push(`[pageerror] expected the player in the ward courtyard (125, 214), got ${JSON.stringify(ward)}`);
 
   fs.writeFileSync(`${out}/console.txt`, logs.join('\n'));
   await browser.close();

@@ -3,6 +3,10 @@ extends Node
 
 const SAVE_PATH := "user://savegame.json"
 const SAVE_VERSION := 1
+## Bumped whenever the overworld layout moves (2: Phase 4a inc 4, walled kingdom, the Outer
+## Ward moved to the citadel). A save from another layout keeps everything but the player
+## position: the player starts at the scene's own spawn instead of inside a wall.
+const WORLD_VERSION := 2
 
 
 func has_save() -> bool:
@@ -14,6 +18,7 @@ func save_game(player_position: Vector3) -> bool:
 	state["player_position"] = [player_position.x, player_position.y, player_position.z]
 	var data := {
 		"version": SAVE_VERSION,
+		"world_version": WORLD_VERSION,
 		"scene": GameState.current_scene_path,
 		"saved_at": Time.get_datetime_string_from_system(),
 		"state": state,
@@ -40,6 +45,8 @@ func load_game() -> bool:
 	var state: Dictionary = data.get("state", {})
 	GameState.from_dict(state)
 	var pos: Array = state.get("player_position", [])
+	if int(data.get("world_version", 1)) != WORLD_VERSION:
+		pos = []
 	if pos.size() == 3:
 		GameState.pending_player_position = Vector3(float(pos[0]), float(pos[1]), float(pos[2]))
 	var scene_path := str(data.get("scene", ""))

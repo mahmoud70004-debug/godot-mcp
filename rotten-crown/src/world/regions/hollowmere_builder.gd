@@ -12,7 +12,7 @@ extends RefCounted
 ## Assumptions (contract C9, owned by the overworld assembler / OverworldSpec):
 ## - TerrainBuilder over OverworldSpec.make(); -Z is towards the castle.
 ## - Main road polyline OverworldSpec.MAIN_ROAD, road_width 3.2; it ends at (20, 322).
-## - Village plateau Vector4(22, 338, 44, 24) is flat; FOREST_PATH ends at (34, 322).
+## - Village plateau Vector4(22, 338, 44, 24) is flat; the old forest path (OLD_EAST_PATH) ended at (34, 322).
 ## - Region node sits at the origin, so child positions are world positions.
 ## - Markers: Spawn_Enemy_1..5, Lore_1..2, Pickup_1..2, Light_1..4 and Trigger
 ##   (meta "radius"). OmniLight3D nodes: LanternLight (chapel), CandleLight (window),
@@ -35,6 +35,9 @@ const TRACK := [Vector2(9.6, 262.0), Vector2(14.0, 266.5), Vector2(20.5, 272.5),
 const LANE := [Vector2(20.0, 322.0), Vector2(23.0, 333.0), Vector2(24.0, 343.0), Vector2(26.0, 352.0), Vector2(28.0, 359.0)]
 const LANE_WEST := [Vector2(24.0, 343.0), Vector2(14.0, 345.5), Vector2(3.0, 349.0)]
 const LANE_EAST := [Vector2(25.0, 341.0), Vector2(30.5, 332.0), Vector2(34.0, 322.0)]
+## The tail of the pre-Inc-4 forest path into the village (now the map's rear lane); kept
+## so the village layout stays exactly as baked before (OverworldSpec.FOREST_PATH moved).
+const OLD_EAST_PATH := [Vector2(140, 172), Vector2(130, 242), Vector2(82, 300), Vector2(34, 322)]
 ## [x, z, face_x, face_z, width, depth, storeys, ruin, opts]
 const HOUSES := [
 	[11.0, 339.0, 24.0, 343.0, 5.0, 6.0, 2, 0, {"lit": 2, "sigil": true, "door": "closed"}],
@@ -143,7 +146,7 @@ static func _poly_dist(p: Vector2, pts: Array) -> float:
 static func _path_dist(p: Vector2) -> float:
 	var d := minf(_poly_dist(p, OverworldSpec.MAIN_ROAD), _poly_dist(p, TRACK))
 	d = minf(d, minf(_poly_dist(p, LANE), _poly_dist(p, LANE_WEST)))
-	d = minf(d, minf(_poly_dist(p, LANE_EAST), _poly_dist(p, OverworldSpec.FOREST_PATH)))
+	d = minf(d, minf(_poly_dist(p, LANE_EAST), _poly_dist(p, OLD_EAST_PATH)))
 	return d
 
 
