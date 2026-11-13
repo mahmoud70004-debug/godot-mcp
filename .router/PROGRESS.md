@@ -106,3 +106,8 @@
 | task | tier | status | note |
 |---|---|---|---|
 | V5 | H | done (branch v5-work, not published) | root cause floating "grass": fog-free HorizonBackdrop seen between fogged trees (+289 unattached overhang clumps); depth fog ViewDistance (Kingswood 45 m, deep 34-36, villages 55, plains 70) drives all ranges; palette blue-grey; Low draws forest -55..-60%, Thornfield field 122 -> 91; tests 0 failures, smoke OK, touch PASS |
+
+## V6 (phone report: floating moss, grain, path readability, too dark)
+| task | tier | status | note |
+|---|---|---|---|
+| V6 | H | done (branch v6-work, not published) | root cause: 4,644 floor "hang" cards drawn to 13/17/21 m from the card while the host tree became a 32x64 impostor at 16/20/24 m from its foot (503 cards > 3 m from the nearest trunk); moss now baked into tree meshes (per-instance amount), free overhang clumps removed; corridors 1.0 -> 4.2 trunks/10 m of path edge; no grain, light dither, fog-fade far cards, 64x128 impostors; exposure/ambient/contrast lifted; Low probe all <= 99 draws / 153k prims; tests 0 failures, smoke OK, touch PASS, swap PASS |
