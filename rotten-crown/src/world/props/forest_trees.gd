@@ -5,8 +5,9 @@ extends RefCounted
 ## each grown once as a low-poly NEAR mesh (bark and both-sided leaf cards in one
 ## alpha-cut surface: one draw per style) and an impostor painted into the shared
 ## ForestAtlas (two crossed cards, drawn by ForestBuilder for every style at once).
-## All of it uses the forest shaders (assets/shaders/forest*.gdshader*): per-vertex lit,
-## moonlit rim, vertex-colour bark / moss / rot (rot glows per instance), no shadows.
+## All of it uses the forest shaders (assets/shaders/forest*.gdshader*): unshaded, lit by
+## the one moonlight model (per vertex on the mesh, per pixel on the impostor from its baked
+## normals), vertex-colour bark / moss / rot (rot glows per instance), wind sway, no shadows.
 ##
 ## Tree frame: origin on the ground at the trunk centre, +X the side it leans to; the
 ## trunk is buried to y = -0.9 so it sits on slopes. Physics is ForestBuilder's job.
@@ -123,18 +124,19 @@ static func material(id: String) -> ShaderMaterial:
 	match id:
 		"tree":
 			mat.set_shader_parameter("lod_end", NEAR_END)
+			var hang := ForestAtlas.hang_uv_rect()
+			mat.set_shader_parameter("hang_uv_y", Vector2(hang.position.y, hang.size.y))
 		"far":
 			mat.set_shader_parameter("lod_begin", NEAR_END)
 			mat.set_shader_parameter("lod_end", FAR_END)
-			mat.set_shader_parameter("rim_strength", 0.0)
 			mat.set_shader_parameter("tile_size", Vector2(ForestAtlas.IMPOSTOR) / ForestAtlas.SIZE)
+			mat.set_shader_parameter("normal_atlas", ForestAtlas.normal_texture())
+			mat.set_shader_parameter("impostor_band", ForestAtlas.impostor_band())
+			mat.set_shader_parameter("impostor_view_offset", ForestAtlas.impostor_view_offset())
 		"floor", "floor_solid":
 			mat.set_shader_parameter("lod_end", ForestFloor.RANGE)
 			if id == "floor":
 				mat.set_shader_parameter("tile_size", Vector2(ForestAtlas.TILE, ForestAtlas.TILE) / ForestAtlas.SIZE)
-				# Ground cards lie flat or stand low: no top light (they would glare).
-				mat.set_shader_parameter("top_color", Color(0.04, 0.05, 0.08))
-				mat.set_shader_parameter("rim_strength", 0.3)
 		"floor_small":
 			mat.set_shader_parameter("lod_end", ForestFloor.SMALL_RANGE)
 	_mats[id] = mat
@@ -593,38 +595,89 @@ static func _extent(mesh: ArrayMesh) -> Vector2:
 	return Vector2(reach * 2.0, top)
 
 
-## Paints every style's impostor into its 64 x 128 cell of `img`: the near mesh seen from
-## the side (orthographic, depth-tested), bark shaded by a soft moon from the upper left,
-## leaves sampled from their atlas tile.
-static func paint_impostors(img: Image) -> void:
+## The impostors are baked looking up at the tree the way the player sees it at the swap:
+## from IMPOSTOR_EYE m above its foot, IMPOSTOR_DISTANCE m away (ViewDistance.NEAR_TREES
+## Medium), towards its mid-height (5-12 degrees by style). That shows the flat leaf cards a
+## pure side view misses (V7: measured with tools/test_impostor_match.gd).
+const IMPOSTOR_EYE := 1.6
+const IMPOSTOR_DISTANCE := 20.0
+
+
+## Paints every style's impostor into `img`: four views per style (ForestAtlas.impostor_rect:
+## views 0 / 2 from the tree's +Z / -Z side, drawn on the two faces of the card quad facing
+## Z; views 1 / 3 from +X / -X, on the quad facing X), each orthographic, seen from below
+## (IMPOSTOR_EYE, IMPOSTOR_DISTANCE), depth-tested,
+## with the UNLIT albedo exactly as the tree shader builds it (leaf tile x vertex colour;
+## bark: vertex colour x the mean bark grain), and its light response into `nimg` (half
+## resolution, ForestAtlas.normal_texture): the interpolated vertex normal in the view's
+## axes (x along the quad's u axis, y up, z towards the viewer) and 1 for leaves / 0 for
+## bark. The far shader lights both with the same moonlight model as the mesh.
+static func paint_impostors(img: Image, nimg: Image) -> void:
 	var src := img.duplicate() as Image
-	var light := Vector3(-0.4, 0.8, 0.45).normalized()
-	for style in NAMES.size():
-		var cell := ForestAtlas.impostor_rect(style)
-		var mesh := tree(style, 0)["mesh"] as ArrayMesh
-		var ext := impostor_size(style)
-		var zbuf := PackedFloat32Array()
-		zbuf.resize(cell.size.x * cell.size.y)
-		zbuf.fill(-INF)
-		for s in mesh.get_surface_count():
-			var arr := mesh.surface_get_arrays(s)
-			var v: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
-			var nr: PackedVector3Array = arr[Mesh.ARRAY_NORMAL]
-			var col: PackedColorArray = arr[Mesh.ARRAY_COLOR]
-			var uv: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
-			var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
-			var uv2: Variant = arr[Mesh.ARRAY_TEX_UV2]
-			var scr := PackedVector2Array()
-			for p in v:
-				scr.append(Vector2((p.x / ext.x + 0.5) * cell.size.x, (1.0 - p.y / ext.y) * cell.size.y))
-			for f in range(0, idx.size(), 3):
-				if uv2 is PackedVector2Array and (uv2 as PackedVector2Array)[idx[f]].y > 0.0:
-					continue  # moss strands stay off the impostor
-				_raster(img, src, cell, zbuf, [idx[f], idx[f + 1], idx[f + 2]], scr, v, nr, col, uv, light)
+	var bark := _bark_grain_mean()
+	var div := ForestAtlas.NORMAL_DIV
+	for view in 4:
+		# The quad's u axis and the direction towards its viewer (tree frame).
+		var axis := Vector3.RIGHT if view % 2 == 0 else Vector3.BACK
+		var t0: Vector3 = [Vector3.BACK, Vector3.RIGHT, Vector3.FORWARD, Vector3.LEFT][view]
+		for style in NAMES.size():
+			var cell := ForestAtlas.impostor_rect(style, view)
+			var mesh := tree(style, 0)["mesh"] as ArrayMesh
+			var ext := impostor_size(style)
+			var tilt := atan2(ext.y * 0.5 - IMPOSTOR_EYE, IMPOSTOR_DISTANCE)
+			var up := Vector3.UP * cos(tilt) + t0 * sin(tilt)
+			var toward := t0 * cos(tilt) - Vector3.UP * sin(tilt)
+			var zbuf := PackedFloat32Array()
+			zbuf.resize(cell.size.x * cell.size.y)
+			zbuf.fill(-INF)
+			# Full-resolution normal + leaf flag per texel, reduced to nimg afterwards.
+			var nbuf := PackedVector4Array()
+			nbuf.resize(cell.size.x * cell.size.y)
+			for s in mesh.get_surface_count():
+				var arr := mesh.surface_get_arrays(s)
+				var v: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+				var col: PackedColorArray = arr[Mesh.ARRAY_COLOR]
+				var uv: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
+				var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
+				var uv2: Variant = arr[Mesh.ARRAY_TEX_UV2]
+				var nr := PackedVector3Array()
+				for n: Vector3 in (arr[Mesh.ARRAY_NORMAL] as PackedVector3Array):
+					nr.append(Vector3(n.dot(axis), n.y, n.dot(t0)))
+				var scr := PackedVector2Array()
+				var depth := PackedFloat32Array()
+				for p in v:
+					scr.append(Vector2((p.dot(axis) / ext.x + 0.5) * cell.size.x, (1.0 - p.dot(up) / ext.y) * cell.size.y))
+					depth.append(p.dot(toward))
+				for f in range(0, idx.size(), 3):
+					if uv2 is PackedVector2Array and (uv2 as PackedVector2Array)[idx[f]].y > 0.0:
+						continue  # moss strands stay off the impostor
+					_raster(img, src, cell, zbuf, nbuf, [idx[f], idx[f + 1], idx[f + 2]], scr, depth, nr, col, uv, bark)
+			_reduce_normals(nimg, cell, zbuf, nbuf, div)
 
 
-static func _raster(img: Image, src: Image, cell: Rect2i, zbuf: PackedFloat32Array, tri: Array, scr: PackedVector2Array,
-		v: PackedVector3Array, nr: PackedVector3Array, col: PackedColorArray, uv: PackedVector2Array, light: Vector3) -> void:
+## Mean albedo factor of the bark scan as the tree shader uses it (forest.gdshaderinc
+## defaults: mix(0.7, luma x bark_gain, bark_detail)).
+static func _bark_grain_mean() -> float:
+	var tex := load(BARK_TEX) as Texture2D
+	var im := tex.get_image() if tex else null
+	if im == null:
+		return 0.75
+	if im.is_compressed():
+		im = im.duplicate() as Image
+		im.decompress()
+	var sum := 0.0
+	var n := 0
+	for y in range(0, im.get_height(), 2):
+		for x in range(0, im.get_width(), 2):
+			var c := im.get_pixel(x, y)
+			sum += (c.r * 0.3 + c.g * 0.59 + c.b * 0.11) * 2.0
+			n += 1
+	return lerpf(0.7, sum / maxf(n, 1.0), 0.35)
+
+
+static func _raster(img: Image, src: Image, cell: Rect2i, zbuf: PackedFloat32Array, nbuf: PackedVector4Array, tri: Array,
+		scr: PackedVector2Array, depth: PackedFloat32Array, nr: PackedVector3Array, col: PackedColorArray, uv: PackedVector2Array,
+		bark: float) -> void:
 	var a := scr[tri[0]]
 	var b := scr[tri[1]]
 	var c := scr[tri[2]]
@@ -636,7 +689,6 @@ static func _raster(img: Image, src: Image, cell: Rect2i, zbuf: PackedFloat32Arr
 	var y0 := maxi(int(floor(minf(a.y, minf(b.y, c.y)))), 0)
 	var y1 := mini(int(ceil(maxf(a.y, maxf(b.y, c.y)))), cell.size.y - 1)
 	var solid := uv[tri[0]].x < -0.5
-	var shade := 0.45 + 0.55 * maxf((nr[tri[0]] + nr[tri[1]] + nr[tri[2]]).normalized().dot(light), 0.0)
 	for py in range(y0, y1 + 1):
 		for px in range(x0, x1 + 1):
 			var q := Vector2(px + 0.5, py + 0.5)
@@ -645,20 +697,67 @@ static func _raster(img: Image, src: Image, cell: Rect2i, zbuf: PackedFloat32Arr
 			var w2 := 1.0 - w0 - w1
 			if w0 < 0.0 or w1 < 0.0 or w2 < 0.0:
 				continue
-			var z := v[tri[0]].z * w0 + v[tri[1]].z * w1 + v[tri[2]].z * w2
+			var z := depth[tri[0]] * w0 + depth[tri[1]] * w1 + depth[tri[2]] * w2
 			var zi := py * cell.size.x + px
 			if z <= zbuf[zi]:
 				continue
 			var c3 := col[tri[0]] * w0 + col[tri[1]] * w1 + col[tri[2]] * w2
 			var out: Color
 			if solid:
-				out = Color(c3.r * 0.75 * shade, c3.g * 0.75 * shade, c3.b * 0.75 * shade)
+				out = Color(c3.r * bark, c3.g * bark, c3.b * bark)
 			else:
 				var t := uv[tri[0]] * w0 + uv[tri[1]] * w1 + uv[tri[2]] * w2
 				var tx := src.get_pixel(clampi(int(t.x * ForestAtlas.WIDTH), 0, ForestAtlas.WIDTH - 1),
 					clampi(int(t.y * ForestAtlas.HEIGHT), 0, ForestAtlas.HEIGHT - 1))
 				if tx.a < 0.5:
 					continue
-				out = Color(tx.r * c3.r * shade, tx.g * c3.g * shade, tx.b * c3.b * shade)
+				out = Color(tx.r * c3.r, tx.g * c3.g, tx.b * c3.b)
 			zbuf[zi] = z
+			var n := (nr[tri[0]] * w0 + nr[tri[1]] * w1 + nr[tri[2]] * w2).normalized()
+			nbuf[zi] = Vector4(n.x, n.y, n.z, 0.0 if solid else 1.0)
 			img.set_pixel(cell.position.x + px, cell.position.y + py, Color(out.r, out.g, out.b, 1.0))
+
+
+## Averages the painted normals of `cell` into `nimg` (div x div texels per pixel), then
+## grows them two pixels into the empty background so linear filtering at the cut-out edge
+## never pulls in a meaningless normal; what stays empty faces the viewer.
+static func _reduce_normals(nimg: Image, cell: Rect2i, zbuf: PackedFloat32Array, nbuf: PackedVector4Array, div: int) -> void:
+	var w := cell.size.x / div
+	var h := cell.size.y / div
+	var cells := []
+	cells.resize(w * h)
+	for y in h:
+		for x in w:
+			var sum := Vector4.ZERO
+			var n := 0
+			for k in div * div:
+				var zi := (y * div + k / div) * cell.size.x + x * div + k % div
+				if zbuf[zi] > -INF:
+					sum += nbuf[zi]
+					n += 1
+			cells[y * w + x] = sum / float(n) if n > 0 else null
+	for _pass in 2:
+		var grown := cells.duplicate()
+		for y in h:
+			for x in w:
+				if cells[y * w + x] != null:
+					continue
+				var sum := Vector4.ZERO
+				var n := 0
+				for o: Vector2i in [Vector2i(-1, 0), Vector2i(1, 0), Vector2i(0, -1), Vector2i(0, 1)]:
+					var nx := x + o.x
+					var ny := y + o.y
+					if nx >= 0 and ny >= 0 and nx < w and ny < h and cells[ny * w + nx] != null:
+						sum += cells[ny * w + nx] as Vector4
+						n += 1
+				if n > 0:
+					grown[y * w + x] = sum / float(n)
+		cells = grown
+	var origin := cell.position / div
+	for y in h:
+		for x in w:
+			var c: Variant = cells[y * w + x]
+			var nv: Vector4 = Vector4(0.0, 0.0, 1.0, 1.0) if c == null else c
+			var n3 := Vector3(nv.x, nv.y, nv.z)
+			n3 = n3.normalized() if n3.length() > 0.001 else Vector3.BACK
+			nimg.set_pixel(origin.x + x, origin.y + y, Color(n3.x * 0.5 + 0.5, n3.y * 0.5 + 0.5, n3.z * 0.5 + 0.5, nv.w))

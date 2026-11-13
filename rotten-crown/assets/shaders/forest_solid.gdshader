@@ -1,8 +1,6 @@
 // Opaque kingdom-forest geometry: logs, stumps, stones, mounds, rot growths (ForestFloor).
-// See forest.gdshaderinc.
+// Unshaded: the moonlight model is evaluated per vertex. See forest.gdshaderinc.
 shader_type spatial;
-render_mode cull_back, vertex_lighting, diffuse_lambert, specular_disabled;
-
-#define SHRINK_FADE
+render_mode unshaded, cull_back;
 
 #include "res://assets/shaders/forest.gdshaderinc"

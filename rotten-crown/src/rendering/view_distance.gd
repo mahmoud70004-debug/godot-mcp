@@ -8,8 +8,10 @@ extends Node
 ## the fog, nothing past it is drawn: every mesh under `world` gets a visibility range of
 ## (fog distance + its own half-size), and the forest / grass shaders get their per-instance
 ## cut-offs from the same number. The far tree cards fade into the fog colour before their
-## cut-off (V6: no dither, it read as grain) and the near trees cross-dissolve into their
-## cards, so nothing pops; the floor cards and kits sink into the ground at their range.
+## cut-off (V6: no dither, it read as grain) and the near trees swap to their cards at one
+## distance (V7: the cards are lit like their trees, so the swap does not show). The floor
+## cards and kits never grow or shrink (V7): they end where the depth fog is already thick
+## (FLOOR_FOG) and fade into the fog colour over FLOOR_FADE before that.
 ## The sky's horizon band and the painted far horizon take the fog colour, so whatever is
 ## culled at the fog line disappears into the same colour.
 ## Graphics quality changes ranges and density (grass, forest floor, detailed trees), not the
@@ -28,10 +30,15 @@ const FAR_FADE := 7.0
 ## dither cross-dissolve read as a grainy ghost tree on phones; the card is painted from
 ## the same mesh, so the swap barely shows in the fog).
 const SWAP_FADE := 0.0
-## Detailed tree meshes / forest floor / large floor kits up to (Low, Medium, High) metres.
+## Detailed tree meshes up to (Low, Medium, High) metres.
 const NEAR_TREES := [16.0, 20.0, 24.0]
-const FLOOR := [13.0, 17.0, 21.0]
-const FLOOR_LARGE := [18.0, 22.0, 26.0]
+## Forest floor (cards, small kits) / large floor kits end where the depth fog has reached
+## this amount (0..1, Low, Medium, High), never past what the bake drew them for
+## (ForestFloor.SMALL_RANGE / RANGE: a chunk node is cut at that range plus its spread).
+const FLOOR_FOG := [0.3, 0.35, 0.4]
+const FLOOR_LARGE_FOG := [0.4, 0.45, 0.5]
+## Fade band (m) of the floor into the fog colour before its end.
+const FLOOR_FADE := 6.0
 ## Grass and wheat up to this fraction of the fog distance (Low, Medium, High).
 const GRASS := [0.55, 0.68, 0.8]
 ## Half the diagonal of a grass chunk (GrassScatter.CHUNK / MeadowProps.GRASS_CHUNK, 12 m).
@@ -156,14 +163,22 @@ func reach(kind: int) -> float:
 		Kind.NEAR_TREES:
 			return minf(NEAR_TREES[q], d - 4.0)
 		Kind.FLOOR:
-			return minf(FLOOR[q], d - 4.0)
+			return minf(fog_distance(FLOOR_FOG[q], d), ForestFloor.SMALL_RANGE)
 		Kind.FLOOR_LARGE:
-			return minf(FLOOR_LARGE[q], d - 3.0)
+			return minf(fog_distance(FLOOR_LARGE_FOG[q], d), ForestFloor.RANGE)
 		Kind.GRASS:
 			return d * float(GRASS[q])
 		Kind.TERRAIN:
 			return d + 2.0
 	return d + 1.0
+
+
+## Distance (m) at which the depth fog ending at `end` reaches `amount` (0..1): the inverse
+## of the renderer's pow(smoothstep(FOG_BEGIN, end, depth), FOG_CURVE).
+static func fog_distance(amount: float, end: float) -> float:
+	var s := pow(clampf(amount, 0.0, 1.0), 1.0 / FOG_CURVE)
+	var t := 0.5 - sin(asin(1.0 - 2.0 * s) / 3.0)
+	return FOG_BEGIN + t * maxf(end - FOG_BEGIN, 0.0)
 
 
 func _collect() -> void:

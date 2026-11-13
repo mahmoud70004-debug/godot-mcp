@@ -1,46 +1,74 @@
 @tool
 class_name ForestAtlas
 extends RefCounted
-## The one 512 x 256 px texture of the kingdom forest (ForestTrees, ForestFloor): leaf clumps,
+## The one 2048 x 640 px texture of the kingdom forest (ForestTrees, ForestFloor): leaf clumps,
 ## understory cards, ground patches, the green rot and the far tree impostors, painted
-## in code (pixel art, cut-out alpha, no mipmaps) so the bake stores one small image.
+## in code (pixel art, cut-out alpha) so the bake stores one small image.
 ## Drawn with the forest shaders (assets/shaders/forest*.gdshader*).
 ##
-## Layout (pixels): the top band (y 0-127) holds the seven impostors (64 x 128, ForestTrees
-## style order; V6: twice the old 32 x 64, so a far tree is no longer a few huge blocks that
-## read as a floating blob) and the hanging moss strip at x 448; rows 2-3 hold 64 px tiles.
+## Layout (pixels): the top band (y 0-511) holds the impostors (128 x 256, ForestTrees style
+## order; V7: twice the V6 64 x 128), four views per style, one per side of each crossed
+## card quad: row y 0-255 seen from the tree's +Z (x 0-895) and +X (x 896-1791) sides, row
+## y 256-511 from -Z and -X; the hanging moss strip at x 1792; rows 8-9 hold 64 px tiles. Mipmapped (V7, the shaders sample nearest within a level) with the cut-out
+## coverage of every tile kept at each level, so far cards neither show giant pixels nor
+## thin out. The impostors' light response (normal + leaf/bark) is a second, half-resolution
+## texture over the impostor band (normal_texture()), so the far shader lights an impostor
+## with the same moonlight model as its tree.
 
-const WIDTH := 512
-const HEIGHT := 256
+const WIDTH := 2048
+const HEIGHT := 640
 ## Atlas size as a vector: UV = pixel / SIZE (component-wise).
 const SIZE := Vector2(WIDTH, HEIGHT)
 const TILE := 64
 ## Tile name -> top-left corner in tiles (64 px units).
 const TILES := {
-	"leaf_dark": Vector2i(0, 2), "leaf_birch": Vector2i(1, 2), "leaf_dying": Vector2i(2, 2), "fern": Vector2i(3, 2),
-	"bush": Vector2i(4, 2), "bramble": Vector2i(5, 2), "weeds": Vector2i(6, 2), "moss": Vector2i(7, 2),
-	"litter": Vector2i(0, 3), "litter_amber": Vector2i(1, 3), "rot": Vector2i(2, 3), "tuft": Vector2i(3, 3),
+	"leaf_dark": Vector2i(0, 8), "leaf_birch": Vector2i(1, 8), "leaf_dying": Vector2i(2, 8), "fern": Vector2i(3, 8),
+	"bush": Vector2i(4, 8), "bramble": Vector2i(5, 8), "weeds": Vector2i(6, 8), "moss": Vector2i(7, 8),
+	"litter": Vector2i(0, 9), "litter_amber": Vector2i(1, 9), "rot": Vector2i(2, 9), "tuft": Vector2i(3, 9),
 }
 ## The hanging moss strip (32 x 64) and the impostor column width.
-const HANG := Rect2i(448, 0, 32, 64)
-const IMPOSTOR := Vector2i(64, 128)
+const HANG := Rect2i(1792, 0, 32, 64)
+const IMPOSTOR := Vector2i(128, 256)
+## ForestTrees styles (impostor cells per view).
+const STYLE_COUNT := 7
+## The normal texture is this many times smaller than the impostor band.
+const NORMAL_DIV := 2
 const ROT_GREEN := Color(0.36, 0.6, 0.1)
 
 static var _image: Image
-static var _texture: Texture2D
+static var _texture: ImageTexture
+static var _normal_texture: ImageTexture
 
 
-## The finished atlas (impostors included), built once.
+## The finished atlas (impostors included, mipmapped), built once.
 static func texture() -> Texture2D:
 	if _texture == null:
-		# The texture exists before the impostors are painted: the trees they are painted
-		# from already need their materials (which hold this texture).
+		# The textures exist before the impostors are painted: the trees they are painted
+		# from already need their materials (which hold them).
 		var img := image().duplicate() as Image
-		var tex := ImageTexture.create_from_image(img)
-		_texture = tex
-		ForestTrees.paint_impostors(img)
-		tex.update(img)
+		var nimg := Image.create(WIDTH / NORMAL_DIV, IMPOSTOR.y * 2 / NORMAL_DIV, false, Image.FORMAT_RGBA8)
+		_texture = ImageTexture.create_from_image(with_mipmaps(img))
+		var nmip := nimg.duplicate() as Image
+		nmip.generate_mipmaps()
+		_normal_texture = ImageTexture.create_from_image(nmip)
+		ForestTrees.paint_impostors(img, nimg)
+		_texture.update(with_mipmaps(img))
+		nimg.generate_mipmaps()
+		_normal_texture.update(nimg)
 	return _texture
+
+
+## The impostors' light response over the impostor band (see the class comment): rgb =
+## normal in the bake view (x right, y up, z towards the viewer) * 0.5 + 0.5, a = 1 leaf,
+## 0 bark. Linear filtered, mipmapped.
+static func normal_texture() -> Texture2D:
+	texture()
+	return _normal_texture
+
+
+## The share of the atlas (UV) the impostor band and so the normal texture covers.
+static func impostor_band() -> Vector2:
+	return Vector2(1.0, float(IMPOSTOR.y * 2) / HEIGHT)
 
 
 ## The painted tiles without impostors (ForestTrees samples the leaf tiles from it).
@@ -77,14 +105,111 @@ static func hang_uv_rect() -> Rect2:
 	return Rect2(Vector2(HANG.position) / SIZE, Vector2(HANG.size) / SIZE)
 
 
-## Atlas UV rect of a style's impostor (style index 0..6).
-static func impostor_rect(style: int) -> Rect2i:
-	return Rect2i(style * IMPOSTOR.x, 0, IMPOSTOR.x, IMPOSTOR.y)
+## Pixel rect of a style's impostor (style index 0..6) in one of its two views.
+## Views: 0 from +Z, 1 from +X, 2 from -Z, 3 from -X (tree frame).
+static func impostor_rect(style: int, view := 0) -> Rect2i:
+	return Rect2i(((view % 2) * STYLE_COUNT + style) * IMPOSTOR.x, (view / 2) * IMPOSTOR.y, IMPOSTOR.x, IMPOSTOR.y)
+
+
+## UV offsets from a style's +Z view to its +X view (u) and to the views of the far sides (v).
+static func impostor_view_offset() -> Vector2:
+	return Vector2(float(STYLE_COUNT * IMPOSTOR.x) / WIDTH, float(IMPOSTOR.y) / HEIGHT)
 
 
 static func _rect(tile: String) -> Rect2i:
 	var t: Vector2i = TILES[tile]
 	return Rect2i(t * TILE, Vector2i(TILE, TILE))
+
+
+# --- Mipmaps ----------------------------------------------------------------------
+
+## A copy of `img` (RGBA8, no mipmaps) with its mipmap chain: colour averaged over the
+## opaque texels only (no dark fringes from the empty background), alpha cut again at
+## every level so each impostor cell, tile and the moss strip keeps the share of opaque
+## texels it has at full size (a plain average would thin far cards out under the alpha
+## scissor). Cells never mix: every region edge is a multiple of 32 px.
+static func with_mipmaps(img: Image) -> Image:
+	var chain := img.duplicate() as Image
+	chain.generate_mipmaps()
+	var data := chain.get_data()
+	var regions: Array[Rect2i] = []
+	for view in 4:
+		for style in STYLE_COUNT:
+			regions.append(impostor_rect(style, view))
+	regions.append(HANG)
+	for tile: String in TILES:
+		regions.append(_rect(tile))
+	var cover := PackedFloat32Array()
+	for r in regions:
+		cover.append(_coverage(data, WIDTH, r))
+	var w := WIDTH
+	var h := HEIGHT
+	var prev := data.slice(0, w * h * 4)
+	var result := prev.duplicate()
+	for level in range(1, chain.get_mipmap_count() + 1):
+		var nw := maxi(w >> 1, 1)
+		var nh := maxi(h >> 1, 1)
+		var avg := PackedFloat32Array()
+		avg.resize(nw * nh)
+		var out := PackedByteArray()
+		out.resize(nw * nh * 4)
+		for y in nh:
+			for x in nw:
+				var sum := Vector4.ZERO
+				var a_sum := 0.0
+				for k in 4:
+					var sx := mini(x * 2 + (k & 1), w - 1)
+					var sy := mini(y * 2 + (k >> 1), h - 1)
+					var o := (sy * w + sx) * 4
+					var a := prev[o + 3] / 255.0
+					sum += Vector4(prev[o] * a, prev[o + 1] * a, prev[o + 2] * a, 0.0)
+					a_sum += a
+				var i := y * nw + x
+				avg[i] = a_sum * 0.25
+				if a_sum > 0.0:
+					out[i * 4] = clampi(roundi(sum.x / a_sum), 0, 255)
+					out[i * 4 + 1] = clampi(roundi(sum.y / a_sum), 0, 255)
+					out[i * 4 + 2] = clampi(roundi(sum.z / a_sum), 0, 255)
+		# Alpha: everything at >= 0.5 coverage, then per region the threshold that keeps its share.
+		for i in nw * nh:
+			out[i * 4 + 3] = 255 if avg[i] >= 0.5 else 0
+		var scale := 1 << level
+		for ri in regions.size():
+			var r := regions[ri]
+			var rr := Rect2i(r.position / scale, Vector2i(maxi(r.size.x / scale, 1), maxi(r.size.y / scale, 1)))
+			if r.position.x % scale != 0 or r.position.y % scale != 0:
+				continue
+			var vals := PackedFloat32Array()
+			for y in range(rr.position.y, mini(rr.end.y, nh)):
+				for x in range(rr.position.x, mini(rr.end.x, nw)):
+					vals.append(avg[y * nw + x])
+			if vals.is_empty():
+				continue
+			var sorted := vals.duplicate()
+			sorted.sort()
+			var keep := roundi(cover[ri] * sorted.size())
+			var cut := 2.0 if keep <= 0 else maxf(sorted[sorted.size() - keep], 0.001)
+			for y in range(rr.position.y, mini(rr.end.y, nh)):
+				for x in range(rr.position.x, mini(rr.end.x, nw)):
+					var i := y * nw + x
+					out[i * 4 + 3] = 255 if avg[i] >= cut else 0
+		# Levels are stored one after the other.
+		assert(chain.get_mipmap_offset(level) == result.size())
+		result.append_array(out)
+		prev = out
+		w = nw
+		h = nh
+	return Image.create_from_data(WIDTH, HEIGHT, true, Image.FORMAT_RGBA8, result)
+
+
+## Share of opaque (alpha >= 0.5) texels of a rect of an RGBA8 buffer `w` px wide.
+static func _coverage(data: PackedByteArray, w: int, r: Rect2i) -> float:
+	var n := 0
+	for y in range(r.position.y, r.end.y):
+		for x in range(r.position.x, r.end.x):
+			if data[(y * w + x) * 4 + 3] >= 128:
+				n += 1
+	return float(n) / maxf(r.size.x * r.size.y, 1.0)
 
 
 # --- Painting helpers -------------------------------------------------------------
