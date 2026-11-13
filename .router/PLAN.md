@@ -406,7 +406,7 @@ Two parallel tasks (disjoint files), then I merge, re-bake once, verify, publish
 Budgets (Low, probe): <= 200 draws and <= 300k primitives at every pose; pck growth <= +4 MB.
 
 ## V7 (user, 2026-11-13, phone video): "the last update looks the same; tree pop-in is cheap; lighting is immature;
-## ground too dark, no detail; no moonlight that reads as dynamic". Status: PLANNED, awaiting user approval.
+## ground too dark, no detail; no moonlight that reads as dynamic". Status: APPROVED 2026-11-13 (user: go, send link when done).
 
 ### Diagnosis (measured, not guessed)
 1. Black ground: terrain albedo = scan (~0.3) x tint (0.27-0.5) ~= 0.1; moon at 30 deg elevation gives N.L 0.5 -> lit ground ~0.06,

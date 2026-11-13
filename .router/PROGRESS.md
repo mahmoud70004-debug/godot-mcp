@@ -111,3 +111,8 @@
 | task | tier | status | note |
 |---|---|---|---|
 | V6 | H | done (branch v6-work, not published) | root cause: 4,644 floor "hang" cards drawn to 13/17/21 m from the card while the host tree became a 32x64 impostor at 16/20/24 m from its foot (503 cards > 3 m from the nearest trunk); moss now baked into tree meshes (per-instance amount), free overhang clumps removed; corridors 1.0 -> 4.2 trunks/10 m of path edge; no grain, light dither, fog-fade far cards, 64x128 impostors; exposure/ambient/contrast lifted; Low probe all <= 99 draws / 153k prims; tests 0 failures, smoke OK, touch PASS, swap PASS |
+
+## V7 (phone video: black ground, cheap tree pop, flat/random lighting) - plan approved 2026-11-13
+| task | tier | status | note |
+|---|---|---|---|
+| baseline | H (me) | done | V6 shots at 8 poses (scratch v6shots); bottom-third luminance: road 16.3, cross 8.3, wood 8.2, spawn 16.7, thornfield 29.7, hollowmere 19.5, kingswood 9.0, plains 11.6. web_perf V6 (software GL): Low spawn 2.5 / hollowmere 1.75 fps, Medium 2.0 / 1.75 |
