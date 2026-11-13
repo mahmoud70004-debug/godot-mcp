@@ -404,3 +404,66 @@ Two parallel tasks (disjoint files), then I merge, re-bake once, verify, publish
   Files: forest_builder.gd, forest_trees.gd, new src/world/props/forest_floor.gd (+shaders), wood_props.gd (additive), overworld_populator.gd, data/regions/*,
   tools/test_forest_walkable.gd.
 Budgets (Low, probe): <= 200 draws and <= 300k primitives at every pose; pck growth <= +4 MB.
+
+## V7 (user, 2026-11-13, phone video): "the last update looks the same; tree pop-in is cheap; lighting is immature;
+## ground too dark, no detail; no moonlight that reads as dynamic". Status: PLANNED, awaiting user approval.
+
+### Diagnosis (measured, not guessed)
+1. Black ground: terrain albedo = scan (~0.3) x tint (0.27-0.5) ~= 0.1; moon at 30 deg elevation gives N.L 0.5 -> lit ground ~0.06,
+   while the fog colour (0.2-0.27) x exposure 1.45 is ~4x brighter. Near ground darker than far fog = inverted depth, plus the hard
+   dark/bright edge where the fog takes over. Prototype (terrain x2, tree fill down) already shows readable ground detail.
+2. Tree pop: near trees are LIT (moon + ambient + emission fill 0.23/0.28/0.44 + rim) -> bright teal; their impostors are UNSHADED
+   albedo x far_light (no ambient/fill/rim) -> dark blocky cards (64x128 tiles, nearest filter). Swap = 1-frame jump in colour and
+   resolution (SWAP_FADE 0). Bushes/floor kits "sink into / grow out of" the ground at their range (SHRINK_FADE) - the cheap animation.
+3. "Random" lighting: every material family lights itself differently (terrain = Godot lambert, forest = emission fills + rim,
+   impostors = flat colour, grass = unshaded). On Low the moon has no shadows at all, so nothing ties light to the trees.
+   Nothing moves (no wind, no cloud light) -> the moon reads as a flat studio light.
+
+### Goal / acceptance
+- AC1 One moonlight model for everything: ground, trees (mesh + impostor), floor kits, props, grass use the same key (moon), the same
+  sky ambient (brighter from above, darker below) and the same canopy shade. No per-family emission fills.
+- AC2 Ground readable: bottom third of review shots mean luminance >= 2x the V6 value at the same poses; texture detail visible;
+  no dark-band/bright-fog step at the fog edge (luminance profile down the screen is monotonic within tolerance).
+- AC3 Moonlight with structure: dappled moonlight and shade under canopies on EVERY quality (baked canopy shade map), real-time
+  moon shadows near the player where the budget allows; moonlit glades vs dark groves visible in shots.
+- AC4 Dynamic: slow cloud shadows drift across ground and trees (and dim the moon slightly while a thick cloud passes);
+  tree crowns and grass sway in the wind. Cheap (vertex/texture only, no extra passes).
+- AC5 No pop: at the near/impostor swap the tree's mean colour differs < 6/255 (measured test), impostor tiles 2x resolution with
+  mipmaps (no giant pixels); bushes/floor cards never grow/shrink - they appear inside the fog, colour-faded.
+- AC6 Budgets: Low probe <= 110 draws / 170k prims (V6: 99 / 153k); web_perf Medium not worse than V6 by > 10%; tests 0 failures,
+  smoke OK, touch PASS, swap PASS.
+- AC7 Visible proof: a before/after sheet (V6 vs V7, same poses) and a short side-by-side clip sent to the user with the build.
+
+### Decisions
+- Keep the Compatibility renderer (one look on web/APK). No LightmapGI (needs RenderingDevice to bake; not reliable here).
+- Canopy shade map = baked texture (like the rest of the world): at bake time rasterise tree crowns, walls and buildings projected
+  along the moon direction into an L8 map over the kingdom rect (2 px/m, ~940x870, soft blur) + contact darkening around trunks.
+  Sampled by world XZ in shaders -> free at runtime and identical on all quality levels.
+- Shared shader include assets/shaders/moonlight.gdshaderinc owns the model; terrain uses a custom light() so the moon (directional)
+  is multiplied by shade x cloud while lanterns (omni) stay normal. Unshaded families (impostors, grass) call moon_shade() by hand
+  with the same uniforms (globals via RenderingServer global shader parameters, so one place drives all).
+- Real-time moon shadows: measure Low with a 1024 atlas / 15 m; enable on Low only if frame time +<= 12%, else canopy map only on Low.
+
+### Contracts
+- Global shader params (project.godot [shader_globals], set by new src/rendering/moonlight.gd [Moonlight] autoload-free node in the
+  overworld): `moon_dir: vec3` (towards the moon), `moon_color: color`, `sky_ambient_top: color`, `sky_ambient_bottom: color`,
+  `shade_map: sampler2D`, `shade_rect: vec4` (x0, z0, x1, z1), `cloud_tex: sampler2D`, `cloud_scroll: vec2`, `cloud_strength: float`,
+  `wind: vec4` (dir.xy, strength, time scale).
+- moonlight.gdshaderinc: `float moon_shade(vec3 world_pos)` (shade map x cloud, 0..1); `vec3 moon_light(vec3 albedo, vec3 n,
+  vec3 world_pos)` (key + hemispheric ambient, for unshaded families); `vec3 wind_offset(vec3 world_pos, float height01)`.
+- Shade map file: assets/textures/world/moon_shade.png (+ .import), written by tools/bake_world.gd step `bake_moon_shade(world)`.
+
+### Tasks
+| id | title | tier | deps | files | done_check |
+|---|---|---|---|---|---|
+| V7-1 | Moonlight contract: globals, Moonlight node, include | H | - | project.godot, src/rendering/moonlight.gd, assets/shaders/moonlight.gdshaderinc, valdron_overworld.tscn | import clean; globals visible in a test shader shot |
+| V7-2 | Bake canopy shade map | H | 1 | tools/bake_world.gd, src/world/moon_shade_baker.gd (new) | PNG exists, crowns/glades visible in a downscaled view; bake time + < 20 s |
+| V7-3 | Terrain on the model + palette (tints, path not blown out) | N | 1,2 | assets/shaders/terrain.gdshader, src/world/terrain_builder.gd | AC2 luminance numbers at road/cross/wood/plains poses |
+| V7-4 | Forest meshes on the model, remove fills, wind sway | H | 1 | assets/shaders/forest.gdshaderinc, forest_card/solid/floor_card.gdshader | shots: trunks not glowing; sway visible in 2 frames 1 s apart |
+| V7-5 | Impostors: 2x tiles + normal atlas, lit by moon_light(), mipmaps | H | 4 | src/world/props/forest_atlas.gd, forest_far.gdshader, forest_trees.gd | swap colour test < 6/255 (new tools/test_impostor_match.gd) |
+| V7-6 | Floor kits/bushes: no shrink, fog-colour fade, ranges | N | 4 | forest.gdshaderinc (SHRINK_FADE path), src/rendering/view_distance.gd | 10-frame walk clip: no growing bushes |
+| V7-7 | Grass/wheat/meadow_far/props on the model + cloud shadows | N | 1,2 | grass, meadow_grass, thornfield_wheat, meadow_far shaders, retro_materials.gd | plains + Thornfield shots match the forest light |
+| V7-8 | Environment + fog calibration per region (no dark band) | H | 3-7 | valdron_overworld.tscn, data/regions/*.tres, view_distance.gd | AC2 profile check, all 12 regions shot |
+| V7-9 | Real-time moon shadows on Low: measure, decide | H | 8 | src/rendering/quality_manager.gd | web_perf Low with/without, decision logged here |
+| V7-10 | Re-bake, tests, publish, smoke/touch/swap/perf, before/after sheet + clip | H | 9 | src/levels/valdron/baked/*, ../docs | AC6 + AC7 |
+| V7-R | router-reviewer on the diff, fix findings | H | 10 | - | 0 open findings |
