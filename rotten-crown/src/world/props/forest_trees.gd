@@ -70,7 +70,16 @@ static var _impostor_size: Dictionary = {}
 ## One style, built on first use (`lod` 0; 1 is a coarser copy kept for experiments):
 ## {mesh: ArrayMesh (one "tree" surface), radius: collider radius at the foot, base:
 ##  Vector2 trunk centre offset at 1.6 m, hangs: PackedVector3Array (limb undersides),
-##  face: {o, out, up, r} bark-face anchor (WoodProps.bark_face), tris: int}.
+##  strands: Array of [anchor Vector3 on a limb, width, length, rank] (the hanging moss
+##  baked into the mesh), face: {o, out, up, r} bark-face anchor (WoodProps.bark_face),
+##  tris: int}.
+##
+## Hanging moss (V6): every limb underside carries a moss strand IN the tree mesh (UV2.y =
+## the strand's rank, 0 on bark and leaves). The instance says how mossy it is
+## (INSTANCE_CUSTOM.y, 0..1) and shifts the ranks (INSTANCE_CUSTOM.w), the shader collapses
+## the strands it does not keep. So moss is drawn exactly when its tree's full mesh is
+## (same instance, same LOD band, same dissolve) and always hangs from a real limb; it is
+## left out of the impostor (a far tree has no moss rather than moss in the wrong place).
 static func tree(style: int, lod: int) -> Dictionary:
 	var key := "%d/%d" % [style, lod]
 	if not _cache.has(key):
@@ -122,6 +131,7 @@ static func material(id: String) -> ShaderMaterial:
 		"floor", "floor_solid":
 			mat.set_shader_parameter("lod_end", ForestFloor.RANGE)
 			if id == "floor":
+				mat.set_shader_parameter("tile_size", Vector2(ForestAtlas.TILE, ForestAtlas.TILE) / ForestAtlas.SIZE)
 				# Ground cards lie flat or stand low: no top light (they would glare).
 				mat.set_shader_parameter("top_color", Color(0.04, 0.05, 0.08))
 				mat.set_shader_parameter("rim_strength", 0.3)
@@ -167,9 +177,59 @@ static func _build(style: int, lod: int) -> Dictionary:
 	var mesh := ArrayMesh.new()
 	var trunk: Dictionary = ctx["trunk"]
 	_append(trunk, ctx["leaves"])
+	var uv2 := PackedVector2Array()
+	uv2.resize((trunk["v"] as PackedVector3Array).size())
+	uv2.fill(Vector2.ZERO)
+	var strands: Array = []
+	if near:
+		var moss := _acc()
+		strands = _strands(moss, ctx["hangs"], style)
+		for st: Array in strands:
+			for k in STRAND_VERTS:
+				uv2.append(Vector2(0.0, float(st[3])))
+		_append(trunk, moss)
+	trunk["uv2"] = uv2
 	_commit(mesh, trunk, material("tree"))
 	var tris := (trunk["i"] as PackedInt32Array).size() / 3
-	return {"mesh": mesh, "radius": radius(style), "base": base, "hangs": ctx["hangs"], "face": ctx["face"], "tris": tris}
+	return {"mesh": mesh, "radius": radius(style), "base": base, "hangs": ctx["hangs"], "strands": strands, "face": ctx["face"],
+		"tris": tris}
+
+
+## Vertices per baked moss strand (two crossed quads).
+const STRAND_VERTS := 8
+
+
+## One beard-moss strand under every limb point in `hangs` (tree frame): two crossed quads
+## of the atlas moss strip, the top tucked into the limb, hanging straight down; each has
+## both windings (the tree shader culls back faces). Own random stream: the tree's shape
+## does not move. Returns [anchor, width, length, rank] per strand.
+static func _strands(acc: Dictionary, hangs: PackedVector3Array, style: int) -> Array:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 7307 * (style + 1) + 5
+	var r := ForestAtlas.hang_uv_rect()
+	var out: Array = []
+	for h: Vector3 in hangs:
+		var w := rng.randf_range(0.6, 1.1)
+		var length := rng.randf_range(1.3, 2.8)
+		# Distinct ranks spread over (0, 1]: an instance keeping a fraction f of them keeps
+		# about f of the strands whatever its shift.
+		var rank := clampf((out.size() + rng.randf_range(0.2, 0.8)) / maxf(hangs.size(), 1.0), 0.002, 1.0)
+		var top := h + Vector3(0.0, 0.12, 0.0)
+		var yaw := rng.randf() * TAU
+		var outward := Vector3(h.x, 0.0, h.z)
+		outward = outward.normalized() if outward.length() > 0.01 else Vector3.RIGHT
+		var nrm := (outward * 0.6 + Vector3.UP * 0.8).normalized()
+		for q in 2:
+			var side := Vector3(cos(yaw + q * PI * 0.5), 0.0, -sin(yaw + q * PI * 0.5)) * w * 0.5
+			var base := (acc["v"] as PackedVector3Array).size()
+			var corners := [top - side, top + side, top + side - Vector3(0.0, length, 0.0), top - side - Vector3(0.0, length, 0.0)]
+			var uvs := [Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0)]
+			for k in 4:
+				_vert(acc, corners[k], nrm, Color.WHITE, r.position + (uvs[k] as Vector2) * r.size)
+			var idx: PackedInt32Array = acc["i"]
+			idx.append_array([base, base + 1, base + 2, base, base + 2, base + 3, base, base + 2, base + 1, base, base + 3, base + 2])
+		out.append([top, w, length, rank])
+	return out
 
 
 ## One trunk from `foot` leaning towards `out` (xz), with roots, limbs and leaf clumps.
@@ -499,6 +559,8 @@ static func _commit(mesh: ArrayMesh, acc: Dictionary, mat: Material) -> void:
 	arrays[Mesh.ARRAY_NORMAL] = acc["n"]
 	arrays[Mesh.ARRAY_COLOR] = acc["c"]
 	arrays[Mesh.ARRAY_TEX_UV] = acc["uv"]
+	if acc.has("uv2"):
+		arrays[Mesh.ARRAY_TEX_UV2] = acc["uv2"]
 	arrays[Mesh.ARRAY_INDEX] = acc["i"]
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	mesh.surface_set_material(mesh.get_surface_count() - 1, mat)
@@ -519,14 +581,19 @@ static func _extent(mesh: ArrayMesh) -> Vector2:
 	var reach := 0.5
 	var top := 1.0
 	for s in mesh.get_surface_count():
-		var verts: PackedVector3Array = mesh.surface_get_arrays(s)[Mesh.ARRAY_VERTEX]
-		for v in verts:
+		var arr := mesh.surface_get_arrays(s)
+		var verts: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+		var uv2: Variant = arr[Mesh.ARRAY_TEX_UV2]
+		for i in verts.size():
+			if uv2 is PackedVector2Array and (uv2 as PackedVector2Array)[i].y > 0.0:
+				continue  # moss strands: not part of the impostor
+			var v := verts[i]
 			reach = maxf(reach, maxf(absf(v.x), absf(v.z)))
 			top = maxf(top, v.y)
 	return Vector2(reach * 2.0, top)
 
 
-## Paints every style's impostor into its 32 x 64 cell of `img`: the near mesh seen from
+## Paints every style's impostor into its 64 x 128 cell of `img`: the near mesh seen from
 ## the side (orthographic, depth-tested), bark shaded by a soft moon from the upper left,
 ## leaves sampled from their atlas tile.
 static func paint_impostors(img: Image) -> void:
@@ -546,10 +613,13 @@ static func paint_impostors(img: Image) -> void:
 			var col: PackedColorArray = arr[Mesh.ARRAY_COLOR]
 			var uv: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
 			var idx: PackedInt32Array = arr[Mesh.ARRAY_INDEX]
+			var uv2: Variant = arr[Mesh.ARRAY_TEX_UV2]
 			var scr := PackedVector2Array()
 			for p in v:
 				scr.append(Vector2((p.x / ext.x + 0.5) * cell.size.x, (1.0 - p.y / ext.y) * cell.size.y))
 			for f in range(0, idx.size(), 3):
+				if uv2 is PackedVector2Array and (uv2 as PackedVector2Array)[idx[f]].y > 0.0:
+					continue  # moss strands stay off the impostor
 				_raster(img, src, cell, zbuf, [idx[f], idx[f + 1], idx[f + 2]], scr, v, nr, col, uv, light)
 
 
@@ -585,8 +655,8 @@ static func _raster(img: Image, src: Image, cell: Rect2i, zbuf: PackedFloat32Arr
 				out = Color(c3.r * 0.75 * shade, c3.g * 0.75 * shade, c3.b * 0.75 * shade)
 			else:
 				var t := uv[tri[0]] * w0 + uv[tri[1]] * w1 + uv[tri[2]] * w2
-				var tx := src.get_pixel(clampi(int(t.x * ForestAtlas.SIZE), 0, ForestAtlas.SIZE - 1),
-					clampi(int(t.y * ForestAtlas.SIZE), 0, ForestAtlas.SIZE - 1))
+				var tx := src.get_pixel(clampi(int(t.x * ForestAtlas.WIDTH), 0, ForestAtlas.WIDTH - 1),
+					clampi(int(t.y * ForestAtlas.HEIGHT), 0, ForestAtlas.HEIGHT - 1))
 				if tx.a < 0.5:
 					continue
 				out = Color(tx.r * c3.r * shade, tx.g * c3.g * shade, tx.b * c3.b * shade)

@@ -7,8 +7,9 @@ extends Node
 ## plus a ground mist that pools below the player's feet. Because nothing is visible past
 ## the fog, nothing past it is drawn: every mesh under `world` gets a visibility range of
 ## (fog distance + its own half-size), and the forest / grass shaders get their per-instance
-## cut-offs from the same number. The far tree cards dissolve (dither) into the fog before
-## their cut-off and the near trees cross-dissolve into their cards, so nothing pops.
+## cut-offs from the same number. The far tree cards fade into the fog colour before their
+## cut-off (V6: no dither, it read as grain) and the near trees cross-dissolve into their
+## cards, so nothing pops; the floor cards and kits sink into the ground at their range.
 ## The sky's horizon band and the painted far horizon take the fog colour, so whatever is
 ## culled at the fog line disappears into the same colour.
 ## Graphics quality changes ranges and density (grass, forest floor, detailed trees), not the
@@ -20,9 +21,13 @@ const DEFAULT_DISTANCE := 60.0
 const FOG_BEGIN := 4.0
 ## >1 keeps the near ground clearer and closes the fog late (pow of the smoothstep).
 const FOG_CURVE := 1.5
-## Dissolve band of the far tree cards before the fog line, and of the near/far tree swap.
+## Fade band of the far tree cards into the fog colour before the fog line, and the
+## dissolve band of the near/far tree swap.
 const FAR_FADE := 7.0
-const SWAP_FADE := 3.0
+## 0: the near tree and its card swap in one frame at the same distance (V6: the 3 m
+## dither cross-dissolve read as a grainy ghost tree on phones; the card is painted from
+## the same mesh, so the swap barely shows in the fog).
+const SWAP_FADE := 0.0
 ## Detailed tree meshes / forest floor / large floor kits up to (Low, Medium, High) metres.
 const NEAR_TREES := [16.0, 20.0, 24.0]
 const FLOOR := [13.0, 17.0, 21.0]
@@ -124,6 +129,9 @@ func _process(_delta: float) -> void:
 		for mat in _horizon_mats:
 			mat.set_shader_parameter("haze_color", env.fog_light_color)
 			mat.set_shader_parameter("haze", _haze)
+		# The far tree cards fade into the fog colour (no dither) before their cut-off.
+		for mat: ShaderMaterial in _mats.get(Kind.FAR_TREES, []):
+			mat.set_shader_parameter("fog_tint", env.fog_light_color)
 		if horizon:
 			horizon.visible = _haze < 0.99
 	var key := Vector3(snappedf(distance, 0.25), _range_floor, _quality())
@@ -174,6 +182,7 @@ func _collect() -> void:
 				mat.set_shader_parameter("veil_rect", veil_rect)
 				_horizon_mats.append(mat)
 	_ready_done = true
+	_last_color = Color(-1.0, 0.0, 0.0)  # push the fog colour to the materials just found
 	_apply()
 
 

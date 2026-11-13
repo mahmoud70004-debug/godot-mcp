@@ -25,9 +25,6 @@ void vertex() {
 void fragment() {
 	float t = clamp((world_pos.y - base_height) / max(top_height - base_height, 0.001), 0.0, 1.0);
 	vec3 col = mix(base_color, top_color, t * t);
-	// Pixel dither between the two tones keeps the retro look.
-	float d = fract(sin(dot(floor(FRAGCOORD.xy), vec2(12.9898, 78.233))) * 43758.5453);
-	col += (d - 0.5) * 0.015;
 	col += top_color * rim * smoothstep(0.85, 1.0, t);
 	vec2 p = world_pos.xz;
 	float inside = step(veil_rect.x, p.x) * step(p.x, veil_rect.z) * step(veil_rect.y, p.y) * step(p.y, veil_rect.w);

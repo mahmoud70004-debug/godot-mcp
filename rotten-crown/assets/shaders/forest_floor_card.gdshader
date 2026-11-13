@@ -5,4 +5,5 @@ render_mode cull_disabled, vertex_lighting, diffuse_lambert, specular_disabled;
 
 #define CUTOUT
 #define TILED
+#define SHRINK_FADE
 #include "res://assets/shaders/forest.gdshaderinc"

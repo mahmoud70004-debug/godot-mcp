@@ -2,7 +2,7 @@
 class_name ForestFloor
 extends RefCounted
 ## The forest floor and understory of the kingdom forest (ForestBuilder): ground cover,
-## ferns, bushes, dead weeds, brambles hugging the trails, hanging moss, fallen logs,
+## ferns, bushes, dead weeds, brambles and bushes walling the roads and trails, fallen logs,
 ## stumps, mossy boulders and mounds, root tangles, mushrooms and the green rot (the
 ## curse made visible: glowing pustules and wet veins, densest in the deep zones and
 ## around the villages and clearings), plus a few rare "wrong" growths.
@@ -14,6 +14,9 @@ extends RefCounted
 ## instance, in the shader; fog hides the rest). Logs, boulders and big stumps of
 ## 0.6 m and more collide (StaticBody3D "Obstacles", layer 1), never on a road and never
 ## closing the gap between two obstacles (ForestBuilder rules).
+## Everything here stands on the ground (V6): the hanging moss is baked into the tree meshes
+## (ForestTrees) and drawn with its tree, and no leaf clump is placed in the air over a
+## path (the trees beside a path lean over it instead), so nothing can float.
 
 const RANGE := 30.0
 ## The small kits (mushrooms, pustules, mounds...) stop sooner: they are many and small.
@@ -270,7 +273,6 @@ var _cells := {}
 ## Obstacle circles [Vector2 centre, radius] (trunks + colliding floor kits), hashed by 4 m.
 var _obs: Array = []
 var _obs_hash := {}
-var _tree_hash := {}
 var _trees: Array = []
 var _stats := {"cards": 0, "small": 0, "large": 0, "colliders": 0, "wrong": 0}
 
@@ -287,10 +289,6 @@ static func build(forest: Node3D, trees: Array, terrain: TerrainBuilder, blocked
 		var t: Array = trees[i]
 		var r := ForestTrees.radius(int(t[3])) * float(t[2])
 		f._add_obstacle(t[5] as Vector2, r)
-		var key := Vector2i(((t[5] as Vector2) / 8.0).floor())
-		if not f._tree_hash.has(key):
-			f._tree_hash[key] = []
-		(f._tree_hash[key] as Array).append(i)
 	f._dress_trees()
 	f._ground()
 	f._trails()
@@ -345,14 +343,13 @@ func _ground_basis(p: Vector2, yaw: float) -> Basis:
 
 
 func _card(pos: Vector3, tile: String, size: Vector2, mode: float, glow: float, tint: Color, yaw := -1.0) -> void:
-	var r := ForestAtlas.uv_rect(tile) if tile != "hang" else Rect2(Vector2(ForestAtlas.HANG.position) / ForestAtlas.SIZE, Vector2.ZERO)
+	var r := ForestAtlas.uv_rect(tile)
 	if yaw < 0.0:
 		yaw = _rng.randf() * TAU
 	var p2 := Vector2(pos.x, pos.z)
 	var b := _ground_basis(p2, yaw) if mode == CARD_MODE_FLAT else Basis(Vector3.UP, yaw)
 	var xf := Transform3D(b.scaled(Vector3(size.x, size.y if mode != CARD_MODE_FLAT else 1.0, size.x)), pos)
-	var w := mode + (10.0 if tile == "hang" else 0.0)
-	(_cell(p2)["cards"] as Array).append([xf, Color(r.position.x, r.position.y, glow, w), tint])
+	(_cell(p2)["cards"] as Array).append([xf, Color(r.position.x, r.position.y, glow, mode), tint])
 	_stats["cards"] += 1
 
 
@@ -378,9 +375,11 @@ func _near_site(p: Vector2) -> bool:
 	return false
 
 
-func _usable(p: Vector2, clear: float) -> int:
+## Tier at p, or 0 where nothing grows: T0, outside the wall, or less than `margin` m
+## outside a road's or trail's clearance (ForestBuilder.road_margin()).
+func _usable(p: Vector2, margin: float) -> int:
 	var tier := ForestBuilder._tier_cached(p.x, p.y)
-	if tier <= 0 or ForestBuilder.road_distance(p) < clear:
+	if tier <= 0 or ForestBuilder.road_margin(p) < margin:
 		return 0
 	return tier
 
@@ -388,7 +387,7 @@ func _usable(p: Vector2, clear: float) -> int:
 # --- Kinds ---
 
 ## Around every tree foot: mushrooms, rot (pustules + veins) on rotting trees, ferns,
-## root tangles by the old giants, hanging moss from the limbs.
+## root tangles by the old giants. (The hanging moss is part of the tree mesh.)
 func _dress_trees() -> void:
 	for t: Array in _trees:
 		var foot: Vector3 = t[0]
@@ -424,18 +423,6 @@ func _dress_trees() -> void:
 			var a := _rng.randf() * TAU
 			var at := col + Vector2(cos(a), sin(a)) * (r + 0.8)
 			_kit("small", Small.ROOTS, _terrain.ground(at.x, at.y), Basis(Vector3.UP, a).scaled(Vector3.ONE * _rng.randf_range(1.0, 1.6) * s), 0.0, _tint(0.7, 0.95))
-		var hang: float = [0.0, 0.12, 0.45][tier - 1]
-		if zone == "weeping_hollow":
-			hang = 0.85
-		elif zone == "cellar_hollow":
-			hang *= 0.5
-		if hang <= 0.0:
-			continue
-		var b: Basis = t[6]
-		for h: Vector3 in (ForestTrees.tree(style, 0)["hangs"] as PackedVector3Array):
-			if _rng.randf() < hang:
-				_card(foot + b * h * s, "hang", Vector2(_rng.randf_range(0.6, 1.2), _rng.randf_range(1.2, 3.0) * (1.4 if zone == "weeping_hollow" else 1.0)),
-					CARD_MODE_HANG, 0.0, _tint(0.65, 0.95))
 
 
 ## Random ground kinds per cell, by the tier under each candidate.
@@ -453,7 +440,7 @@ func _ground() -> void:
 				for i in n:
 					var p := origin + Vector2(_rng.randf(), _rng.randf()) * cell
 					var roll := _rng.randf()
-					var tier := _usable(p, ForestBuilder.ROAD_CLEAR - 0.2)
+					var tier := _usable(p, -0.2)
 					if tier == 0 or roll * top > _density(kind, tier):
 						continue
 					_place(kind, p, tier)
@@ -563,11 +550,18 @@ func _large(kind: String, p: Vector2, tier: int) -> void:
 	_kit("large", kit, pos, basis.scaled(Vector3.ONE * s), 0.6 if tier == 3 and kit == Large.HOLLOW_LOG else 0.0, _tint(0.75, 1.0))
 
 
-## The trails as tunnels: brambles and trampled tufts along both edges of the narrow
-## trails, and leaves and moss reaching over every road from the trees beside it.
+## The paths as corridors (V6): undergrowth packed along both edges of every road and
+## trail, just outside the walkable strip (brambles and trampled tufts on the narrow trails,
+## ferns and brambles at the edge of the roads), then bushes and ferns crowding in behind,
+## the same band where ForestBuilder lines the path with trunks. The strip itself stays
+## clear (and every card stands on the ground).
 func _trails() -> void:
 	for road: Dictionary in ForestBuilder.map()["roads"]:
-		var narrow := str(road["kind"]) == "new" and str(road["id"]) != "kings_road"
+		var narrow := str(road["kind"]) == "new" and not (str(road["id"]) in ForestBuilder.BUILT_ROADS)
+		var kings := str(road["id"]) == "kings_road"
+		# Where the walkable strip ends: the trail's trampled edge, the King's Road's
+		# kerbs and waymarkers, the main dirt roads' painted edge.
+		var strip := 1.75 if narrow else (3.2 if kings else 2.5)
 		var pts: Array = road["pts"]
 		for k in pts.size() - 1:
 			var a := ForestBuilder._v2(pts[k])
@@ -578,68 +572,32 @@ func _trails() -> void:
 			var d := 0.0
 			while d < length:
 				var c := a + dir * d
-				d += 1.4
+				d += 1.15
 				for sgn: float in [-1.0, 1.0]:
 					var out := side * sgn
 					if narrow:
-						_edge(c + out * _rng.randf_range(1.8, 2.8), "bramble", Vector2(_rng.randf_range(0.8, 1.3), _rng.randf_range(0.6, 1.0)), 0.5)
-						_edge(c + out * _rng.randf_range(1.1, 1.7), "tuft", Vector2(_rng.randf_range(0.5, 0.8), _rng.randf_range(0.35, 0.6)), 0.45)
-					# The walls of the tunnel: bushes and ferns crowding in behind the edge.
-					var wall := _rng.randf_range(3.2, 6.5) if narrow else _rng.randf_range(4.5, 8.0)
-					var tile := "fern" if _rng.randf() < 0.35 else "bush"
-					_edge(c + out * wall, tile, Vector2(_rng.randf_range(1.3, 2.2), _rng.randf_range(1.0, 2.0)), 0.5)
-					if _rng.randf() < 0.55:
-						_overhang(c, out, narrow)
+						_edge(c + out * _rng.randf_range(1.15, 1.6), "tuft", Vector2(_rng.randf_range(0.5, 0.8), _rng.randf_range(0.35, 0.6)), 0.5, 1.0)
+					# The edge: low brambles and ferns right where the strip ends.
+					var inner := "bramble" if narrow or _rng.randf() < 0.45 else "fern"
+					_edge(c + out * (strip + _rng.randf_range(0.0, 0.9)), inner,
+						Vector2(_rng.randf_range(0.9, 1.5), _rng.randf_range(0.6, 1.1)), 0.85, strip - 0.3)
+					# The walls: bushes and ferns crowding in behind the edge.
+					var tile := "fern" if _rng.randf() < 0.3 else "bush"
+					_edge(c + out * (strip + _rng.randf_range(1.0, 3.2)), tile, Vector2(_rng.randf_range(1.4, 2.3), _rng.randf_range(1.1, 2.0)), 0.85, strip)
+					var far_tile := "fern" if _rng.randf() < 0.4 else "bush"
+					_edge(c + out * (strip + _rng.randf_range(3.2, 6.5)), far_tile, Vector2(_rng.randf_range(1.3, 2.2), _rng.randf_range(1.0, 1.9)), 0.5, strip)
 
 
-func _edge(p: Vector2, tile: String, size: Vector2, chance: float) -> void:
+## An upright undergrowth card at p (with `chance`), on forest ground, not in a village,
+## at least `strip` m from every road or trail centreline and clear of trunks and logs.
+func _edge(p: Vector2, tile: String, size: Vector2, chance: float, strip: float) -> void:
 	if _rng.randf() > chance or ForestBuilder._tier_cached(p.x, p.y) <= 0 or ForestBuilder._in_settlement(p):
 		return
-	if ForestBuilder.road_distance(p) < 1.0 or not _clear_of_obstacles(p, 0.1, 0.0):
+	if ForestBuilder.road_distance(p) < strip or not _clear_of_obstacles(p, 0.1, 0.0):
 		return
+	if tile == "bush" and ForestBuilder.zone_at(p.x, p.y) == "cellar_hollow":
+		tile = "bramble"
 	_card(_terrain.ground(p.x, p.y), tile, size, CARD_MODE_UPRIGHT, 0.0, _tint(0.6, 0.95))
-
-
-## A leaf clump (and moss) high over the road edge, where a tree's limbs reach over it.
-func _overhang(c: Vector2, out: Vector2, narrow: bool) -> void:
-	var p := c + out * (_rng.randf_range(1.4, 3.2) if narrow else _rng.randf_range(3.5, 5.0))
-	var tier := ForestBuilder._tier_cached(p.x, p.y)
-	if tier <= 0 or ForestBuilder._in_settlement(p):
-		return
-	var owner := _nearest_tree(c + out * 7.0, 9.0)
-	if owner < 0:
-		return
-	var t: Array = _trees[owner]
-	var style: int = t[3]
-	# Only where the owner's limbs really reach over the spot: a clump or a moss strand
-	# anywhere else hangs from nothing (V5: the "floating grass" over the roads).
-	var limbs: Vector2 = ForestTrees.STYLES[style]["len"]
-	if (t[5] as Vector2).distance_to(p) > limbs.y * float(t[2]) * 0.8:
-		return
-	if style in [ForestTrees.Style.BARE, ForestTrees.Style.SNAG]:
-		var g := _terrain.ground(p.x, p.y)
-		_card(g + Vector3(0.0, _rng.randf_range(3.6, 5.0), 0.0), "hang", Vector2(_rng.randf_range(0.6, 1.0), _rng.randf_range(1.2, 2.4)), CARD_MODE_HANG, 0.0, _tint(0.6, 0.9))
-		return
-	var tile := "leaf_birch" if style == ForestTrees.Style.BIRCH else ("leaf_dying" if style == ForestTrees.Style.HOLLOW else "leaf_dark")
-	var size := _rng.randf_range(2.8, 4.2)
-	var g := _terrain.ground(p.x, p.y)
-	_card(g + Vector3(0.0, _rng.randf_range(3.8, 5.4), 0.0), tile, Vector2.ONE * size, CARD_MODE_UPRIGHT, 0.0, t[7] as Color)
-	if tier >= 2 and _rng.randf() < 0.5:
-		_card(g + Vector3(0.0, _rng.randf_range(4.2, 5.4), 0.0), "hang", Vector2(_rng.randf_range(0.6, 1.1), _rng.randf_range(1.4, 2.8)), CARD_MODE_HANG, 0.0, _tint(0.6, 0.9))
-
-
-func _nearest_tree(p: Vector2, within: float) -> int:
-	var key := Vector2i((p / 8.0).floor())
-	var best := -1
-	var best_d := within
-	for dz in range(-1, 2):
-		for dx in range(-1, 2):
-			for i: int in _tree_hash.get(key + Vector2i(dx, dz), []):
-				var d := p.distance_to(_trees[i][5])
-				if d < best_d:
-					best_d = d
-					best = i
-	return best
 
 
 # --- Output ---

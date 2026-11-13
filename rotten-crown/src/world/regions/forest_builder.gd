@@ -16,11 +16,16 @@ extends RefCounted
 ## Under them ForestFloor lays the floor, the understory and the green rot.
 ##
 ## Placement: a jittered lattice at the T3 spacing, thinned per tier to its density,
-## keeps ROAD_CLEAR m (+ trunk radius) from every road centreline, SPACING m between
-## trunks (SPACING_DEEP in T3) and at least PASS_GAP m of free ground between trunk
-## surfaces, WALL_CLEAR m from the wall line, and stays off every solid thing the
-## other builders made (colliders and landmark meshes, see _blockers()). Trees near a
-## trail lean over it (the canopy closes in, the trunks stay clear).
+## keeps ROAD_CLEAR m (TRAIL_CLEAR on the narrow trails) of free ground between every road
+## centreline and a trunk, SPACING m between trunks (SPACING_DEEP in T3) and at least
+## PASS_GAP m of free ground between trunk surfaces, WALL_CLEAR m from the wall line, and
+## stays off every solid thing the other builders made (colliders and landmark meshes, see
+## _blockers()). Trees near a road or trail lean over it (the canopy closes in, the trunks
+## stay clear).
+## Corridors (V6): a second pass lines both sides of every road and trail with one dense
+## row of trunks just outside the clearance and a looser row behind it (CORRIDOR m deep),
+## so a path reads as a corridor; the spacing and pass-gap rules still hold, the forest
+## stays walkable off the path. ForestFloor packs the undergrowth into the same band.
 ## Seeded on its own (SEED), so the layout does not move when other builders change.
 ##
 ## Also: paint_ground() paints the forest floor and the narrow trails on the terrain
@@ -37,6 +42,14 @@ const NEAR_CELL := 24.0
 ## Impostors cost 4 triangles each: two cells hold them all (one draw each).
 const FAR_CELL := 1000.0
 const ROAD_CLEAR := 3.5
+## Free ground from a narrow trail's centreline to a trunk (the trail is 2.6 m wide).
+const TRAIL_CLEAR := 2.3
+## Corridor band behind the clearance (m) and the step along the path between tries.
+const CORRIDOR := 6.0
+const CORRIDOR_STEP := 1.9
+## Corridor style weights (outside the deep zones) [TALL, BROAD, BARE, ELDER, HOLLOW, SNAG,
+## BIRCH]: dark trunks first, so the path walls read against the fog.
+const CORRIDOR_STYLE := [0.38, 0.17, 0.12, 0.0, 0.06, 0.04, 0.23]
 const SPACING := 2.4
 const SPACING_DEEP := 2.0
 ## Free ground between two trunk surfaces (the player's capsule is 0.8 m wide).
@@ -197,6 +210,28 @@ static func zone_at(x: float, z: float) -> String:
 	return ""
 
 
+## Free ground left between (x, z) and the nearest road or trail edge of its clearance:
+## distance to each centreline minus ROAD_CLEAR (TRAIL_CLEAR on the narrow trails).
+## Negative inside a clearance.
+static func road_margin(p: Vector2) -> float:
+	var best := INF
+	for line: Array in road_lines():
+		best = minf(best, _polyline_distance(p, line[0]) - float(line[1]))
+	return best
+
+
+## Every road and trail as [points, clearance]: the narrow trails (trails()) keep
+## TRAIL_CLEAR, the built roads, the King's Road and EXTRA_ROADS keep ROAD_CLEAR.
+static func road_lines() -> Array:
+	var out: Array = []
+	for road: Dictionary in map()["roads"]:
+		var narrow := str(road["kind"]) == "new" and not (str(road["id"]) in BUILT_ROADS)
+		out.append([road["pts"], TRAIL_CLEAR if narrow else ROAD_CLEAR])
+	for pts: Array in EXTRA_ROADS:
+		out.append([pts, ROAD_CLEAR])
+	return out
+
+
 ## Narrow trails painted here (map roads of kind "new" that nobody else builds).
 static func trails() -> Array:
 	var out: Array = []
@@ -340,7 +375,10 @@ static func scatter(terrain: TerrainBuilder, blocked: PackedByteArray) -> Array:
 	var nz := int(ceil(wr.size.y / lattice))
 	var trees: Array = []
 	var grid_hash := {}
-	var paths := trails()
+	# Trees lean over every road and trail beside them.
+	var paths: Array = []
+	for line: Array in road_lines():
+		paths.append(line[0])
 	for name: String in LANDMARK_ELDERS:
 		_landmark(trees, grid_hash, terrain, blocked, name, rng)
 	for gz in nz:
@@ -367,7 +405,7 @@ static func scatter(terrain: TerrainBuilder, blocked: PackedByteArray) -> Array:
 					continue
 				var y := yaw
 				var t := tilt
-				# Beside a trail the tree leans over it: the canopy closes in, the trunk stays clear.
+				# Beside a path the tree leans over it: the canopy closes in, the trunk stays clear.
 				var to_trail := _towards(p, paths)
 				if to_trail.z < 10.0 and float(extra[0]) < 0.7:
 					y = atan2(-to_trail.y, to_trail.x) + (float(extra[1]) - 0.5) * 0.8
@@ -379,7 +417,62 @@ static func scatter(terrain: TerrainBuilder, blocked: PackedByteArray) -> Array:
 				tree.append(_rot(rng, p, tier))
 				_insert(trees, grid_hash, tree)
 				break
+	_corridors(trees, grid_hash, terrain, blocked, wr)
 	return trees
+
+
+## The corridor pass: along both sides of every road and trail, a dense row of trunks just
+## outside the clearance (leaning over the path) and a looser row behind it. Own random
+## stream (the lattice above does not move); every tree passes the same _fits() rules.
+static func _corridors(trees: Array, grid_hash: Dictionary, terrain: TerrainBuilder, blocked: PackedByteArray, wr: Rect2) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = SEED + 77
+	for line: Array in road_lines():
+		var pts: Array = line[0]
+		var clear: float = line[1]
+		for k in pts.size() - 1:
+			var a := _v2(pts[k])
+			var b := _v2(pts[k + 1])
+			var dir := (b - a).normalized()
+			var side := Vector2(-dir.y, dir.x)
+			var length := a.distance_to(b)
+			var d := rng.randf() * CORRIDOR_STEP
+			while d < length:
+				var c := a + dir * d
+				d += CORRIDOR_STEP * rng.randf_range(0.8, 1.2)
+				for sgn: float in [-1.0, 1.0]:
+					for row in 2:
+						var roll := rng.randf()
+						var pick := rng.randf()
+						var scale_roll := rng.randf()
+						var depth := rng.randf_range(0.35, 1.7) if row == 0 else rng.randf_range(2.6, CORRIDOR)
+						var jitter := rng.randf_range(-0.6, 0.6)
+						var lean := rng.randf_range(0.05, 0.13)
+						var stretch := rng.randf_range(0.92, 1.1)
+						var along := rng.randf_range(-0.5, 0.5)
+						if roll > (0.92 if row == 0 else 0.55):
+							continue
+						var edge := c + side * sgn * clear
+						var tier0 := tier_at(edge.x, edge.y)
+						if tier0 <= 0:
+							continue
+						var zone := zone_at(edge.x, edge.y)
+						var style := _pick_style(tier0, zone, pick) if tier0 == 3 and ZONE_STYLE.has(zone) else _weighted(CORRIDOR_STYLE, pick)
+						var srange: Vector2 = TIER_SCALE[maxi(tier0, 2)]
+						var scale := lerpf(srange.x, srange.y, scale_roll)
+						var radius := ForestTrees.radius(style) * scale
+						var p := c + dir * along + side * sgn * (clear + radius + depth)
+						var tier := tier_at(p.x, p.y)
+						if tier <= 0:
+							continue
+						# Lean over the path (towards -side * sgn).
+						var to_path := -side * sgn
+						var tree := _make_tree(terrain, p, atan2(-to_path.y, to_path.x) + jitter, scale, style, tier, lean, stretch)
+						if not _fits(tree, trees, grid_hash, blocked, wr):
+							continue
+						tree.append(_tint(rng, zone_at(p.x, p.y)))
+						tree.append(_rot(rng, p, tier))
+						_insert(trees, grid_hash, tree)
 
 
 ## [foot, yaw, scale, style, tier, collider centre, basis] of a tree at p.
@@ -397,7 +490,7 @@ static func _fits(tree: Array, trees: Array, grid_hash: Dictionary, blocked: Pac
 	var col: Vector2 = tree[5]
 	var radius := ForestTrees.radius(int(tree[3])) * float(tree[2])
 	for q: Vector2 in [p, col]:
-		if road_distance(q) < ROAD_CLEAR + radius:
+		if road_margin(q) < radius:
 			return false
 		var d_wall := minf(minf(q.x - wr.position.x, wr.end.x - q.x), minf(q.y - wr.position.y, wr.end.y - q.y))
 		if d_wall < WALL_CLEAR + radius:
@@ -462,6 +555,10 @@ static func _towards(p: Vector2, paths: Array) -> Vector3:
 
 static func _pick_style(tier: int, zone: String, roll: float) -> int:
 	var w: Array = ZONE_STYLE[zone] if tier == 3 and ZONE_STYLE.has(zone) else TIER_STYLE[tier]
+	return _weighted(w, roll)
+
+
+static func _weighted(w: Array, roll: float) -> int:
 	var total := 0.0
 	for x: float in w:
 		total += x
@@ -652,6 +749,20 @@ static func _chunks(forest: Node3D, trees: Array) -> void:
 				_impostors(node, trees, members, reach)
 
 
+## Share of a tree's baked moss strands it shows (ForestTrees: INSTANCE_CUSTOM.y): none on
+## the edge (T1), some in the wood, a lot in the deep zones, curtains in the Weeping Hollow.
+static func moss_amount(t: Array) -> float:
+	var foot: Vector3 = t[0]
+	var zone := zone_at(foot.x, foot.z)
+	var tier := clampi(int(t[4]), 0, 3)
+	var amount: float = [0.0, 0.0, 0.14, 0.45][tier]
+	if zone == "weeping_hollow" and tier >= 2:
+		amount = 0.85
+	elif zone == "cellar_hollow":
+		amount *= 0.5
+	return amount
+
+
 ## One MultiMeshInstance3D per style present: "Near_<Style>".
 static func _style_set(node: Node3D, trees: Array, members: Array, reach: Array) -> void:
 	for k in STYLES.size():
@@ -659,7 +770,9 @@ static func _style_set(node: Node3D, trees: Array, members: Array, reach: Array)
 		for i: int in members:
 			var t: Array = trees[i]
 			if int(t[3]) == k:
-				items.append([_xf(t, node.position), Color(0.0, 0.0, float(t[8]), 0.0), t[7]])
+				var foot: Vector3 = t[0]
+				var shift := fposmod(foot.x * 0.618 + foot.z * 0.377, 1.0)
+				items.append([_xf(t, node.position), Color(0.0, moss_amount(t), float(t[8]), shift), t[7]])
 		if items.is_empty():
 			continue
 		var mmi := _multimesh(ForestTrees.tree(k, 0)["mesh"] as Mesh, items, reach[k] as Vector2)
@@ -680,7 +793,8 @@ static func _impostors(node: Node3D, trees: Array, members: Array, reach: Array)
 		var xf := _xf(t, node.position)
 		xf.basis = xf.basis * Basis.from_scale(Vector3(size.x, size.y, size.x))
 		var cell := ForestAtlas.impostor_rect(k)
-		items.append([xf, Color(float(cell.position.x) / ForestAtlas.SIZE, float(cell.position.y) / ForestAtlas.SIZE, 0.0, 0.0), t[7]])
+		var uv := Vector2(cell.position) / ForestAtlas.SIZE
+		items.append([xf, Color(uv.x, uv.y, 0.0, 0.0), t[7]])
 		big = big.max(reach[k] as Vector2)
 	var mmi := _multimesh(ForestFloor.mesh("card"), items, big)
 	mmi.name = "Far"

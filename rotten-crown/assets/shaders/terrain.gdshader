@@ -7,10 +7,10 @@
 shader_type spatial;
 render_mode diffuse_lambert, specular_disabled;
 
-uniform sampler2D grass_tex : filter_nearest, repeat_enable;
-uniform sampler2D dry_tex : filter_nearest, repeat_enable;
-uniform sampler2D road_tex : filter_nearest, repeat_enable;
-uniform sampler2D forest_tex : filter_nearest, repeat_enable;
+uniform sampler2D grass_tex : filter_nearest_mipmap, repeat_enable;
+uniform sampler2D dry_tex : filter_nearest_mipmap, repeat_enable;
+uniform sampler2D road_tex : filter_nearest_mipmap, repeat_enable;
+uniform sampler2D forest_tex : filter_nearest_mipmap, repeat_enable;
 // Texture repeats per metre for each layer.
 uniform float grass_scale = 0.16;
 uniform float dry_scale = 0.2;
@@ -52,11 +52,12 @@ float bayer4(vec2 p) {
 
 void fragment() {
 	vec2 uv = world_pos.xz;
-	// Dither threshold on the 16 px/m world grid so blends read as pixel art.
-	float d = bayer4(floor(world_pos.xz * 16.0)) - 0.5;
+	// Dither threshold on an 8 px/m world grid so blends read as chunky pixel art (V6:
+	// 16 px/m went below one screen pixel a few metres out and read as grain).
+	float d = bayer4(floor(world_pos.xz * 8.0)) - 0.5;
 	vec3 grass = texture(grass_tex, uv * grass_scale).rgb * grass_tint;
 	vec3 col = grass;
-	if (paint.b + d * 0.5 > 0.5) {
+	if (paint.b + d * 0.3 > 0.5) {
 		col = texture(forest_tex, uv * forest_scale).rgb * forest_tint;
 		if (floor_mix > 0.004) {
 			vec3 base = texture(forest_tex, uv * forest_scale).rgb;
@@ -67,15 +68,15 @@ void fragment() {
 			if (n + d * 0.2 < moss_amt * 0.6) {
 				col = texture(grass_tex, uv * 0.23).rgb * moss_tint;
 			}
-			if (amber + d * 0.5 > 0.5 + n * 0.3) {
+			if (amber + d * 0.3 > 0.5 + n * 0.3) {
 				col = base * amber_tint;
 			}
 		}
 	}
-	if (paint.g + d * 0.5 > 0.5) {
+	if (paint.g + d * 0.3 > 0.5) {
 		col = texture(dry_tex, uv * dry_scale).rgb * dry_tint;
 	}
-	if (paint.r + d * 0.5 > 0.5) {
+	if (paint.r + d * 0.3 > 0.5) {
 		vec3 road = texture(road_tex, uv * road_scale).rgb * road_tint;
 		float luma = dot(road, vec3(0.3, 0.59, 0.11));
 		// The same road changes with the land it crosses: a pale, moonlit dirt

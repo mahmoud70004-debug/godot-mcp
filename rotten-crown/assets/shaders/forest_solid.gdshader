@@ -3,4 +3,6 @@
 shader_type spatial;
 render_mode cull_back, vertex_lighting, diffuse_lambert, specular_disabled;
 
+#define SHRINK_FADE
+
 #include "res://assets/shaders/forest.gdshaderinc"

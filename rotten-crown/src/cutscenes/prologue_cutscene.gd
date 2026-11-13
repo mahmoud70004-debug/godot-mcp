@@ -297,8 +297,9 @@ func _apply_festive_grade() -> void:
 	var mat := screen.material.duplicate() as ShaderMaterial
 	mat.set_shader_parameter("desaturation", 0.08)
 	mat.set_shader_parameter("tint", Color(1.0, 0.97, 0.93))
-	mat.set_shader_parameter("grain_strength", 0.035)
+	mat.set_shader_parameter("grain_strength", 0.0)
 	mat.set_shader_parameter("contrast", 1.1)
+	mat.set_shader_parameter("contrast_pivot", 0.5)
 	mat.set_shader_parameter("lift", Color(0.01, 0.012, 0.025))
 	mat.set_shader_parameter("vignette_strength", 0.45)
 	screen.material = mat

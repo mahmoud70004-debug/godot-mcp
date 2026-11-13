@@ -1,25 +1,29 @@
 @tool
 class_name ForestAtlas
 extends RefCounted
-## The one 256 px texture of the kingdom forest (ForestTrees, ForestFloor): leaf clumps,
+## The one 512 x 256 px texture of the kingdom forest (ForestTrees, ForestFloor): leaf clumps,
 ## understory cards, ground patches, the green rot and the far tree impostors, painted
 ## in code (pixel art, cut-out alpha, no mipmaps) so the bake stores one small image.
 ## Drawn with the forest shaders (assets/shaders/forest*.gdshader*).
 ##
-## Layout (pixels): row 0 (y 0-63) holds the seven impostors (32 x 64, ForestTrees
-## style order) and the hanging moss strip at x 224; rows 1-3 hold 64 px tiles.
+## Layout (pixels): the top band (y 0-127) holds the seven impostors (64 x 128, ForestTrees
+## style order; V6: twice the old 32 x 64, so a far tree is no longer a few huge blocks that
+## read as a floating blob) and the hanging moss strip at x 448; rows 2-3 hold 64 px tiles.
 
-const SIZE := 256
+const WIDTH := 512
+const HEIGHT := 256
+## Atlas size as a vector: UV = pixel / SIZE (component-wise).
+const SIZE := Vector2(WIDTH, HEIGHT)
 const TILE := 64
 ## Tile name -> top-left corner in tiles (64 px units).
 const TILES := {
-	"leaf_dark": Vector2i(0, 1), "leaf_birch": Vector2i(1, 1), "leaf_dying": Vector2i(2, 1), "fern": Vector2i(3, 1),
-	"bush": Vector2i(0, 2), "bramble": Vector2i(1, 2), "weeds": Vector2i(2, 2), "moss": Vector2i(3, 2),
+	"leaf_dark": Vector2i(0, 2), "leaf_birch": Vector2i(1, 2), "leaf_dying": Vector2i(2, 2), "fern": Vector2i(3, 2),
+	"bush": Vector2i(4, 2), "bramble": Vector2i(5, 2), "weeds": Vector2i(6, 2), "moss": Vector2i(7, 2),
 	"litter": Vector2i(0, 3), "litter_amber": Vector2i(1, 3), "rot": Vector2i(2, 3), "tuft": Vector2i(3, 3),
 }
 ## The hanging moss strip (32 x 64) and the impostor column width.
-const HANG := Rect2i(224, 0, 32, 64)
-const IMPOSTOR := Vector2i(32, 64)
+const HANG := Rect2i(448, 0, 32, 64)
+const IMPOSTOR := Vector2i(64, 128)
 const ROT_GREEN := Color(0.36, 0.6, 0.1)
 
 static var _image: Image
@@ -42,7 +46,7 @@ static func texture() -> Texture2D:
 ## The painted tiles without impostors (ForestTrees samples the leaf tiles from it).
 static func image() -> Image:
 	if _image == null:
-		_image = Image.create(SIZE, SIZE, false, Image.FORMAT_RGBA8)
+		_image = Image.create(WIDTH, HEIGHT, false, Image.FORMAT_RGBA8)
 		_image.fill(Color(0.0, 0.0, 0.0, 0.0))
 		var rng := RandomNumberGenerator.new()
 		rng.seed = 2718
@@ -66,6 +70,11 @@ static func image() -> Image:
 static func uv_rect(tile: String) -> Rect2:
 	var r := _rect(tile)
 	return Rect2(Vector2(r.position) / SIZE, Vector2(r.size) / SIZE)
+
+
+## Atlas UV rect of the hanging moss strip.
+static func hang_uv_rect() -> Rect2:
+	return Rect2(Vector2(HANG.position) / SIZE, Vector2(HANG.size) / SIZE)
 
 
 ## Atlas UV rect of a style's impostor (style index 0..6).

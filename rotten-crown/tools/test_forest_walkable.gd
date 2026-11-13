@@ -7,17 +7,33 @@ extends SceneTree
 ## --headless), the trunk colliders and the floor obstacles (logs, boulders, stumps).
 ## Prints PASS/FAIL lines and FOREST_TEST_FAILURES <n>.
 ## (-s mode: no autoloads; only ForestBuilder / WoodProps statics are used.)
+## FOREST_SCENE=<path> reads another baked scene (e.g. an older bake, for comparison).
+##
+## Nothing floats (V6): every hanging moss strand is baked into a tree mesh and hangs from
+## one of its limbs (so it is drawn by its own tree instance: same LOD band, same range,
+## same cull), no floor card hangs or stands in the air, and every floor card and kit
+## stands on the terrain (or on the log it grows on).
 
-const SCENE := "res://src/levels/valdron/baked/overworld_world.scn"
+const DEFAULT_SCENE := "res://src/levels/valdron/baked/overworld_world.scn"
 const CAPSULE := 0.4
 ## Allowed deviation of the tree count per tier from area x density.
 const COUNT_TOLERANCE := 0.15
+## The corridors (trees lining the paths) are counted apart from the tiers: this far (m)
+## past a path's clearance.
+const CORRIDOR_BAND := ForestBuilder.CORRIDOR + 1.5
+## Trunks per 10 m of path edge (both sides counted apart) the corridors must reach.
+const CORRIDOR_MIN := 2.5
+## A floor card or kit origin this close (m) to the terrain counts as standing on it.
+const GROUND_TOLERANCE := 0.4
+## A baked moss strand's top must be this close (m) to a bark vertex of its tree's limbs.
+const LIMB_REACH := 0.6
 
 var _failures := 0
 
 
 func _initialize() -> void:
-	var packed := load(SCENE) as PackedScene
+	var scene := OS.get_environment("FOREST_SCENE")
+	var packed := load(scene if scene != "" else DEFAULT_SCENE) as PackedScene
 	if packed == null:
 		_check(false, "baked scene loads")
 		_finish()
@@ -39,6 +55,9 @@ func _initialize() -> void:
 	_check_spacing(trees, trunks)
 	_check_obstacles(trunks, obstacles)
 	_check_tiers(trees)
+	_check_corridors(trunks)
+	_check_moss(forest)
+	_check_grounded(root, forest)
 	root.free()
 	_finish()
 
@@ -192,14 +211,31 @@ func _check_floor(forest: Node3D) -> void:
 		"floor kits scattered (cards %d, small kits %d, large kits %d)" % [counts["Cards"], counts["Small"], counts["Large"]])
 
 
-## Roads (map roads + the painted old forest path): every trunk centre keeps
-## ROAD_CLEAR m from every centreline, and a 0.4 m capsule walked along each
-## centreline in 1 m steps touches no trunk collider.
+## Roads (map roads + the painted old forest path): every trunk collider keeps its whole
+## width outside the clearance (ROAD_CLEAR m from a road centreline, TRAIL_CLEAR from a
+## narrow trail's), and a 0.4 m capsule walked along each centreline in 1 m steps touches
+## no trunk collider.
 func _check_roads(trees: Array, trunks: Array) -> void:
-	var worst := INF
+	var worst_road := INF
+	var worst_trail := INF
+	var inside := 0
+	for tr: Array in trunks:
+		var c: Vector2 = tr[0]
+		for line: Array in ForestBuilder.road_lines():
+			var d := ForestBuilder._polyline_distance(c, line[0])
+			if float(line[1]) >= ForestBuilder.ROAD_CLEAR:
+				worst_road = minf(worst_road, d)
+			else:
+				worst_trail = minf(worst_trail, d)
+			if d - float(tr[1]) < float(line[1]) - 0.05:
+				inside += 1
+	_check(inside == 0 and worst_road >= ForestBuilder.ROAD_CLEAR and worst_trail >= ForestBuilder.TRAIL_CLEAR,
+		"trunk colliders stay outside the clearances: roads >= %.1f m (closest centre %.2f m), trails >= %.1f m (closest %.2f m), %d inside" % [
+		ForestBuilder.ROAD_CLEAR, worst_road, ForestBuilder.TRAIL_CLEAR, worst_trail, inside])
+	var feet_ok := true
 	for t: Array in trees:
-		worst = minf(worst, ForestBuilder.road_distance(t[0]))
-	_check(worst >= ForestBuilder.ROAD_CLEAR, "trunks keep >= %.1f m from road centrelines (closest %.2f m)" % [ForestBuilder.ROAD_CLEAR, worst])
+		feet_ok = feet_ok and ForestBuilder.road_margin(t[0]) >= 0.0
+	_check(feet_ok, "every tree foot lies outside every road / trail clearance")
 	var hash := _hash(trunks)
 	var lines: Array = []
 	for road: Dictionary in ForestBuilder.map()["roads"]:
@@ -331,21 +367,34 @@ func _check_obstacles(trunks: Array, obstacles: Array) -> void:
 func _check_tiers(trees: Array) -> void:
 	var counts := [0, 0, 0, 0]
 	var outside := 0
+	var t0_trees := 0
 	for t: Array in trees:
 		var tier := ForestBuilder.tier_at(t[0].x, t[0].y)
 		if tier < 0:
 			outside += 1
-		else:
+		elif tier == 0:
+			t0_trees += 1
+		elif ForestBuilder.road_margin(t[0]) >= CORRIDOR_BAND:
 			counts[tier] += 1
 	_check(outside == 0, "no tree outside the wall (%d)" % outside)
-	_check(counts[0] == 0, "T0 areas are empty (%d trees)" % counts[0])
+	_check(t0_trees == 0, "T0 areas are empty (%d trees)" % t0_trees)
+	# Area per tier outside the corridor bands (the corridors are checked on their own).
 	var area := [0, 0, 0, 0]
-	for tier: int in ForestBuilder.tier_grid():
+	var wr := ForestBuilder.wall_rect()
+	var w := int(wr.size.x)
+	var grid := ForestBuilder.tier_grid()
+	for i in grid.size():
+		var tier: int = grid[i]
+		if tier == 0:
+			continue
+		var p := wr.position + Vector2(i % w + 0.5, i / w + 0.5)
+		if _near_any_path(p) and ForestBuilder.road_margin(p) < CORRIDOR_BAND:
+			continue
 		area[tier] += 1
 	for tier in [1, 2, 3]:
 		var expected: float = area[tier] * ForestBuilder.density(tier)
 		var dev: float = (counts[tier] - expected) / maxf(expected, 1.0)
-		_check(absf(dev) <= COUNT_TOLERANCE, "T%d count %d vs expected %.0f (%d m2 x %.1f/100 m2) deviation %+.1f%%" % [
+		_check(absf(dev) <= COUNT_TOLERANCE, "T%d count %d vs expected %.0f (%d m2 outside the corridors x %.1f/100 m2) deviation %+.1f%%" % [
 			tier, counts[tier], expected, area[tier], ForestBuilder.density(tier) * 100.0, dev * 100.0])
 
 
@@ -366,3 +415,255 @@ func _near(h: Dictionary, p: Vector2) -> Array:
 		for dx in range(-1, 2):
 			out.append_array(h.get(key + Vector2i(dx, dz), []))
 	return out
+
+
+## Cheap pre-test: within CORRIDOR_BAND + clearance of a path's bounding box.
+var _path_boxes: Array = []
+
+
+func _near_any_path(p: Vector2) -> bool:
+	if _path_boxes.is_empty():
+		for line: Array in ForestBuilder.road_lines():
+			var box := Rect2(ForestBuilder._v2(line[0][0]), Vector2.ZERO)
+			for q: Variant in line[0]:
+				box = box.expand(ForestBuilder._v2(q))
+			_path_boxes.append(box.grow(float(line[1]) + CORRIDOR_BAND + 1.0))
+	for box: Rect2 in _path_boxes:
+		if box.has_point(p):
+			return true
+	return false
+
+
+## Corridors: along every road and trail where both edges are forest ground, the band just
+## outside the clearance holds at least CORRIDOR_MIN trunks per 10 m of edge.
+func _check_corridors(trunks: Array) -> void:
+	var hash := _hash(trunks)
+	var edge_m := 0.0
+	var count := 0
+	var thin := 0.0
+	for line: Array in ForestBuilder.road_lines():
+		var pts: Array = line[0]
+		var clear: float = line[1]
+		for k in pts.size() - 1:
+			var a := ForestBuilder._v2(pts[k])
+			var b := ForestBuilder._v2(pts[k + 1])
+			var dir := (b - a).normalized()
+			var side := Vector2(-dir.y, dir.x)
+			var n := int(a.distance_to(b) / 10.0)
+			for i in n:
+				var c := a + dir * (10.0 * i + 5.0)
+				for sgn: float in [-1.0, 1.0]:
+					var probe := c + side * sgn * (clear + 3.0)
+					var deep := c + side * sgn * (clear + ForestBuilder.CORRIDOR)
+					if ForestBuilder.tier_at(probe.x, probe.y) <= 0 or ForestBuilder.tier_at(deep.x, deep.y) <= 0 \
+							or ForestBuilder.road_margin(probe) < 2.0:
+						continue
+					edge_m += 10.0
+					var here := 0
+					var seen := {}
+					for q: Vector2 in [c + side * sgn * (clear + 2.0), c + side * sgn * (clear + 5.5)]:
+						for idx: int in _near_wide(hash, q):
+							if seen.has(idx):
+								continue
+							var tc: Vector2 = trunks[idx][0]
+							var rel := tc - c
+							var along := rel.dot(dir)
+							var across := rel.dot(side) * sgn
+							if absf(along) <= 5.0 and across > clear and across <= clear + CORRIDOR_BAND:
+								seen[idx] = true
+								here += 1
+					count += here
+					if here < 2:
+						thin += 10.0
+	var per10 := 10.0 * count / maxf(edge_m, 1.0)
+	_check(per10 >= CORRIDOR_MIN, "paths read as corridors: %.1f trunks per 10 m of path edge in the %.1f m band past the clearance (need >= %.1f; %.0f m of edge sampled, %.0f m with < 2)" % [
+		per10, CORRIDOR_BAND, CORRIDOR_MIN, edge_m, thin])
+
+
+func _near_wide(h: Dictionary, p: Vector2) -> Array:
+	var out: Array = []
+	var key := Vector2i((p / 4.0).floor())
+	for dz in range(-2, 3):
+		for dx in range(-2, 3):
+			out.append_array(h.get(key + Vector2i(dx, dz), []))
+	return out
+
+
+## Hanging moss: baked into the tree meshes as strands (UV2.y > 0, 8 vertices each) whose
+## tops sit on a limb (within LIMB_REACH of a bark vertex), so each strand is drawn by its
+## own tree instance; the impostor material has none; the moss amount per instance is 0..1
+## and nothing hangs on the edge (T1).
+func _check_moss(forest: Node3D) -> void:
+	var strands := 0
+	var off_limb := 0
+	var worst := 0.0
+	var styles_checked := {}
+	var mossy := 0
+	var t1_mossy := 0
+	var bad_amount := 0
+	for cell in forest.get_node("Trees").get_children():
+		if not String(cell.name).begins_with("N_"):
+			continue
+		for k in ForestBuilder.STYLE_NAMES.size():
+			var near := (cell as Node3D).get_node_or_null("Near_" + ForestBuilder.STYLE_NAMES[k]) as MultiMeshInstance3D
+			if near == null:
+				continue
+			var mm := near.multimesh
+			var stride := _stride(mm)
+			var buf := mm.buffer
+			for i in mm.instance_count:
+				var o := i * stride
+				var amount: float = buf[o + 17]
+				if amount < 0.0 or amount > 1.0:
+					bad_amount += 1
+				if amount > 0.0:
+					mossy += 1
+					var foot := Vector2((cell as Node3D).position.x + buf[o + 3], (cell as Node3D).position.z + buf[o + 11])
+					if ForestBuilder.tier_at(foot.x, foot.y) == 1:
+						t1_mossy += 1
+			if styles_checked.has(k):
+				continue
+			styles_checked[k] = true
+			var arr := mm.mesh.surface_get_arrays(0)
+			var v: PackedVector3Array = arr[Mesh.ARRAY_VERTEX]
+			var uv: PackedVector2Array = arr[Mesh.ARRAY_TEX_UV]
+			var uv2: Variant = arr[Mesh.ARRAY_TEX_UV2]
+			if not (uv2 is PackedVector2Array):
+				continue
+			var bark := PackedVector3Array()
+			var tops := PackedVector3Array()
+			var strand_verts := 0
+			for j in v.size():
+				if (uv2 as PackedVector2Array)[j].y > 0.0:
+					strand_verts += 1
+				elif uv[j].x < -0.5:
+					bark.append(v[j])
+			# Each strand: two quads of 4 vertices, corners 0 and 1 of a quad are its top.
+			var first := -1
+			for j in v.size():
+				if (uv2 as PackedVector2Array)[j].y > 0.0:
+					first = j
+					break
+			if first >= 0:
+				for q in range(first, v.size(), 4):
+					tops.append((v[q] + v[q + 1]) * 0.5)
+			strands += strand_verts / 8
+			for top in tops:
+				var best := INF
+				for bv in bark:
+					best = minf(best, top.distance_to(bv))
+				worst = maxf(worst, best)
+				if best > LIMB_REACH:
+					off_limb += 1
+	_check(strands > 0 and off_limb == 0, "hanging moss: %d strands baked into the tree meshes, every one on a limb (farthest %.2f m from bark, %d off a limb)" % [
+		strands, worst, off_limb])
+	_check(bad_amount == 0 and mossy > 0 and t1_mossy == 0, "moss per tree instance: %d mossy trees, none on the edge (T1: %d), amounts in 0..1 (%d bad)" % [
+		mossy, t1_mossy, bad_amount])
+	var far_mesh_strands := 0
+	for cell in forest.get_node("Trees").get_children():
+		var far := (cell as Node3D).get_node_or_null("Far") as MultiMeshInstance3D
+		if far:
+			var a2: Variant = far.multimesh.mesh.surface_get_arrays(0)[Mesh.ARRAY_TEX_UV2]
+			# The card mesh tags only its flat quad (UV2.x); no strand ranks.
+			if a2 is PackedVector2Array:
+				for t in (a2 as PackedVector2Array):
+					if t.y > 0.0:
+						far_mesh_strands += 1
+	_check(far_mesh_strands == 0, "impostor cards carry no moss strands (%d)" % far_mesh_strands)
+
+
+## Terrain height at (x, z) from the baked HeightMapShape3D (bilinear), or NAN.
+var _hm: HeightMapShape3D
+var _hm_xf: Transform3D
+
+
+func _ground_y(x: float, z: float) -> float:
+	if _hm == null:
+		return NAN
+	var cell := _hm_xf.basis.x.length()
+	var gx := (x - _hm_xf.origin.x) / cell + (_hm.map_width - 1) * 0.5
+	var gz := (z - _hm_xf.origin.z) / cell + (_hm.map_depth - 1) * 0.5
+	gx = clampf(gx, 0.0, _hm.map_width - 1.001)
+	gz = clampf(gz, 0.0, _hm.map_depth - 1.001)
+	var ix := int(gx)
+	var iz := int(gz)
+	var fx := gx - ix
+	var fz := gz - iz
+	var d := _hm.map_data
+	var w := _hm.map_width
+	var h00 := d[iz * w + ix]
+	var h10 := d[iz * w + ix + 1]
+	var h01 := d[(iz + 1) * w + ix]
+	var h11 := d[(iz + 1) * w + ix + 1]
+	return (lerpf(lerpf(h00, h10, fx), lerpf(h01, h11, fx), fz)) * cell + _hm_xf.origin.y
+
+
+## Every floor card and kit stands on the terrain (small kits may sit on a fallen log);
+## no card is a hanging strip (mode 2 / hang tile) or floats over a path.
+func _check_grounded(root: Node3D, forest: Node3D) -> void:
+	for node in root.find_children("*", "CollisionShape3D", true, false):
+		var cs := node as CollisionShape3D
+		if cs.shape is HeightMapShape3D:
+			_hm = cs.shape as HeightMapShape3D
+			var xf := cs.transform
+			var n: Node = cs.get_parent()
+			while n != null and n != root:
+				if n is Node3D:
+					xf = (n as Node3D).transform * xf
+				n = n.get_parent()
+			_hm_xf = xf
+	_check(_hm != null, "terrain height map found in the baked world")
+	if _hm == null:
+		return
+	var floor_node := forest.get_node_or_null("Floor")
+	if floor_node == null:
+		return
+	var logs: Array = []
+	for cell in floor_node.get_children():
+		var large := (cell as Node3D).get_node_or_null("Large") as MultiMeshInstance3D
+		if large == null:
+			continue
+		var stride := _stride(large.multimesh)
+		var buf := large.multimesh.buffer
+		for i in large.multimesh.instance_count:
+			var o := i * stride
+			var kit := int(round(buf[o + 16]))
+			if kit == ForestFloor.Large.LOG or kit == ForestFloor.Large.HOLLOW_LOG:
+				logs.append(Vector2((cell as Node3D).position.x + buf[o + 3], (cell as Node3D).position.z + buf[o + 11]))
+	var hang_uv := ForestAtlas.hang_uv_rect().position
+	var floating := 0
+	var hanging := 0
+	var worst := 0.0
+	var checked := 0
+	for cell in floor_node.get_children():
+		var c := cell as Node3D
+		for fam: String in ["Cards", "Small", "Large"]:
+			var mmi := c.get_node_or_null(fam) as MultiMeshInstance3D
+			if mmi == null:
+				continue
+			var stride := _stride(mmi.multimesh)
+			var buf := mmi.multimesh.buffer
+			for i in mmi.multimesh.instance_count:
+				var o := i * stride
+				var p := c.position + Vector3(buf[o + 3], buf[o + 7], buf[o + 11])
+				checked += 1
+				if fam == "Cards":
+					var mode := fmod(buf[o + 19], 10.0)
+					if buf[o + 19] > 9.5 or (mode > 1.5 and mode < 2.5) or Vector2(buf[o + 16], buf[o + 17]).distance_to(hang_uv) < 0.001:
+						hanging += 1
+				var rise := p.y - _ground_y(p.x, p.z)
+				if absf(rise) <= GROUND_TOLERANCE:
+					continue
+				if fam == "Small" and rise > 0.0 and rise < 1.6 and _near_log(logs, Vector2(p.x, p.z)):
+					continue
+				floating += 1
+				worst = maxf(worst, absf(rise))
+	_check(hanging == 0, "no hanging cards on the floor (moss is part of the trees) (%d)" % hanging)
+	_check(floating == 0, "every floor card and kit stands on the ground: %d checked, %d off it (worst %.2f m)" % [checked, floating, worst])
+
+
+func _near_log(logs: Array, p: Vector2) -> bool:
+	for q: Vector2 in logs:
+		if q.distance_to(p) < 3.0:
+			return true
+	return false

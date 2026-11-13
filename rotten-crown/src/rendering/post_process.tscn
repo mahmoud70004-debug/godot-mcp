@@ -4,14 +4,15 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_post"]
 shader = ExtResource("1_post")
-shader_parameter/color_levels = 14.0
-shader_parameter/dither_strength = 0.7
+shader_parameter/color_levels = 18.0
+shader_parameter/dither_strength = 0.3
 shader_parameter/desaturation = 0.4
 shader_parameter/tint = Color(0.86, 0.93, 1.0, 1)
 shader_parameter/vignette_strength = 0.6
-shader_parameter/grain_strength = 0.075
-shader_parameter/contrast = 1.06
-shader_parameter/lift = Color(0.03, 0.036, 0.07, 1)
+shader_parameter/grain_strength = 0.0
+shader_parameter/contrast = 1.18
+shader_parameter/contrast_pivot = 0.2
+shader_parameter/lift = Color(0.022, 0.027, 0.055, 1)
 shader_parameter/corruption = 0.0
 shader_parameter/rain_amount = 0.0
 shader_parameter/flash = 0.0
