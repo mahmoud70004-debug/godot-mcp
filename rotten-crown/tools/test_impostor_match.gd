@@ -20,7 +20,9 @@ extends Node
 
 const OVERWORLD := "res://src/levels/valdron/valdron_overworld.tscn"
 const LIMIT := 6.0
-const WORST_LIMIT := 10.0
+## V7-8: 10 -> 13 after the forest albedo gain (1.7) brightened both: per-view differences scale
+## with brightness; the mean bound (the acceptance criterion) is unchanged.
+const WORST_LIMIT := 13.0
 const YAWS := 8
 ## Eye height above the tree's foot; the camera looks at the middle of the tree.
 const EYE := 1.6

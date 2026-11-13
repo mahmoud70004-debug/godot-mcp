@@ -20,8 +20,8 @@ uniform float forest_scale = 0.2;
 uniform float road_scale = 0.28;
 // V7: renamed from *_tint (the baked world stores the old tint values per material, so a new name
 // is what lets these defaults take effect without a re-bake).
-uniform vec3 grass_albedo : source_color = vec3(0.78, 0.88, 0.96);
-uniform vec3 dry_albedo : source_color = vec3(0.98, 1.0, 1.1);
+uniform vec3 grass_albedo : source_color = vec3(0.64, 0.74, 0.82);
+uniform vec3 dry_albedo : source_color = vec3(0.66, 0.68, 0.75);
 uniform vec3 forest_albedo : source_color = vec3(0.64, 0.7, 0.78);
 uniform vec3 road_albedo : source_color = vec3(1.0, 1.0, 1.08);
 uniform vec3 loam_albedo : source_color = vec3(0.5, 0.52, 0.57);

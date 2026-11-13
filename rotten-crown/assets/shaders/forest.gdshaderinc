@@ -51,6 +51,8 @@
 #define TREE_SWAY
 #endif
 
+// Display-space gain on every forest albedo (mesh and impostor alike; V7-8 calibration).
+uniform float albedo_gain = 1.7;
 uniform sampler2D atlas : source_color, filter_nearest_mipmap;
 // Mipmapped (nearest within a level): chunky up close, no shimmering grain far away.
 uniform sampler2D bark_tex : source_color, filter_nearest_mipmap, repeat_enable;
@@ -270,7 +272,10 @@ void fragment() {
 	} else {
 		t = texture(atlas, v_uv);
 	}
-	vec3 albedo = t.rgb * COLOR.rgb * tint;
+	// V7-8: the painted bark/leaf colours were chosen under the old fill light and read
+	// near-black under the plain moon model; one gain (display space) lifts mesh and impostor
+	// alike, so their match holds.
+	vec3 albedo = min(t.rgb * COLOR.rgb * tint * albedo_gain, vec3(1.0));
 #ifdef IMPOSTOR
 	vec4 nt = texture(normal_atlas, v_uv / impostor_band);
 	vec3 nb = nt.rgb * 2.0 - 1.0;
