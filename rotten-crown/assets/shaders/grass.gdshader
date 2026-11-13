@@ -2,8 +2,10 @@
 // columns (no texture), sway in the wind, and shade from base to tip.
 shader_type spatial;
 // Unshaded on purpose: the web renderer re-draws lit objects once per light,
-// and grass covers the whole meadow. Moonlight is baked into the colours.
+// and grass covers the whole meadow. The moonlight model is evaluated per vertex (V7).
 render_mode cull_disabled, unshaded;
+
+#include "res://assets/shaders/moonlight.gdshaderinc"
 
 uniform vec4 base_color : source_color = vec4(0.035, 0.05, 0.025, 1.0);
 uniform vec4 tip_color : source_color = vec4(0.12, 0.18, 0.16, 1.0);
@@ -25,8 +27,26 @@ uniform float chunk_range = 0.0;
 uniform float fade_start = 1000.0;
 uniform float fade_end = 1001.0;
 
+
+// V7 moonlight model: the shader's painted colours are the CLEAR-moon look; this scales them by
+// the model's light (moon key with wrapped lambert x canopy shade x cloud + hemispheric sky
+// ambient) relative to the reference light (project defaults, open ground, no cloud), so a
+// clear moon leaves the colours as authored and shade / clouds / a dimmed moon follow the globals.
+// The factor is a display-space multiplier (linear ratio ^ 1/2.2), computed per vertex.
+const vec3 MOON_REF_IRR = vec3(0.387, 0.5431, 1.1067);
+uniform float light_gain = 1.0;
+
+vec3 grass_light(vec3 wp, vec3 cam) {
+	vec3 to_cam = vec3(cam.x - wp.x, 0.0, cam.z - wp.z);
+	vec3 n = normalize(mix(vec3(0.0, 1.0, 0.0), to_cam / max(length(to_cam), 0.001), 0.3));
+	float ndl = max((dot(n, moon_dir) + 0.5) / 1.5, 0.0);
+	vec3 ratio = moon_irradiance(ndl, n, wp) / MOON_REF_IRR;
+	return pow(ratio, vec3(1.0 / 2.2)) * light_gain;
+}
+
 varying vec3 world_pos;
 varying float v_culled;
+varying vec3 v_lit;
 
 float hash(float n) {
 	return fract(sin(n) * 43758.5453);
@@ -36,7 +56,15 @@ void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float h = 1.0 - UV.y;
 	float gust = sin(TIME * wind_speed + world_pos.x * 0.35 + world_pos.z * 0.25) * 0.6 + sin(TIME * wind_speed * 2.3 + world_pos.z) * 0.4;
-	VERTEX.x += (gust * gust_strength * wind_strength + lean) * h * h;
+	// Own gust character, direction and strength from the global wind (the old fixed look
+	// where no Moonlight node drives it: strength 0).
+	bool driven = wind.z > 0.0001;
+	vec2 wdir = driven ? normalize(wind.xy) : vec2(1.0, 0.0);
+	float wk = driven ? wind.z / 0.12 : 1.0;
+	vec3 sway = vec3(wdir.x, 0.0, wdir.y) * (gust * gust_strength * wind_strength * wk) * h * h;
+	VERTEX.x += lean * h * h;
+	VERTEX += (inverse(MODEL_MATRIX) * vec4(sway, 0.0)).xyz;
+	v_lit = grass_light(world_pos, CAMERA_POSITION_WORLD);
 	VERTEX.y *= 1.0 - smoothstep(fade_start, fade_end, length((MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz));
 	v_culled = chunk_range > 0.0 && distance(CAMERA_POSITION_WORLD, INSTANCE_CUSTOM.xyz) > chunk_range ? 1.0 : 0.0;
 	// A culled tuft collapses to a point: no pixels are rasterised for it at all.
@@ -60,7 +88,7 @@ void fragment() {
 	}
 	vec3 tip = mix(tip_color.rgb, dry_color.rgb, step(0.8, seed));
 	float t = y / height;
-	ALBEDO = mix(base_color.rgb, tip, t);
+	ALBEDO = mix(base_color.rgb, tip, t) * v_lit;
 	ALBEDO += vec3(sheen * 0.5) * smoothstep(0.7, 1.0, t);
 	ROUGHNESS = 1.0;
 }

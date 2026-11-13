@@ -9,12 +9,12 @@
 shader_type spatial;
 render_mode cull_disabled, unshaded;
 
+#include "res://assets/shaders/moonlight.gdshaderinc"
+
 uniform vec4 root_color : source_color = vec4(0.022, 0.024, 0.03, 1.0);
 uniform vec4 stem_color : source_color = vec4(0.11, 0.115, 0.12, 1.0);
 uniform vec4 tip_color : source_color = vec4(0.27, 0.28, 0.31, 1.0);
 uniform vec4 ear_color : source_color = vec4(0.33, 0.34, 0.37, 1.0);
-// Multiplier in cloud shadow: shadows lean cold (art direction).
-uniform vec4 shade_tint : source_color = vec4(0.36, 0.38, 0.42, 1.0);
 uniform vec2 wind_dir = vec2(0.55, 0.83);
 // Static bend along the wind, as a fraction of the tuft height.
 uniform float lean = 0.42;
@@ -25,9 +25,6 @@ uniform float gust_scale = 0.07;
 uniform float flutter = 0.04;
 uniform float blades = 26.0;
 uniform float pixel_size = 52.0;
-uniform float cloud_scale = 0.085;
-uniform float cloud_speed = 0.5;
-uniform float cloud_shadow = 0.65;
 uniform float sheen = 0.45;
 
 varying vec3 world_pos;
@@ -41,7 +38,25 @@ uniform float chunk_range = 0.0;
 uniform float fade_start = 1000.0;
 uniform float fade_end = 1001.0;
 
+
+// V7 moonlight model: the shader's painted colours are the CLEAR-moon look; this scales them by
+// the model's light (moon key with wrapped lambert x canopy shade x cloud + hemispheric sky
+// ambient) relative to the reference light (project defaults, open ground, no cloud), so a
+// clear moon leaves the colours as authored and shade / clouds / a dimmed moon follow the globals.
+// The factor is a display-space multiplier (linear ratio ^ 1/2.2), computed per vertex.
+const vec3 MOON_REF_IRR = vec3(0.387, 0.5431, 1.1067);
+uniform float light_gain = 0.88;
+
+vec3 grass_light(vec3 wp, vec3 cam) {
+	vec3 to_cam = vec3(cam.x - wp.x, 0.0, cam.z - wp.z);
+	vec3 n = normalize(mix(vec3(0.0, 1.0, 0.0), to_cam / max(length(to_cam), 0.001), 0.3));
+	float ndl = max((dot(n, moon_dir) + 0.5) / 1.5, 0.0);
+	vec3 ratio = moon_irradiance(ndl, n, wp) / MOON_REF_IRR;
+	return pow(ratio, vec3(1.0 / 2.2)) * light_gain;
+}
+
 varying float v_light;
+varying vec3 v_lit;
 varying float v_culled;
 varying float v_gust;
 
@@ -53,21 +68,22 @@ void vertex() {
 	vec3 wp = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	float h = 1.0 - UV.y;
 	float tuft_h = COLOR.g * 2.0;
-	vec2 wd = normalize(wind_dir);
+	// Direction and strength follow the global wind (project default 0 = the authored look).
+	bool driven = wind.z > 0.0001;
+	vec2 wd = driven ? normalize(wind.xy) : normalize(wind_dir);
+	float wk = driven ? wind.z / 0.12 : 1.0;
 	float phase = dot(wp.xz, wd) * gust_scale * 6.2832 - TIME * gust_speed;
 	float gust = sin(phase) * 0.5 + 0.5;
 	gust *= gust;
 	float fl = sin(TIME * 3.7 + COLOR.r * 40.0 + wp.x * 1.3) * flutter;
-	float bend = (lean + gust * gust_strength + fl) * h * h;
+	float bend = (lean + (gust * gust_strength + fl) * wk) * h * h;
 	VERTEX.xz += wd * bend * tuft_h;
 	VERTEX.y -= bend * bend * tuft_h * 0.45;
 	float dist = length((MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz);
 	VERTEX.y -= smoothstep(fade_start, fade_end, dist) * h * tuft_h;
-	// Drifting cloud shadows: two crossed sine fields, cheap and per vertex.
-	float t = TIME * cloud_speed * 0.05;
-	float c = sin(wp.x * cloud_scale + t) * sin(wp.z * cloud_scale * 1.3 - t * 0.7);
-	c += 0.5 * sin((wp.x + wp.z) * cloud_scale * 2.3 + 1.7 + t * 1.3);
-	v_light = mix(1.0 - cloud_shadow, 1.0, smoothstep(-0.45, 0.35, c));
+	// Moonlight (shade, clouds, moon) at the tuft, not the bent tip.
+	v_lit = grass_light(wp, CAMERA_POSITION_WORLD);
+	v_light = moon_shade(wp);
 	v_gust = gust;
 	world_pos = wp;
 	v_culled = chunk_range > 0.0 && distance(CAMERA_POSITION_WORLD, CUSTOM0.xyz) > chunk_range ? 1.0 : 0.0;
@@ -102,7 +118,7 @@ void fragment() {
 	c *= (0.78 + 0.4 * s2) * (0.7 + 0.6 * COLOR.b);
 	// Deep inside the tuft is dark, whatever the blade.
 	c *= mix(0.35, 1.0, smoothstep(0.0, 0.55, y));
-	c *= mix(shade_tint.rgb, vec3(1.0), v_light);
+	c *= v_lit;
 	c += tip_color.rgb * sheen * v_gust * t * t * v_light;
 	ALBEDO = c;
 }

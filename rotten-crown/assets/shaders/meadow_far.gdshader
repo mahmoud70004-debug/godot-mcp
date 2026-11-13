@@ -8,6 +8,8 @@
 shader_type spatial;
 render_mode unshaded, fog_disabled, cull_disabled, shadows_disabled;
 
+#include "res://assets/shaders/moonlight.gdshaderinc"
+
 uniform vec3 base_color : source_color = vec3(0.045, 0.055, 0.045);
 uniform vec3 top_color : source_color = vec3(0.1, 0.115, 0.095);
 uniform vec3 window_color : source_color = vec3(0.79, 0.7, 0.35);
@@ -21,9 +23,11 @@ uniform float near_start = 70.0;
 varying float local_y;
 varying float view_dist;
 varying float front;
+varying vec3 v_world;
 
 void vertex() {
 	local_y = VERTEX.y;
+	v_world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	view_dist = length((MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz);
 	// Seen from behind (local -Z side) the card is a lie: hide it.
 	front = (inverse(MODEL_MATRIX) * vec4(INV_VIEW_MATRIX[3].xyz, 1.0)).z;
@@ -45,5 +49,7 @@ void fragment() {
 	vec3 col = mix(base_color, top_color, t * t);
 	float d = fract(sin(dot(floor(FRAGCOORD.xy), vec2(12.9898, 78.233))) * 43758.5453);
 	col += (d - 0.5) * 0.012;
+	// Cloud shadows carry to the horizon (V7); windows stay lit.
+	col *= moon_cloud(v_world);
 	ALBEDO = mix(col, window_color, step(0.5, COLOR.r));
 }
