@@ -23,7 +23,8 @@ func _ready() -> void:
 	var what := OS.get_environment("RC_BAKE")
 	if what == "" or what == "overworld":
 		var root := _new_root("OverworldWorld")
-		OverworldBuilder.build(root)
+		var terrain := OverworldBuilder.build(root)
+		bake_moon_shade(root, terrain)
 		await _finish(root, OUT_DIR + "overworld_world.scn", OVERWORLD_DEFAULT_RANGE)
 	if what == "" or what == "prologue":
 		var root := _new_root("PrologueWorld")
@@ -38,6 +39,13 @@ func _ready() -> void:
 		await _finish(root, OUT_DIR + "prologue_world.scn")
 	print("WORLD_BAKE_DONE")
 	get_tree().quit()
+
+
+## Canopy shade map (MoonShadeBaker -> assets/textures/world/moon_shade.png) from the
+## freshly built overworld, before the merges and the save: the near tree MultiMeshes
+## and the scenery colliders are all still there.
+func bake_moon_shade(world: Node3D, terrain: TerrainBuilder) -> void:
+	MoonShadeBaker.bake(world, terrain)
 
 
 func _new_root(root_name: String) -> Node3D:
