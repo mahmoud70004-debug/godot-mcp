@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" path="res://src/levels/valdron/baked/overworld_world.scn" id="2_world"]
 [ext_resource type="Script" path="res://src/world/horizon_backdrop.gd" id="23_horizon"]
 [ext_resource type="Script" path="res://src/rendering/view_distance.gd" id="35_view"]
+[ext_resource type="Script" path="res://src/rendering/moonlight.gd" id="36_moonlight"]
 [ext_resource type="Script" path="res://src/levels/valdron/overworld_populator.gd" id="24_populator"]
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/night_wind.wav" id="25_wind"]
 [ext_resource type="PackedScene" path="res://src/player/player.tscn" id="3_player"]
@@ -111,6 +112,11 @@ shadow_enabled = true
 shadow_opacity = 0.85
 directional_shadow_mode = 0
 directional_shadow_max_distance = 40.0
+
+[node name="MoonlightModel" type="Node" parent="." node_paths=PackedStringArray("light", "environment")]
+script = ExtResource("36_moonlight")
+light = NodePath("../Moonlight")
+environment = NodePath("../WorldEnvironment")
 
 [node name="World" parent="." instance=ExtResource("2_world")]
 

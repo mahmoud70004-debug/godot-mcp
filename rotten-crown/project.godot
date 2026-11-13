@@ -166,3 +166,50 @@ lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
 environment/defaults/default_clear_color=Color(0.03, 0.035, 0.035, 1)
 2d/snap/snap_2d_transforms_to_pixel=true
 2d/snap/snap_2d_vertices_to_pixel=true
+
+[shader_globals]
+
+moon_dir={
+"type": "vec3",
+"value": Vector3(-0.420856, 0.500347, -0.756659)
+}
+moon_color={
+"type": "color",
+"value": Color(0.3405, 0.5147, 1.15, 1)
+}
+sky_ambient_top={
+"type": "color",
+"value": Color(0.16, 0.2, 0.34, 1)
+}
+sky_ambient_bottom={
+"type": "color",
+"value": Color(0.05, 0.055, 0.07, 1)
+}
+shade_map={
+"type": "sampler2D",
+"value": ""
+}
+shade_rect={
+"type": "vec4",
+"value": Vector4(0, 0, 1, 1)
+}
+cloud_tex={
+"type": "sampler2D",
+"value": ""
+}
+cloud_scroll={
+"type": "vec2",
+"value": Vector2(0, 0)
+}
+cloud_scale={
+"type": "float",
+"value": 0.012
+}
+cloud_strength={
+"type": "float",
+"value": 0.0
+}
+wind={
+"type": "vec4",
+"value": Vector4(0.8, 0.6, 0, 1)
+}

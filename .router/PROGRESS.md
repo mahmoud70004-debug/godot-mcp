@@ -116,3 +116,4 @@
 | task | tier | status | note |
 |---|---|---|---|
 | baseline | H (me) | done | V6 shots at 8 poses (scratch v6shots); bottom-third luminance: road 16.3, cross 8.3, wood 8.2, spawn 16.7, thornfield 29.7, hollowmere 19.5, kingswood 9.0, plains 11.6. web_perf V6 (software GL): Low spawn 2.5 / hollowmere 1.75 fps, Medium 2.0 / 1.75 |
+| V7-1 | H (router-hard) | done | project.godot shader_globals, moonlight.gdshaderinc, moonlight.gd, overworld MoonlightModel node | verified: import/run clean, validate OK; me: colour-space fix (unshaded helpers light in linear, return display; moon_color pushed linear) |
