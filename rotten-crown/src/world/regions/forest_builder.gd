@@ -333,7 +333,7 @@ static func _walls(trees: Array, grid_hash: Dictionary, terrain: TerrainBuilder,
 				var radius := ForestTrees.radius(style) * scale
 				var crown := ForestTrees.impostor_size(style).x * 0.5 * scale
 				var p := cell + off + (out * (radius * 0.75 + 0.2) if row_depth == 1 else Vector2.ZERO)
-				var tier := maxi(_tier_cached(p.x, p.y), 1)
+				var tier := maxi(tier_at(p.x, p.y), 1)
 				var key := Vector2i((p / 3.5).floor())
 				var free := true
 				for dz in range(-1, 2):
