@@ -185,3 +185,9 @@
 - User: leaves "keep loading" while walking. Cause: mesh->card swap at fixed 16-24 m. Now ViewDistance.NEAR_FOG [0.45, 0.55, 0.7] (caps NEAR_TREES 28/34/40, ForestTrees.NEAR_END 40, IMPOSTOR_DISTANCE 28, SWAP_FADE 3): swap at 21-25 m in the Whispering Wood, 27-33 m in the Kingswood.
 - Tests: layout 0, forest 0, impostor 0, validate/gdlint clean, web smoke/touch/swap PASS. web_perf Low: spawn 2.5, hollowmere 3 (V14: 3 / 1.75). Not measured inside the forest (more detailed trees drawn there).
 - Next: bake bark furrows from the sculpts into bark texture; canopy roof over paths; foliage interlacing with walls.
+
+## V16 - wall growth (published 2026-11-14T23:47:32Z)
+- Bark furrow re-bake skipped: bark already uses the Blender tile + normal relief (bark_gnarled); little gain. Canopy roof over paths checked with look-up shots: already closed.
+- New src/world/props/wall_growth.gd (WallGrowth) + assets/shaders/forest_growth.gdshader (forest_card without ViewDistance LOD bands): 4 variants (creepers, leaf mantle, crown spill, drooping boughs + moss), 198 sites on the kingdom wall where tier >= 1, south outer face gets spill only; MultiMesh per (60 m chunk, variant), 115 nodes. Called from OverworldBuilder after ForestBuilder.
+- Tests: layout 0, forest 0, impostor 0, validate/gdlint clean, web smoke/touch/swap PASS. web_perf Low: spawn 2.25, hollowmere 1.75 (V15: 2.5 / 3; V14: 3 / 1.75 - noise range).
+- Open: same growth on village buildings / citadel walls; router-reviewer pass V8-V16.
