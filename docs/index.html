@@ -235,12 +235,12 @@ h1 span { display: block; }
 		</div>
 		<figcaption id="caption" aria-live="polite">Valdron sang, and drank, and sang again.</figcaption>
 	</figure>
-	<p class="build" id="rc-build">V7 &middot; build 2026-11-14 09:26 UTC</p>
+	<p class="build" id="rc-build">V8 &middot; build 2026-11-14 10:18 UTC</p>
 </main>
 
 <script src="index.js"></script>
 <script>
-const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":24341272,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js"};
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"emscriptenPoolSize":8,"ensureCrossOriginIsolationHeaders":true,"executable":"index","experimentalVK":false,"fileSizes":{"index.pck":24367988,"index.wasm":39513091},"focusCanvas":true,"gdextensionLibs":[],"godotPoolSize":4,"serviceWorker":"index.service.worker.js"};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -248,7 +248,7 @@ const engine = new Engine(GODOT_CONFIG);
 // requested under a per-build URL so neither the browser's HTTP cache nor the PWA service worker's
 // cache can hand a phone an older game; the page itself checks build.txt on the server and, when
 // a cached copy of it is stale, drops every service worker + cache and reloads once.
-const RC_BUILD = '2026-11-14T09:26:51Z';
+const RC_BUILD = '2026-11-14T10:18:35Z';
 const rcFresh = (function () {
 	const upToDate = Promise.resolve(true);
 	// Browsers look for a new service worker only now and then (about once a day); ask right away,
