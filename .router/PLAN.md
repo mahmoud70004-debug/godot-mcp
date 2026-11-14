@@ -547,3 +547,55 @@ Spec = the user's message (tasks fully specified; cinematic choices left to me).
   until the new scene is in the tree, then for its prewarm. Verified with a web frame capture (trace logs
   showed scene=null before the fix).
 - V9-3 grade: a little more blue; cinematic touches that cost ~nothing on the phone (post-process only).
+
+---
+
+# V11 - tree overhaul (user request 2026-11-14) - AWAITING APPROVAL
+References: .router/ref/v11_trees_pixel_tunnel.jpg (gnarled wide trunks, claw roots, canopy closing into a
+tunnel, trees fused into walls beside the path), v11_trees_amber_fog.jpg (huge trunks, dense overlapping
+leaves in the foreground, depth in fog).
+
+## Recon
+- Trees today: 7 procedural styles built in GDScript (forest_trees.gd), one atlas, MultiMesh per 24 m cell,
+  4-view impostor cards beyond 16-24 m. No Blender in the tree pipeline (Blender 4.2 is only used for
+  characters: tools/blender/rc_blender, tools/setup_blender.sh; download host reachable).
+- Placement (forest_builder.gd): the whole forest is walkable by design (PASS_GAP 0.9 m between trunks;
+  tools/test_forest_walkable.gd enforces it). Roads/trails have a 6 m "corridor" of denser trunks only.
+- Budget on Low: 101 draws / 165.5k prims of 110 / 170k.
+
+## Design change (needs the user's yes)
+Off-path forest becomes impassable: beside every road and trail, beyond a short walkable verge, stands a
+continuous wall of large fused trees. Clearings, sites and landmarks stay reachable by the existing trails.
+The walkability test is rewritten: paths/clearings connected, walls closed (no gap > 0.5 m).
+
+## Acceptance
+- AC1 Trees are visibly larger (hero/wall trunks ~2x girth, +40-60 % height) and far more detailed up
+  close: gnarled bark relief, knots, hollows, claw-like buttress roots, branching limbs.
+- AC2 Wall: along every road/trail a CharacterBody3D cannot leave the path corridor except at
+  clearings/sites/junctions (test); roots and trunks of neighbouring wall trees visibly merge.
+- AC3 Canopy: dense overlapping leaf masses that close over the path (tunnel), no see-through single cards
+  from the path; foreground branches hang into view.
+- AC4 Look matches the V10 night grade (no new palette); side-by-side with the references for form.
+- AC5 Low budget kept (<= 110 draws / 170k prims at the probe poses), web fps not worse than V10, pck growth
+  <= 3 MB, load time not worse than V10.
+- AC6 Tests 0 failures; published as V11.
+
+## Approach
+- Blender (headless, scripted, reproducible: tools/blender/trees/*.py): sculpt-quality source trees
+  (skin/metaball trunks with displacement bark, root flares, limb forks, leaf-cluster geometry), then BAKE
+  to game assets: low-poly trunk meshes (500-900 tris hero, 250-400 standard) with baked albedo + normal
+  detail in the atlas, and leaf-cluster cards rendered from real 3D foliage (dense, layered, alpha-cut).
+- Wall modules: 3-4 "fused" pieces (2-3 trunks + shared roots + joined canopy, ~10 m long) authored as
+  single meshes, placed end to end along paths with one box/capsule collider chain; interior forest behind
+  the wall thinned (never seen) to pay for the detail.
+- Canopy roof: large shared leaf masses over paths (few big cards per cell) for the tunnel.
+- Impostors/atlas re-baked for the new meshes; LOD cross-dissolve from V10 kept.
+
+## Tasks
+| id | tier | what | done-check |
+|---|---|---|---|
+| V11-1 | N | Blender setup + tree authoring scripts, export GLB/meshes + bake textures | renders of each tree; tri counts in budget |
+| V11-2 | H | import into ForestTrees (mesh + atlas + normal data, moon model, wind), impostor re-bake | impostor match test; close-up shots |
+| V11-3 | H | wall modules + placement along roads/trails, colliders, interior thinning, verge | wall test (AC2), layout test |
+| V11-4 | N | canopy roof / foreground foliage density | AC3 shots from path poses |
+| V11-5 | H | budgets, perf, review, publish V11 | AC5, AC6 |
