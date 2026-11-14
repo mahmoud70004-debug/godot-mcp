@@ -151,3 +151,11 @@
 | V9-2 | H (me) | done | scene_loader.gd | web trace: scene=<null> one frame after the change -> fade lifted at 12.1 s, prewarm done 26.1 s, wake 26.1 s. After fix: black until the eyelids open (frame capture) |
 | V9-3 | H (me) | done | make_night_grade.py (BLUE_SHIFT 0.95/0.99/1.09 on cool colours), retro_post (cine_vignette oval to deep blue, cine_fringe lens split), post_process.tscn; prologue/menu opt out | reference pose: mean RGB 19/38/64 (V8 21/40/60), sat 0.70; warm sources unchanged; cost = 2 extra screen fetches at 640x360 |
 | V9-4 | H (me) | done | ../docs (V9, 2026-11-14 11:29 UTC) | validate OK, gdlint clean, visual_test clean; smoke OK (menu -> black load -> wake, 0 console errors), touch PASS, swap PASS; pck 24.34 -> 24.02 MB (prologue excluded); live Pages = V9. web_perf vs V8 not comparable (V8 build still routes through the prologue the updated tools no longer skip) |
+
+## V10 (phone: black ground patches + rut strips, chessboard path edges, long black load, tree pop / flat trees) - user spec 2026-11-14
+| task | tier | status | note |
+|---|---|---|---|
+| V10-1 | H (me) | done | kingdom_roads.gd, thornfield_builder.gd, re-baked overworld | black strips = wheel-rut boxes (0.1,0.085,0.07), black patches = ooze puddles; removed (rng draws kept exact so the layout is unchanged: forest walkable 0 failures, layout 0) |
+| V10-2 | H (me) | done | terrain.gdshader | chessboard = 8 px/m Bayer layer dither; now smoothstep blends on two-octave value noise (ragged soft edges) |
+| V10-3 | H (me) | done | level.gd, shader_prewarm.gd (hold()), main_menu.gd | first frames drew the whole world + shadows under the fade before the prewarm; the world is now hidden from camera/lights from _ready until the prewarm; menu fade 1.2 -> 0.5 s. Desktop: tap->prewarmed 4.8 -> 3.5 s; web (software GL, Low) tap->first visible frame V9 25.7 s -> V10 20.4 s (avg of 2) |
+| V10-4 | H (me) | done | forest.gdshaderinc, view_distance.gd | mesh/card swap: SWAP_FADE 0 -> 5 m complementary cross-dissolve beyond the near reach (mesh dissolves out exactly where the card dissolves in), interleaved-gradient-noise pattern instead of Bayer; impostor match 0 failures |
