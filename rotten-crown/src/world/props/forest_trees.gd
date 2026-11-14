@@ -18,7 +18,7 @@ const NAMES := ["Tall", "Broad", "Bare", "Elder", "Hollow", "Snag", "Birch"]
 ## Per-instance LOD bands (metres from the camera to the tree's origin): the mesh up to
 ## NEAR_END, then the impostor (fog has taken most of the tree by then) up to FAR_END.
 ## ForestBuilder adds the cell spread to the node ranges.
-const NEAR_END := 26.0
+const NEAR_END := 40.0
 const FAR_END := 78.0
 ## V11: every leaf clump is this much larger, so neighbouring clumps (and neighbouring trees)
 ## overlap into one dense canopy at no extra triangles.
@@ -713,7 +713,7 @@ static func _extent(mesh: ArrayMesh) -> Vector2:
 ## Medium), towards its mid-height (5-12 degrees by style). That shows the flat leaf cards a
 ## pure side view misses (V7: measured with tools/test_impostor_match.gd).
 const IMPOSTOR_EYE := 1.6
-const IMPOSTOR_DISTANCE := 20.0
+const IMPOSTOR_DISTANCE := 28.0
 
 
 ## Paints every style's impostor into `img`: four views per style (ForestAtlas.impostor_rect:

@@ -29,9 +29,12 @@ const FAR_FADE := 7.0
 ## Cross-dissolve band (m) of the near tree into its card, just beyond the near reach (V10: the
 ## one-frame swap read as leaves popping in; the band now uses an even noise pattern, not the
 ## V6 Bayer grid, and the mesh dissolves out exactly where the card dissolves in).
-const SWAP_FADE := 5.0
-## Detailed tree meshes up to (Low, Medium, High) metres.
-const NEAR_TREES := [16.0, 20.0, 24.0]
+const SWAP_FADE := 3.0
+## V15: the detailed trees reach to where the depth fog has taken this much of them (Low,
+## Medium, High), so the swap to the card happens inside the fog and is not seen while walking
+## (at a fixed 16-24 m it read as leaves loading in all the time); never past NEAR_TREES m.
+const NEAR_FOG := [0.45, 0.55, 0.7]
+const NEAR_TREES := [28.0, 34.0, 40.0]
 ## Forest floor (cards, small kits) / large floor kits end where the depth fog has reached
 ## this amount (0..1, Low, Medium, High), never past what the bake drew them for
 ## (ForestFloor.SMALL_RANGE / RANGE: a chunk node is cut at that range plus its spread).
@@ -166,7 +169,7 @@ func reach(kind: int) -> float:
 	var q := _quality()
 	match kind:
 		Kind.NEAR_TREES:
-			return minf(NEAR_TREES[q], d - 4.0)
+			return minf(minf(fog_distance(NEAR_FOG[q], d), NEAR_TREES[q]), d - 4.0)
 		Kind.FLOOR:
 			return minf(fog_distance(FLOOR_FOG[q], d), ForestFloor.SMALL_RANGE)
 		Kind.FLOOR_LARGE:
