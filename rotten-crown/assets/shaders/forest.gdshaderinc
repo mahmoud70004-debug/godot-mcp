@@ -76,6 +76,17 @@ uniform float fade_out = 0.0;
 // same band, same screen pattern: every pixel is drawn by exactly one of the two) instead of
 // fading into the fog colour, so the mesh/impostor swap is a soft cross-dissolve, not a pop.
 uniform bool dissolve_out = false;
+#ifdef TREE
+// V11b relief: the near trees are lit per pixel through the Blender normal maps - every leaf of a
+// canopy mass and every ridge of the bark catches the moon at its own angle (they read as
+// separate leaves and deep bark, not as a printed sheet). leaf_normal covers leaf_normal_rect
+// (atlas UV: x, y, w, h); normals in the card's frame (x right, y up, z out).
+uniform sampler2D leaf_normal : filter_nearest, repeat_disable;
+uniform vec4 leaf_normal_rect = vec4(0.0, 0.0, 0.0, 0.0);
+uniform sampler2D bark_normal : filter_linear_mipmap, repeat_enable;
+uniform float bark_relief = 1.6;
+uniform float leaf_relief = 0.6;
+#endif
 // Atlas tile size (UV units) for TILED cards.
 uniform vec2 tile_size = vec2(0.25, 0.25);
 uniform float bark_scale = 0.5;
@@ -367,7 +378,32 @@ void fragment() {
 	vec3 n = normalize(v_right * nb.x + vec3(0.0, nb.y, 0.0) + v_toward * nb.z);
 	vec3 light = forest_moon(n, forest_shade(v_canopy, v_cloud, v_height), mix(bark_wrap, leaf_wrap, nt.a));
 #else
-	vec3 light = forest_moon(normalize(v_wnormal), v_shade, bark ? bark_wrap : leaf_wrap) + v_lantern;
+	vec3 n = normalize(v_wnormal);
+#ifdef TREE
+	if (bark) {
+		vec2 nuv = abs(v_wnormal.y) > 0.75 ? v_world.xz : vec2(v_world.x + v_world.z, v_world.y);
+		vec3 nm = texture(bark_normal, nuv * bark_scale).rgb * 2.0 - 1.0;
+		vec3 across = cross(vec3(0.0, 1.0, 0.0), n);
+		across = dot(across, across) > 1e-4 ? normalize(across) : vec3(1.0, 0.0, 0.0);
+		n = normalize(n + (across * nm.x + vec3(0.0, 1.0, 0.0) * nm.y) * bark_relief);
+	} else if (leaf_normal_rect.z > 0.0) {
+		vec2 q = (v_uv - leaf_normal_rect.xy) / leaf_normal_rect.zw;
+		if (q.x >= 0.0 && q.x <= 1.0 && q.y >= 0.0 && q.y <= 1.0) {
+			vec3 nm = texture(leaf_normal, q).rgb * 2.0 - 1.0;
+			// The card's own axes from screen derivatives (no tangents in the mesh).
+			vec3 dp1 = dFdx(v_world);
+			vec3 dp2 = dFdy(v_world);
+			vec2 du1 = dFdx(v_uv);
+			vec2 du2 = dFdy(v_uv);
+			vec3 right = dp1 * du2.y - dp2 * du1.y;
+			vec3 down = dp2 * du1.x - dp1 * du2.x;
+			if (dot(right, right) > 1e-12 && dot(down, down) > 1e-12) {
+				n = normalize((normalize(right) * nm.x - normalize(down) * nm.y) * leaf_relief + n * max(nm.z, 0.2));
+			}
+		}
+	}
+#endif
+	vec3 light = forest_moon(n, v_shade, bark ? bark_wrap : leaf_wrap) + v_lantern;
 #endif
 	if (v_glow > 0.0) {
 		float beat = 0.8 + 0.2 * sin(TIME * 1.3 + v_world.x * 0.7 + v_world.z * 0.9);

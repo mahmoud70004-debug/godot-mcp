@@ -32,6 +32,7 @@ const FLOOR_SHADER := preload("res://assets/shaders/forest_floor_card.gdshader")
 const FAR_SHADER := preload("res://assets/shaders/forest_far.gdshader")
 ## V11: deep gnarled ridges with knots (Blender script tools/blender/trees/render_tree_textures.py).
 const BARK_TEX := "res://assets/textures/world/bark_gnarled.png"
+const BARK_NORMAL := "res://assets/textures/world/bark_gnarled_n.png"
 ## Marker UV of solid (non-atlas) vertices: the shader maps the bark scan in world space.
 const SOLID_UV := Vector2(-1.0, -1.0)
 const MOSS := Color(0.2, 0.33, 0.28)
@@ -134,6 +135,9 @@ static func material(id: String) -> ShaderMaterial:
 			mat.set_shader_parameter("lod_end", NEAR_END)
 			var hang := ForestAtlas.hang_uv_rect()
 			mat.set_shader_parameter("hang_uv_y", Vector2(hang.position.y, hang.size.y))
+			mat.set_shader_parameter("leaf_normal", ForestAtlas.leaf_normal_texture())
+			mat.set_shader_parameter("leaf_normal_rect", ForestAtlas.leaf_normal_rect())
+			mat.set_shader_parameter("bark_normal", load(BARK_NORMAL))
 		"far":
 			mat.set_shader_parameter("lod_begin", NEAR_END)
 			mat.set_shader_parameter("lod_end", FAR_END)

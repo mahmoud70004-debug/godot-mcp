@@ -46,6 +46,7 @@ const LEAF_MASS := {
 static var _image: Image
 static var _texture: ImageTexture
 static var _normal_texture: ImageTexture
+static var _leaf_normal: ImageTexture
 
 
 ## The finished atlas (impostors included, mipmapped), built once.
@@ -124,6 +125,42 @@ static func impostor_rect(style: int, view := 0) -> Rect2i:
 ## UV offsets from a style's +Z view to its +X view (u) and to the views of the far sides (v).
 static func impostor_view_offset() -> Vector2:
 	return Vector2(float(STYLE_COUNT * IMPOSTOR.x) / WIDTH, float(IMPOSTOR.y) / HEIGHT)
+
+
+## The leaf tiles' normal maps (Blender, "<mass>_n.png") side by side, for the near trees'
+## per-pixel light; covers leaf_normal_rect() of the atlas.
+static func leaf_normal_texture() -> Texture2D:
+	if _leaf_normal == null:
+		var r := leaf_normal_rect_px()
+		var img := Image.create(r.size.x, r.size.y, false, Image.FORMAT_RGBA8)
+		img.fill(Color(0.5, 0.5, 1.0, 1.0))
+		for tile: String in LEAF_MASS:
+			var tex := load(str(LEAF_MASS[tile][0]).replace(".png", "_n.png")) as Texture2D
+			if tex == null:
+				continue
+			var src := tex.get_image()
+			if src.is_compressed():
+				src.decompress()
+			src.convert(Image.FORMAT_RGBA8)
+			var tr := _rect(tile)
+			if src.get_size() != tr.size:
+				src.resize(tr.size.x, tr.size.y, Image.INTERPOLATE_NEAREST)
+			img.blit_rect(src, Rect2i(Vector2i.ZERO, tr.size), tr.position - r.position)
+		_leaf_normal = ImageTexture.create_from_image(img)
+	return _leaf_normal
+
+
+static func leaf_normal_rect_px() -> Rect2i:
+	var r := Rect2i()
+	for tile: String in LEAF_MASS:
+		r = _rect(tile) if r.size == Vector2i.ZERO else r.merge(_rect(tile))
+	return r
+
+
+## leaf_normal_rect_px() in atlas UV (x, y, w, h).
+static func leaf_normal_rect() -> Vector4:
+	var r := leaf_normal_rect_px()
+	return Vector4(r.position.x / SIZE.x, r.position.y / SIZE.y, r.size.x / SIZE.x, r.size.y / SIZE.y)
 
 
 ## A Blender canopy mass over the code-painted leaves of its tile (kept only as a fallback).

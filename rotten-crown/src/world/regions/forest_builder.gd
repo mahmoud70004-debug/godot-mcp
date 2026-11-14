@@ -119,8 +119,8 @@ const KINGSWOOD_REGION := "res://data/regions/kingswood.tres"
 ## funnels the player along the paths. The forest deeper than VISIBLE_DEPTH m behind the wall
 ## is never walked and mostly hidden: only HIDDEN_KEEP of its trees stay (skyline).
 const VERGE := 1.6
-const WALL_STEP := 2.7
-const WALL_SCALE := Vector2(1.55, 2.1)
+## The wall, row by row: [cells behind the walkable ground, spacing (m), scale range].
+const WALL_ROWS := [[1, 2.7, Vector2(1.55, 2.1)], [5, 3.0, Vector2(1.35, 1.9)], [9, 3.3, Vector2(1.25, 1.75)]]
 ## Wall style weights [TALL, BROAD, BARE, ELDER, HOLLOW, SNAG, BIRCH]: the wide, gnarled ones.
 const WALL_STYLE := [0.2, 0.45, 0.0, 0.08, 0.27, 0.0, 0.0]
 const VISIBLE_DEPTH := 24
@@ -290,67 +290,75 @@ static func _tier_cached(x: float, z: float) -> int:
 
 # --- Walkable ground and the tree wall (V11) ------------------------------------------
 
-## The wall trees: giants on the wall line, WALL_STEP apart (their trunks and root flares
-## overlap), leaning over the walkable side. Own random stream.
+## The wall trees: giants on the wall line (WALL_ROWS[0]: their trunks and root flares overlap)
+## and two staggered rows behind it, so every gap between two trunks shows another trunk, not
+## open ground - the wood reads as deep and closed. All lean towards the walkable side; near
+## the kingdom wall and buildings they keep their crowns' reach away (the canopy hangs over a
+## wall top instead of poking through it). Own random stream.
 static func _walls(trees: Array, grid_hash: Dictionary, terrain: TerrainBuilder, blocked: PackedByteArray, wr: Rect2) -> int:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = SEED + 91
 	var w := int(wr.size.x)
 	var h := int(wr.size.y)
 	var depth := ForestWall.depth_grid()
-	var walk := ForestWall.walk_grid()
 	var placed := {}
 	var count := 0
-	for iz in range(1, h - 1):
-		for ix in range(1, w - 1):
-			if depth[iz * w + ix] != 1:
-				continue
-			var roll := rng.randf()
-			var pick := rng.randf()
-			var jitter := rng.randf_range(-0.5, 0.5)
-			var lean := rng.randf_range(0.04, 0.12)
-			var stretch := rng.randf_range(0.95, 1.15)
-			var off := Vector2(rng.randf_range(-0.3, 0.3), rng.randf_range(-0.3, 0.3))
-			# Away from the walkable ground.
-			var out := Vector2.ZERO
-			for dz in range(-2, 3):
-				for dx in range(-2, 3):
-					if walk[(iz + clampi(dz, -iz, h - 1 - iz)) * w + ix + clampi(dx, -ix, w - 1 - ix)] == 1:
-						out -= Vector2(dx, dz)
-			out = out.normalized() if out.length_squared() > 0.01 else Vector2.RIGHT
-			var cell := Vector2(ix + 0.5, iz + 0.5) + wr.position
-			var zone := zone_at(cell.x, cell.y)
-			var tier := maxi(_tier_cached(cell.x, cell.y), 1)
-			var style := _pick_style(3, zone, pick) if ZONE_STYLE.has(zone) else _weighted(WALL_STYLE, pick)
-			var scale := lerpf(WALL_SCALE.x, WALL_SCALE.y, roll)
-			if style == ForestTrees.Style.ELDER:
-				scale = lerpf(1.0, 1.25, roll)
-			var radius := ForestTrees.radius(style) * scale
-			var p := cell + off + out * (radius * 0.75 + 0.2)
-			var key := Vector2i((p / WALL_STEP).floor())
-			var free := true
-			for dz in range(-1, 2):
-				for dx in range(-1, 2):
-					for q: Vector2 in placed.get(key + Vector2i(dx, dz), []):
-						if q.distance_squared_to(p) < WALL_STEP * WALL_STEP:
-							free = false
-			if not free:
-				continue
-			var d_wall := minf(minf(p.x - wr.position.x, wr.end.x - p.x), minf(p.y - wr.position.y, wr.end.y - p.y))
-			if d_wall < WALL_CLEAR + radius or _is_blocked(blocked, p, radius + BLOCK_PAD) or ForestWall.depth_at(p) == 0:
-				continue
-			var tree := _make_tree(terrain, p, atan2(out.y, -out.x) + jitter, scale, style, tier, lean, stretch)
-			if road_margin(tree[5]) < radius:
-				continue  # the leaning trunk would reach into a clearance
-			tree.append(_tint(rng, zone))
-			# The green rot stays rare on the giants: on a trunk this size it floods the frame.
-			var rot := _rot(rng, p, tier)
-			tree.append(rot * 0.5 if pick < 0.1 else 0.0)
-			_insert(trees, grid_hash, tree)
-			if not placed.has(key):
-				placed[key] = []
-			(placed[key] as Array).append(p)
-			count += 1
+	for row: Array in WALL_ROWS:
+		var row_depth: int = row[0]
+		var step: float = row[1]
+		var srange: Vector2 = row[2]
+		for iz in range(1, h - 1):
+			for ix in range(1, w - 1):
+				var i := iz * w + ix
+				if depth[i] != row_depth:
+					continue
+				var roll := rng.randf()
+				var pick := rng.randf()
+				var jitter := rng.randf_range(-0.5, 0.5)
+				var lean := rng.randf_range(0.04, 0.12)
+				var stretch := rng.randf_range(0.95, 1.15)
+				var off := Vector2(rng.randf_range(-0.3, 0.3), rng.randf_range(-0.3, 0.3))
+				# Away from the walkable ground: up the depth gradient.
+				var out := Vector2.ZERO
+				for dz in range(-1, 2):
+					for dx in range(-1, 2):
+						out += Vector2(dx, dz) * float(int(depth[i + dz * w + dx]) - row_depth)
+				out = out.normalized() if out.length_squared() > 0.01 else Vector2.RIGHT
+				var cell := Vector2(ix + 0.5, iz + 0.5) + wr.position
+				var zone := zone_at(cell.x, cell.y)
+				var style := _pick_style(3, zone, pick) if ZONE_STYLE.has(zone) else _weighted(WALL_STYLE, pick)
+				var scale := lerpf(srange.x, srange.y, roll)
+				if style == ForestTrees.Style.ELDER:
+					scale = lerpf(1.0, 1.25, roll)
+				var radius := ForestTrees.radius(style) * scale
+				var crown := ForestTrees.impostor_size(style).x * 0.5 * scale
+				var p := cell + off + (out * (radius * 0.75 + 0.2) if row_depth == 1 else Vector2.ZERO)
+				var tier := maxi(_tier_cached(p.x, p.y), 1)
+				var key := Vector2i((p / 3.5).floor())
+				var free := true
+				for dz in range(-1, 2):
+					for dx in range(-1, 2):
+						for q: Vector2 in placed.get(key + Vector2i(dx, dz), []):
+							if q.distance_squared_to(p) < step * step:
+								free = false
+				if not free:
+					continue
+				var d_wall := minf(minf(p.x - wr.position.x, wr.end.x - p.x), minf(p.y - wr.position.y, wr.end.y - p.y))
+				if d_wall < WALL_CLEAR + radius + crown * 0.5 or _is_blocked(blocked, p, radius + BLOCK_PAD + crown * 0.35) \
+						or ForestWall.depth_at(p) == 0:
+					continue
+				var tree := _make_tree(terrain, p, atan2(out.y, -out.x) + jitter, scale, style, tier, lean, stretch)
+				if road_margin(tree[5]) < radius:
+					continue  # the leaning trunk would reach into a clearance
+				tree.append(_tint(rng, zone))
+				# The green rot stays rare on the giants: on a trunk this size it floods the frame.
+				var rot := _rot(rng, p, tier)
+				tree.append(rot * 0.5 if pick < 0.1 else 0.0)
+				_insert(trees, grid_hash, tree)
+				if not placed.has(key):
+					placed[key] = []
+				(placed[key] as Array).append(p)
+				count += 1
 	return count
 
 
