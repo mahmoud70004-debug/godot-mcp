@@ -180,3 +180,8 @@
 - ForestTrees.foot(style) = root reach; ForestBuilder keeps roots off paths (ROOT_REACH 0.8, ROOT_VERGE 1.3); moss anchors snap to bark vertices; no overlay bark faces on sculpted styles (elder has its own).
 - Tests: layout 0, forest 0, impostor 0, validate/gdlint clean, web smoke/touch/swap PASS. web_perf Low: spawn 3 fps, hollowmere 1.75 (V13: 2.75/2.5, 2/1.75).
 - Open: fine bark furrows are not in the low mesh (only silhouette + vertex shade); canopy roof over paths; foliage interlacing with walls/buildings; router-reviewer pass V8-V14.
+
+## V15 - tree swap inside the fog (published 2026-11-14T23:11:52Z)
+- User: leaves "keep loading" while walking. Cause: mesh->card swap at fixed 16-24 m. Now ViewDistance.NEAR_FOG [0.45, 0.55, 0.7] (caps NEAR_TREES 28/34/40, ForestTrees.NEAR_END 40, IMPOSTOR_DISTANCE 28, SWAP_FADE 3): swap at 21-25 m in the Whispering Wood, 27-33 m in the Kingswood.
+- Tests: layout 0, forest 0, impostor 0, validate/gdlint clean, web smoke/touch/swap PASS. web_perf Low: spawn 2.5, hollowmere 3 (V14: 3 / 1.75). Not measured inside the forest (more detailed trees drawn there).
+- Next: bake bark furrows from the sculpts into bark texture; canopy roof over paths; foliage interlacing with walls.
