@@ -137,3 +137,8 @@
 | task | tier | status | note |
 |---|---|---|---|
 | recon | H (me) | done | measured REF vs V7 (see PLAN V8 diagnosis); grey comes from retro_post desaturation + env saturation 0.8 + grey fog; player light = Head/Lantern omni + shader lantern globals |
+| V8-1 | H (me) | done | player.tscn, player.gd | Head/Lantern omni removed (no light follows the player); shader lantern globals stay 0 |
+| V8-2 | H (me) | done | reference pose (-6,0,118,140,8) | matches the user's screenshot composition (Kingswood road entering the wood on the left) |
+| V8-3 | H (me) | done | tools/make_night_grade.py, assets/textures/post/night_grade_lut.png, retro_post.gdshader, post_process.tscn, prologue_cutscene.gd, main_menu.gd | 32^3 LUT fitted by iterative 3D distribution transfer (raw frame -> reference) + warm-hue protection; per-channel matching first tried = too monochrome blue. In-game at the reference pose: mean RGB 21/40/60 vs REF 21/40/61, lum p5/p50/p95 11/36/67 vs 11/36/65, sat 0.66 vs 0.71 => AC1 PASS; Hollowmere pumpkins/windows stay warm (AC3); prologue + title keep their own grade |
+| V8-4 | - | skipped (not needed) | - | the LUT reaches AC1/AC2 on the existing lighting; fog/moon/region palettes left as V7 so the fit stays valid |
+| V8-5 | H (me) | done | ../docs (V8, 2026-11-14 10:18 UTC) | validate OK, gdlint clean, visual_test clean; web smoke OK (0 console errors), touch PASS, swap PASS; live Pages shows V8; sheet rotten-crown/build/v8_compare |
