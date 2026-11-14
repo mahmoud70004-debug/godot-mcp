@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Shader" path="res://assets/shaders/retro_post.gdshader" id="1_post"]
+[ext_resource type="Texture2D" path="res://assets/textures/post/night_grade_lut.png" id="2_lut"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_post"]
 shader = ExtResource("1_post")
@@ -16,6 +17,8 @@ shader_parameter/lift = Color(0.022, 0.027, 0.055, 1)
 shader_parameter/corruption = 0.0
 shader_parameter/rain_amount = 0.0
 shader_parameter/flash = 0.0
+shader_parameter/grade_lut = ExtResource("2_lut")
+shader_parameter/grade_amount = 1.0
 
 [node name="PostProcess" type="CanvasLayer"]
 layer = 1

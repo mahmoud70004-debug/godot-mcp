@@ -295,6 +295,7 @@ func _apply_festive_grade() -> void:
 		return
 	# Duplicate so the warm grade does not leak into the gameplay scenes.
 	var mat := screen.material.duplicate() as ShaderMaterial
+	mat.set_shader_parameter("grade_amount", 0.0)
 	mat.set_shader_parameter("desaturation", 0.08)
 	mat.set_shader_parameter("tint", Color(1.0, 0.97, 0.93))
 	mat.set_shader_parameter("grain_strength", 0.0)

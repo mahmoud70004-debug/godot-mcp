@@ -23,6 +23,11 @@ uniform float corruption : hint_range(0.0, 1.0) = 0.0;
 uniform float rain_amount : hint_range(0.0, 1.0) = 0.0;
 // 0..1, lightning pulse: brightens and cools the whole frame.
 uniform float flash : hint_range(0.0, 1.0) = 0.0;
+// V8 night grade: a 32^3 colour LUT (tools/make_night_grade.py, fitted to the user's reference frame)
+// stored as a 1024x32 strip (x = blue slice * 32 + red, y = green), display values in and out.
+// grade_amount 1 replaces desaturation/contrast/tint (the LUT owns colour); 0 = the old grade.
+uniform sampler2D grade_lut : filter_linear, repeat_disable;
+uniform float grade_amount : hint_range(0.0, 1.0) = 0.0;
 
 const float BAYER[16] = float[16](
 	0.0, 8.0, 2.0, 10.0,
@@ -56,17 +61,33 @@ float rain_layer(vec2 p, float cell_w, float speed, float length_px, float densi
 	return t < length_px ? (1.0 - t / length_px) * (0.5 + 0.5 * h2) : 0.0;
 }
 
+vec3 night_grade(vec3 c) {
+	c = clamp(c, 0.0, 1.0) * 31.0;
+	float b0 = floor(c.b);
+	float b1 = min(b0 + 1.0, 31.0);
+	vec2 rg = vec2(c.r + 0.5, c.g + 0.5) / vec2(1024.0, 32.0);
+	vec3 s0 = textureLod(grade_lut, rg + vec2(b0 * 32.0 / 1024.0, 0.0), 0.0).rgb;
+	vec3 s1 = textureLod(grade_lut, rg + vec2(b1 * 32.0 / 1024.0, 0.0), 0.0).rgb;
+	return mix(s0, s1, c.b - b0);
+}
+
 void fragment() {
 	vec2 uv = SCREEN_UV;
 	// Corruption: faint horizontal smear.
 	uv.x += (rand(vec2(floor(FRAGCOORD.y * 0.5), floor(TIME * 12.0))) - 0.5) * 0.004 * corruption;
 	vec3 col = textureLod(screen_texture, uv, 0.0).rgb;
 
-	float luma = dot(col, vec3(0.299, 0.587, 0.114));
-	col = mix(col, vec3(luma), desaturation);
-	col = max((col - contrast_pivot) * contrast + contrast_pivot, vec3(0.0));
-	col *= tint.rgb;
-	col = lift + col * (1.0 - lift);
+	vec3 lifted = lift + col * (1.0 - lift);
+	if (grade_amount < 1.0) {
+		float luma = dot(col, vec3(0.299, 0.587, 0.114));
+		col = mix(col, vec3(luma), desaturation);
+		col = max((col - contrast_pivot) * contrast + contrast_pivot, vec3(0.0));
+		col *= tint.rgb;
+		col = lift + col * (1.0 - lift);
+	}
+	if (grade_amount > 0.0) {
+		col = mix(col, night_grade(lifted), grade_amount);
+	}
 	col = mix(col, col * vec3(0.75, 1.1, 0.7), corruption * 0.6);
 
 	if (rain_amount > 0.0) {

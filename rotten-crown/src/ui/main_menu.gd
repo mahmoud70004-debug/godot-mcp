@@ -16,6 +16,7 @@ const PROLOGUE := "res://src/cutscenes/prologue.tscn"
 func _ready() -> void:
 	get_tree().paused = false
 	version_label.text = _build_text()
+	_keep_title_colours()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	new_game_button.pressed.connect(_on_new_game)
 	continue_button.pressed.connect(_on_continue)
@@ -31,6 +32,17 @@ func _ready() -> void:
 	settings_button.pressed.connect(_open_settings)
 	settings_panel.closed.connect(_close_settings)
 	new_game_button.grab_focus()
+
+
+## The title painting keeps its own colours: the gameplay night grade (V8 LUT) is for the 3D world.
+## Duplicated so the change does not leak into the shared post-process material.
+func _keep_title_colours() -> void:
+	var screen := get_node_or_null("PostProcess/Screen") as ColorRect
+	if screen == null or not screen.material is ShaderMaterial:
+		return
+	var mat := screen.material.duplicate() as ShaderMaterial
+	mat.set_shader_parameter("grade_amount", 0.0)
+	screen.material = mat
 
 
 ## "V7 - build 2026-11-14 08:40 UTC": the numbered update plus when this pack was exported, so a
