@@ -2,7 +2,9 @@ extends Control
 ## Title screen: the sleeping knight in the Moonlit Meadows (TitleBackdrop), the title,
 ## and the three text-style menu items. "Wake Up" always comes first.
 
-const PROLOGUE := "res://src/cutscenes/prologue.tscn"
+## The opening cutscene is out of the game until the world look is final (V9); a new game
+## starts with the knight waking in the meadow.
+const FIRST_SCENE := "res://src/levels/valdron/valdron_overworld.tscn"
 
 @onready var new_game_button: MenuItemButton = %NewGameButton
 @onready var continue_button: MenuItemButton = %ContinueButton
@@ -57,7 +59,8 @@ func _build_text() -> String:
 
 func _on_new_game() -> void:
 	GameState.new_game()
-	SceneLoader.change_scene(PROLOGUE, 1.2)
+	GameState.set_flag("waking_up")
+	SceneLoader.change_scene(FIRST_SCENE, 1.2)
 
 
 func _on_continue() -> void:

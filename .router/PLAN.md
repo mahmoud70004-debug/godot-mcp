@@ -533,3 +533,17 @@ lantern copy (lantern_pos/lantern_light).
 | V8-3 | H | night grade: make_night_grade.py + LUT asset + retro_post LUT sampling; neutralise desaturation/tint | AC1 on the reference pose; AC3 on Hollowmere |
 | V8-4 | H | atmosphere: fog colour/energy, moon/ambient hue, region .tres palettes, env saturation/exposure; re-bake if uniform defaults change | AC1/AC2 hold, AC5 sheet of all regions |
 | V8-5 | H (me) | verify, side-by-side vs reference, tests, perf vs V7, review, publish with build_label V8 | AC1-AC6 |
+
+---
+
+# V9 - opening cutscene out, load-flash fix, a touch more blue + cinema (user request 2026-11-14)
+Spec = the user's message (tasks fully specified; cinematic choices left to me).
+- V9-1 remove the opening cutscene from the game: Wake Up -> overworld (waking_up flag); prologue scene,
+  script and baked prologue world excluded from Web/Android exports (sources kept for the later redo);
+  web tools no longer wait for/skip the prologue.
+- V9-2 load flash: on the web SceneLoader checked current_scene one frame after change_scene_to_packed,
+  got null (the big overworld enters the tree later), skipped the prewarm wait and lifted the fade on a
+  standing player; the prewarm then froze the frame in view and the eyelids closed afterwards. Fix: wait
+  until the new scene is in the tree, then for its prewarm. Verified with a web frame capture (trace logs
+  showed scene=null before the fix).
+- V9-3 grade: a little more blue; cinematic touches that cost ~nothing on the phone (post-process only).

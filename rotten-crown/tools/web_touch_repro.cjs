@@ -37,11 +37,7 @@ const WAKE_UP = { x: 60, y: 230 };
     throw new Error('timed out waiting for game state');
   };
   const wake = P(WAKE_UP.x, WAKE_UP.y);
-  await page.touchscreen.tap(wake.x, wake.y);          // Wake Up -> prologue
-  await until((st) => st.scene === 'Prologue');
-  await page.waitForTimeout(1500);
-  const skip = P(uiW - 39, 16);
-  await page.touchscreen.tap(skip.x, skip.y);          // SKIP >>
+  await page.touchscreen.tap(wake.x, wake.y);          // Wake Up -> overworld
   await until((st) => !!st.player);
   await page.waitForTimeout(9000);                     // wake-up animation
 

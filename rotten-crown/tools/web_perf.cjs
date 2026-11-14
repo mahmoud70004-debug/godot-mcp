@@ -3,7 +3,7 @@
 // Absolute numbers are far below a phone GPU; compare builds and flags only.
 //   node tools/web_perf.cjs URL [flagset ...]
 //   e.g. node tools/web_perf.cjs http://localhost:8766/index.html "" nograss "nosky,nopost"
-// Then prints prologue_load_s, prologue_fps, spawn_fps and hollowmere_fps
+// Then prints spawn_load_s, spawn_fps and hollowmere_fps
 // (Hollowmere via ?tp=20,1.5,300,180 - yaw 180 faces +Z; see Level._apply_dev_shot).
 // Flags: nosky, nograss, nohorizon, nopost, nofog (see src/world/level.gd).
 // RC_PERF_QUERY="&quality=1" pins a quality level (otherwise the auto-downgrade may switch to Low).
@@ -61,21 +61,12 @@ async function measureAll(b, url) {
     const { box, sc, uiW } = await geom(p);
     await p.touchscreen.tap(box.x + WAKE_UP.x * sc, box.y + WAKE_UP.y * sc);
   };
-  const skip = async (p) => {
-    const { box, sc, uiW } = await geom(p);
-    await p.touchscreen.tap(box.x + (uiW - 39) * sc, box.y + 16 * sc);
-  };
   {
     const { ctx, p } = await mk('');
     const t0 = Date.now();
     await wake(p);
-    await waitScene(p, 'Prologue', 120000);
-    await sleep(1000); // a few frames rendered
-    console.log(`prologue_load_s ${((Date.now() - t0) / 1000).toFixed(1)}`);
-    await sleep(2000);
-    console.log(`prologue_fps ${await countFps(p)}`);
-    await skip(p);
     await waitScene(p, 'ValdronOverworld', 120000);
+    console.log(`spawn_load_s ${((Date.now() - t0) / 1000).toFixed(1)}`);
     await sleep(3000);
     console.log(`spawn_fps ${await countFps(p)}`);
     await ctx.close();
@@ -83,9 +74,6 @@ async function measureAll(b, url) {
   {
     const { ctx, p } = await mk('&tp=20,1.5,300,180');
     await wake(p);
-    await waitScene(p, 'Prologue', 120000);
-    await sleep(1500);
-    await skip(p);
     await waitScene(p, 'ValdronOverworld', 120000);
     await sleep(3000);
     console.log(`hollowmere_fps ${await countFps(p)}`);
@@ -105,9 +93,7 @@ async function measureAll(b, url) {
     const box = await p.locator('canvas').boundingBox();
     const sc = box.height / 360, uiW = box.width / sc;
     await p.touchscreen.tap(box.x + WAKE_UP.x * sc, box.y + WAKE_UP.y * sc); // Wake Up
-    await p.waitForTimeout(10000);
-    await p.touchscreen.tap(box.x + (uiW - 39) * sc, box.y + 16 * sc); // SKIP
-    await p.waitForTimeout(22000);
+    await p.waitForTimeout(32000); // load + wake-up
     const fps = await countFps(p);
     console.log(`${(flags || 'baseline').padEnd(30)} ${fps} fps`);
     await ctx.close();

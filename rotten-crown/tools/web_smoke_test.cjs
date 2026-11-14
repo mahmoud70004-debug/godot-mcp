@@ -48,24 +48,22 @@ const WAKE_UP = { x: 60, y: 230 };
   const P = (ux, uy) => ({ x: box.x + ux * scale, y: box.y + uy * scale });
   const touch = (type, points) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: points.map((p, i) => ({ x: p.x, y: p.y, id: p.id ?? i })) });
   const shot = (name) => page.screenshot({ path: `${out}/${name}.png` });
-  // Title menu -> "Wake Up" -> skip the prologue -> wait for the overworld.
+  // Title menu -> "Wake Up" -> the overworld (the opening cutscene is out of the game since V9).
   const enterOverworld = async (prefix) => {
     await page.touchscreen.tap(P(WAKE_UP.x, WAKE_UP.y).x, P(WAKE_UP.x, WAKE_UP.y).y); // "Wake Up"
     await page.waitForTimeout(9000);
     if (prefix) await shot(prefix);
-    const skip = P(uiW - 39, 16);
-    await page.touchscreen.tap(skip.x, skip.y); // "SKIP >>"
     let scene = '';
     for (let i = 0; i < 240 && scene !== 'ValdronOverworld'; i++) { // up to 60 s
       scene = await page.evaluate(() => (window.rcState && window.rcState.scene) || '').catch(() => '');
       if (scene !== 'ValdronOverworld') await page.waitForTimeout(250);
     }
-    if (scene !== 'ValdronOverworld') logs.push(`[pageerror] expected scene ValdronOverworld after SKIP, got "${scene}"`);
+    if (scene !== 'ValdronOverworld') logs.push(`[pageerror] expected scene ValdronOverworld after Wake Up, got "${scene}"`);
     await page.waitForTimeout(4000);
   };
 
   await shot('01_menu');
-  await enterOverworld('02a_prologue');
+  await enterOverworld('02a_loading');
   await shot('02_wake');      // eyes opening on the plains, facing the kingdom gate
   await page.waitForTimeout(8000); // wake-up animation keeps input locked
   await shot('02b_awake');

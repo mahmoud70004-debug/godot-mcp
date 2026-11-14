@@ -36,10 +36,18 @@ func change_scene(path: String, fade_time: float = FADE_TIME) -> void:
 	if packed == null:
 		push_error("SceneLoader: failed to load %s" % path)
 	else:
+		var old_scene := get_tree().current_scene
 		get_tree().change_scene_to_packed(packed)
-		await get_tree().process_frame
+		# The new scene enters the tree at the end of a frame, and on the web that can be a few
+		# frames later (big scenes): wait for it, or the fade lifts on a half-built world and the
+		# shader prewarm then freezes it in plain view.
+		var scene: Node = null
+		for _i in 600:
+			await get_tree().process_frame
+			scene = get_tree().current_scene
+			if scene != null and scene != old_scene and scene.is_inside_tree():
+				break
 		_apply_interpolation_policy()
-		var scene := get_tree().current_scene
 		if scene and scene.get("prewarming"):
 			await scene.prewarmed
 		scene_changed.emit(path)

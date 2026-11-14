@@ -63,10 +63,6 @@ async function runViewport(browser, vp) {
   await page.screenshot({ path: `${out}/${vp.name}_menu.png` });
   // Main menu: "Wake Up" is the first text item at the left, anchored 130 UI units above the bottom edge.
   await page.touchscreen.tap(g.x + 60 * g.sc, g.y + (g.uh - 130) * g.sc);
-  await until(page, (s) => s.scene === 'Prologue', 120000, 'prologue');
-  await sleep(2500);
-  await page.screenshot({ path: `${out}/${vp.name}_prologue.png` });
-  await page.touchscreen.tap(g.x + (g.uw - 39) * g.sc, g.y + 16 * g.sc); // Skip
   await until(page, (s) => !!s.player && !!s.hud, 120000, 'gameplay');
   await sleep(25000); // wake-up animation (slow in software GL)
   g = await geom(page);

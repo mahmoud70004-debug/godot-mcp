@@ -143,3 +143,9 @@
 | V8-4 | - | skipped (not needed) | - | the LUT reaches AC1/AC2 on the existing lighting; fog/moon/region palettes left as V7 so the fit stays valid |
 | V8-5 | H (me) | done | ../docs (V8, 2026-11-14 10:18 UTC) | validate OK, gdlint clean, visual_test clean; web smoke OK (0 console errors), touch PASS, swap PASS; live Pages shows V8; sheet rotten-crown/build/v8_compare |
 | V8 perf | H (me) | done | - | long-window web_perf Low, V7 vs V8 alternated x2: spawn 3.5/2.0 -> 4.25/3.75, hollowmere 3.25/3.25 -> 3.25/3.5 => no regression (AC6) |
+
+## V9 (opening cutscene out, load flash, more blue + cinema) - user spec 2026-11-14
+| task | tier | status | note |
+|---|---|---|---|
+| V9-1 | H (me) | done | main_menu.gd, export_presets.cfg, tools/web_*.cjs | new game -> overworld wake-up; prologue excluded from exports; tests updated |
+| V9-2 | H (me) | done | scene_loader.gd | web trace: scene=<null> one frame after the change -> fade lifted at 12.1 s, prewarm done 26.1 s, wake 26.1 s. After fix: black until the eyelids open (frame capture) |

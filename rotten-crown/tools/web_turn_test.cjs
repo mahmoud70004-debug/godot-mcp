@@ -59,9 +59,6 @@ async function runLocation(browser, loc) {
   const box = await p.locator('canvas').boundingBox();
   const sc = box.height / 360, uiW = box.width / sc;
   await p.touchscreen.tap(box.x + WAKE_UP.x * sc, box.y + WAKE_UP.y * sc);
-  await waitScene(p, 'Prologue', 120000);
-  await sleep(1500);
-  await p.touchscreen.tap(box.x + (uiW - 39) * sc, box.y + 16 * sc);
   await waitScene(p, 'ValdronOverworld', 120000);
   await sleep(3000);
   const send = (type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts });
