@@ -10,10 +10,12 @@ const PROLOGUE := "res://src/cutscenes/prologue.tscn"
 @onready var touch_toggle: MenuItemButton = %TouchToggle
 @onready var settings_button: MenuItemButton = %SettingsButton
 @onready var settings_panel: SettingsPanel = %SettingsPanel
+@onready var version_label: Label = %VersionLabel
 
 
 func _ready() -> void:
 	get_tree().paused = false
+	version_label.text = _build_text()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	new_game_button.pressed.connect(_on_new_game)
 	continue_button.pressed.connect(_on_continue)
@@ -29,6 +31,16 @@ func _ready() -> void:
 	settings_button.pressed.connect(_open_settings)
 	settings_panel.closed.connect(_close_settings)
 	new_game_button.grab_focus()
+
+
+## "V7 - build 2026-11-14 08:40 UTC": the numbered update plus when this pack was exported, so a
+## phone shows at a glance whether it runs the newest build (tools/export_web.sh sets the stamp).
+func _build_text() -> String:
+	var label := str(ProjectSettings.get_setting("application/config/build_label", "dev"))
+	var stamp := str(ProjectSettings.get_setting("application/config/build_stamp", ""))
+	if stamp.length() < 16 or stamp == "dev":
+		return label
+	return "%s  -  build %s %s UTC" % [label, stamp.substr(0, 10), stamp.substr(11, 5)]
 
 
 func _on_new_game() -> void:

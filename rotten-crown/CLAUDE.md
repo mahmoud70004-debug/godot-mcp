@@ -30,6 +30,10 @@ The user tests on their phone through GitHub Pages (https://mahmoud70004-debug.g
 1. `tools/publish_web.sh` (exports the "Web" preset: Compatibility renderer, no threads, PWA).
 2. Serve ../docs locally and run `node tools/web_smoke_test.cjs http://localhost:PORT/index.html build/smoke`; look at the screenshots.
 3. Commit `../docs` together with the change and push.
+Every numbered update shows its number on both title screens (launch page top-right, in-game menu top-right):
+bump `config/build_label` in project.godot (V7, V8, ...) before `tools/publish_web.sh`; the export adds the UTC
+build stamp. Tell the user the number to look for. The pack is requested as `index.pck?b=<stamp>` and the page
+checks build.txt, so phones cannot keep an older build (tools/export_web.sh also patches the PWA service worker).
 Web uses the Compatibility renderer: keep shaders/features working there too (e.g. generated audio needs PLAYBACK_TYPE_STREAM).
 Also run `node tools/web_touch_repro.cjs URL` (joystick regression) and compare `node tools/web_perf.cjs URL` with the previous build.
 

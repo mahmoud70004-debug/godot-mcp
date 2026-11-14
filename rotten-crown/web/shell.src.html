@@ -125,6 +125,7 @@ h1 span { display: block; }
 .wake:hover:not(:disabled) { background: #b9cf5f; }
 .apk { margin-top: 14px; font-size: 13px; color: rgba(214, 208, 186, 0.62); }
 .apk a { color: #b9cf5f; text-underline-offset: 3px; }
+.build { position: fixed; top: 8px; right: 14px; margin: 0; z-index: 3; font-size: 13px; letter-spacing: 0.04em; color: rgba(214, 208, 186, 0.8); pointer-events: none; }
 .wake:active:not(:disabled) { transform: scale(0.97); }
 .wake:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .wake:disabled { background: var(--surface); color: var(--muted); cursor: progress; }
@@ -230,6 +231,7 @@ $GODOT_HEAD_INCLUDE
 		</div>
 		<figcaption id="caption" aria-live="polite">Valdron sang, and drank, and sang again.</figcaption>
 	</figure>
+	<p class="build" id="rc-build">{{build_label}} &middot; build {{build_stamp_short}}</p>
 </main>
 
 <script src="$GODOT_URL"></script>
@@ -237,6 +239,44 @@ $GODOT_HEAD_INCLUDE
 const GODOT_CONFIG = $GODOT_CONFIG;
 const GODOT_THREADS_ENABLED = $GODOT_THREADS_ENABLED;
 const engine = new Engine(GODOT_CONFIG);
+
+// Which build this page and its game pack belong to (stamped by tools/export_web.sh). The pack is
+// requested under a per-build URL so neither the browser's HTTP cache nor the PWA service worker's
+// cache can hand a phone an older game; the page itself checks build.txt on the server and, when
+// a cached copy of it is stale, drops every service worker + cache and reloads once.
+const RC_BUILD = '{{build_stamp}}';
+const rcFresh = (function () {
+	const upToDate = Promise.resolve(true);
+	// Browsers look for a new service worker only now and then (about once a day); ask right away,
+	// so a phone that still holds an older worker swaps to the new one on this visit.
+	try {
+		if (navigator.serviceWorker && navigator.serviceWorker.getRegistration) {
+			navigator.serviceWorker.getRegistration().then((r) => r && r.update()).catch(() => {});
+		}
+	} catch (e) { /* ignore */ }
+	const attempted = (() => { try { return sessionStorage.getItem('rc-refresh'); } catch (e) { return null; } })();
+	return Promise.race([
+		fetch('build.txt?_=' + Date.now(), { cache: 'no-store' }).then((r) => (r.ok ? r.text() : RC_BUILD)),
+		new Promise((resolve) => setTimeout(() => resolve(RC_BUILD), 4000)),
+	]).then((live) => {
+		live = String(live).trim();
+		if (live === RC_BUILD || !/^\d{4}-\d\d-\d\dT/.test(live) || attempted === live) {
+			return true;
+		}
+		try { sessionStorage.setItem('rc-refresh', live); } catch (e) { /* ignore */ }
+		const wipe = [];
+		if (navigator.serviceWorker && navigator.serviceWorker.getRegistrations) {
+			wipe.push(navigator.serviceWorker.getRegistrations().then((rs) => Promise.all(rs.map((r) => r.unregister()))));
+		}
+		if (window.caches) {
+			wipe.push(caches.keys().then((ks) => Promise.all(ks.map((k) => caches.delete(k)))));
+		}
+		return Promise.all(wipe).catch(() => {}).then(() => {
+			location.replace(location.pathname + '?v=' + encodeURIComponent(live));
+			return new Promise(() => {}); // the page is going away; never start the old engine
+		});
+	}).catch(() => upToDate);
+}());
 
 // Fit the canvas to the visible viewport (browser bars, fullscreen, rotation) and publish safe-area insets.
 (function () {
@@ -442,14 +482,18 @@ const engine = new Engine(GODOT_CONFIG);
 			displayFailureNotice('The following features required to run Godot projects on the Web are missing:\n' + missing.join('\n'));
 		}
 	} else {
-		engine.startGame({
+		const pack = 'index.pck?b=' + encodeURIComponent(RC_BUILD);
+		const sizes = Object.assign({}, GODOT_CONFIG['fileSizes'], { [pack]: GODOT_CONFIG['fileSizes']['index.pck'] });
+		rcFresh.then(() => engine.startGame({
+			'mainPack': pack,
+			'fileSizes': sizes,
 			'onProgress': function (current, total) {
 				if (current > 0 && total > 0 && !failed) {
 					// Downloading is most of the wait; the last tenth is the engine starting.
 					setProgress(0.9 * current / total);
 				}
 			},
-		}).then(setReady, displayFailureNotice);
+		})).then(setReady, displayFailureNotice);
 	}
 }());
 </script>
