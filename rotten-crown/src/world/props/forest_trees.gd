@@ -227,7 +227,7 @@ static func _build(style: int, lod: int) -> Dictionary:
 
 
 ## V13: a trunk sculpted in Blender (tools/blender/trees/sculpt_trunks.py ->
-## res://data/trees/trunk_<style>.json: low-poly mesh with the sculpt's cavities baked into the
+## data/trees, trunk_<style>.json: low-poly mesh with the sculpt's cavities baked into the
 ## vertex colours and its normals, leaf clump centres, moss anchors), or {} when the style has none
 ## and keeps its procedural stem.
 static func _sculpt(style: int) -> Dictionary:
