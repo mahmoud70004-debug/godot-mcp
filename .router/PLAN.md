@@ -477,3 +477,59 @@ Budgets (Low, probe): <= 200 draws and <= 300k primitives at every pose; pck gro
 | V7-9 | Real-time moon shadows on Low: measure, decide | H | 8 | src/rendering/quality_manager.gd | web_perf Low with/without, decision logged here |
 | V7-10 | Re-bake, tests, publish, smoke/touch/swap/perf, before/after sheet + clip | H | 9 | src/levels/valdron/baked/*, ../docs | AC6 + AC7 |
 | V7-R | router-reviewer on the diff, fix findings | H | 10 | - | 0 open findings |
+
+---
+
+# V8 - cinematic night grade from the user's reference (phone feedback 2026-11-14)
+
+## Feedback
+V7 reached the phone (label visible). Shadows better, but light/colour/mood immature: "exposed" bright
+look now (V6 was too dark). The user sent an edited V7 screenshot (Kingswood road) as THE reference for
+colour and shadow, plus a mood photo (stone cottage in a blue forest night, warm windows). Also: the
+player carries a light that brightens whatever they walk towards and washes out shadows -> remove it.
+
+## Diagnosis (measured, Kingswood road, frame below the HUD; display values 0-255)
+| | REF (edited) | V7 road | V7 cross |
+|---|---|---|---|
+| luminance p5 / p50 / p95 | 11 / 36 / 70 | 16 / 46 / 109 | 11 / 50 / 100 |
+| mean RGB | 21, 40, 61 | 42, 53, 70 | 47, 53, 63 |
+| saturation (mean) | 0.69 | 0.43 | 0.28 |
+| shadows / mids / highlights RGB | (6,17,28) (18,38,60) (46,74,105) | (15,22,33) (36,47,64) (90,108,133) | (18,19,22) (44,50,60) (91,104,119) |
+Causes: retro_post desaturation 0.35-0.4 + Environment saturation 0.8 make everything grey; neutral-grey fog
+(0.12,0.13,0.17); highlights not rolled off (p95 100+ vs 70); red channel as strong as the others (REF R:G:B
+~ 0.35:0.65:1 = teal/blue night). The "flashlight": Head/Lantern OmniLight3D (5.5 m, 0.55) + the shader
+lantern copy (lantern_pos/lantern_light).
+
+## Acceptance (AC)
+- AC1 Kingswood road pose matching the user's screenshot, below the HUD: mean RGB within +-20 % per channel
+  of (21, 40, 61); saturation 0.55-0.75; luminance p50 30-42, p95 60-85 (no exposed highlights), p5 >= 8 and
+  textures readable in a 2x crop (no crushed blacks).
+- AC2 Side-by-side with the reference: same colour family (teal foliage, blue-teal ground shadows, blue haze
+  between trunks, moonlit canopy edges).
+- AC3 Warm sources stay warm (mood photo): Hollowmere windows/lanterns/bonfires keep hue 15-45 deg, sat >= 0.5.
+- AC4 No light follows the player; walking up to a tree/wall no longer brightens it (frames at 6 m and 1.5 m
+  from the same trunk: trunk luminance change <= 10 %).
+- AC5 Every region coherent (meadows, Thornfield, Hollowmere, Whispering Wood, keep, prologue): no region
+  goes monochrome or black; prologue feast stays festive-warm.
+- AC6 web perf not worse than V7 (lantern removal frees a light pass); tests 0 failures; published as V8.
+
+## Decisions
+- The grade is data-fitted, not eyeballed: a 3D LUT (32^3, stored as a 1024x32 PNG strip, sampled with
+  manual slice interpolation in retro_post - safe on WebGL2) built by tools/make_night_grade.py from a few
+  parameters (tone curve with highlight shoulder, shadow/mid/highlight tints, red suppression for cool and
+  neutral pixels, saturation, warm-hue protection). Parameters are fitted so the graded V7 frame hits the AC1
+  numbers; warm protection keeps AC3. retro_post desaturation/tint become neutral (LUT owns colour).
+- Lighting supports the grade instead of fighting it: fog -> deep blue haze, moon slightly cyan, ambient bluer,
+  region palettes rebalanced; Environment saturation 1.0; exposure/white so highlights roll off.
+- Player lantern removed everywhere (node + shader globals stay 0; shader lantern branch kept only if scenes
+  still use it, else removed). Lighting stays live per frame (moon, clouds, canopy shade); realtime shadow maps
+  stay on Medium/High as now.
+
+## Tasks
+| id | tier | what | done-check |
+|---|---|---|---|
+| V8-1 | N | remove player lantern (player.tscn/player.gd, shader lantern globals, any script that expects it) | AC4 frames; grep no lantern driver; tests pass |
+| V8-2 | N | tools/grade_stats.py + render the reference pose (user screenshot match) and a near/far trunk pair | prints AC1 metrics for any frame; pose matches the screenshot composition |
+| V8-3 | H | night grade: make_night_grade.py + LUT asset + retro_post LUT sampling; neutralise desaturation/tint | AC1 on the reference pose; AC3 on Hollowmere |
+| V8-4 | H | atmosphere: fog colour/energy, moon/ambient hue, region .tres palettes, env saturation/exposure; re-bake if uniform defaults change | AC1/AC2 hold, AC5 sheet of all regions |
+| V8-5 | H (me) | verify, side-by-side vs reference, tests, perf vs V7, review, publish with build_label V8 | AC1-AC6 |
