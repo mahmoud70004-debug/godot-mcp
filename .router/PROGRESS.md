@@ -149,3 +149,5 @@
 |---|---|---|---|
 | V9-1 | H (me) | done | main_menu.gd, export_presets.cfg, tools/web_*.cjs | new game -> overworld wake-up; prologue excluded from exports; tests updated |
 | V9-2 | H (me) | done | scene_loader.gd | web trace: scene=<null> one frame after the change -> fade lifted at 12.1 s, prewarm done 26.1 s, wake 26.1 s. After fix: black until the eyelids open (frame capture) |
+| V9-3 | H (me) | done | make_night_grade.py (BLUE_SHIFT 0.95/0.99/1.09 on cool colours), retro_post (cine_vignette oval to deep blue, cine_fringe lens split), post_process.tscn; prologue/menu opt out | reference pose: mean RGB 19/38/64 (V8 21/40/60), sat 0.70; warm sources unchanged; cost = 2 extra screen fetches at 640x360 |
+| V9-4 | H (me) | done | ../docs (V9, 2026-11-14 11:29 UTC) | validate OK, gdlint clean, visual_test clean; smoke OK (menu -> black load -> wake, 0 console errors), touch PASS, swap PASS; pck 24.34 -> 24.02 MB (prologue excluded); live Pages = V9. web_perf vs V8 not comparable (V8 build still routes through the prologue the updated tools no longer skip) |
