@@ -43,7 +43,7 @@ var _current_interactable: Interactable
 var _speed_ratio := 0.0
 var _has_gamepad := false
 ## Camera rig. Physics interpolation smooths the body between 30 Hz ticks, but the
-## look (yaw/pitch) must follow the input at once, so the camera, view model and lantern
+## look (yaw/pitch) must follow the input at once, so the camera and view model
 ## live under this top-level, non-interpolated node that _process places every frame.
 var _view: Node3D
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -156,10 +156,7 @@ func _setup_view_rig() -> void:
 	_view.top_level = true
 	_view.physics_interpolation_mode = Node.PHYSICS_INTERPOLATION_MODE_OFF
 	add_child(_view)
-	var lantern := head.get_node_or_null("Lantern")
 	camera.reparent(_view, false)
-	if lantern:
-		lantern.reparent(_view, false)
 	camera.make_current()
 	_update_view()
 
