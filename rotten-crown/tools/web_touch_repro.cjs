@@ -39,7 +39,7 @@ const WAKE_UP = { x: 60, y: 230 };
   const wake = P(WAKE_UP.x, WAKE_UP.y);
   await page.touchscreen.tap(wake.x, wake.y);          // Wake Up -> overworld
   await until((st) => !!st.player);
-  await page.waitForTimeout(9000);                     // wake-up animation
+  await page.waitForTimeout(22000);                    // shader prewarm (software GL) + the 7 s wake-up
 
   let thumb = { ...P(uiW * 0.8, 150), id: 7 };
   let stick = { ...P(80, 280), id: 3 };
