@@ -21,6 +21,7 @@ signal prewarmed
 
 ## True while shaders are being compiled behind the loading fade (SceneLoader waits).
 var prewarming := false
+var _held: Dictionary = {}
 var _base_region: RegionData
 var _zones: Array[RegionData] = []
 var _blend_tween: Tween
@@ -44,6 +45,7 @@ func _ready() -> void:
 	_exempt_follow_nodes_from_interpolation()
 	if player:
 		prewarming = true
+		_held = ShaderPrewarm.hold(self, player.camera)
 		_prewarm.call_deferred()
 	if player and GameState.get_flag("waking_up"):
 		GameState.flags.erase("waking_up")
@@ -64,7 +66,8 @@ func _prewarm() -> void:
 	# Quality applies shadows/grass two frames after the scene enters the tree.
 	for _i in 3:
 		await get_tree().process_frame
-	await ShaderPrewarm.warm(self, player.camera)
+	await ShaderPrewarm.warm(self, player.camera, _held)
+	_held = {}
 	prewarming = false
 	prewarmed.emit()
 

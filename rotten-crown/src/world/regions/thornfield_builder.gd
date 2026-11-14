@@ -223,12 +223,14 @@ static func _build_yard(props: Node3D, details: Node3D, terrain: TerrainBuilder,
 		var node := AssetKit.place(details, str(it[0]), terrain.ground(q.x, q.y), rng.randf() * TAU, float(it[2]))
 		if str(it[0]) == "rusted_wheel_rim_01":
 			node.rotation.x = PI * 0.5 - 0.05  # lying flat
-	# Rain-filled mud puddles in the yard and in the ruts where the track ends.
+	# Where the yard's mud puddles were (V10: removed, they read as black holes at night): the
+	# spots stay clear of props and the draws stay so the rest of the farm keeps its layout.
 	var puddles := [Vector3(6.5, 0, 0.8), Vector3(7.5, 0, 2.2), Vector3(3.5, 0, 6.0), Vector3(5.0, 0, 8.0),
 		Vector3(1.0, 0, 7.5), Vector3(-2.0, 0, 9.5), Vector3(9.5, 0, -1.0)]
 	for p in puddles:
 		var q := _world2(house, p)
-		ThornfieldProps.splat(props, ThornfieldProps.puddle_mat(), terrain.ground(q.x, q.y) + Vector3(0, 0.04, 0), rng.randf_range(1.2, 2.4), rng, rng.randf_range(0.6, 1.0))
+		for _k in 4:  # size, stretch, spin, seed (ThornfieldProps.splat)
+			rng.randf()
 		keep_out.append(Vector3(q.x, q.y, 0.7))
 
 

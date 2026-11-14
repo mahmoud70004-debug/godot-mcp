@@ -72,6 +72,10 @@ uniform float lod_end = 10000.0;
 // fog colour over the fade_out before lod_end.
 uniform float fade_in = 0.0;
 uniform float fade_out = 0.0;
+// V10: near trees dissolve OUT over fade_out (complementary to the impostor's dissolve in over the
+// same band, same screen pattern: every pixel is drawn by exactly one of the two) instead of
+// fading into the fog colour, so the mesh/impostor swap is a soft cross-dissolve, not a pop.
+uniform bool dissolve_out = false;
 // Atlas tile size (UV units) for TILED cards.
 uniform vec2 tile_size = vec2(0.25, 0.25);
 uniform float bark_scale = 0.9;
@@ -316,19 +320,20 @@ void vertex() {
 	}
 }
 
+// Interleaved gradient noise (V10): an even, structure-free screen pattern; the old 4x4 Bayer
+// grid read as a chessboard ghost on phones.
 float dissolve_threshold(vec2 frag) {
-	ivec2 c = ivec2(mod(floor(frag), 4.0));
-	int i = c.y * 4 + c.x;
-	float m[16] = float[16](0.0, 8.0, 2.0, 10.0, 12.0, 4.0, 14.0, 6.0, 3.0, 11.0, 1.0, 9.0, 15.0, 7.0, 13.0, 5.0);
-	return (m[i] + 0.5) / 16.0;
+	return fract(52.9829189 * fract(dot(floor(frag), vec2(0.06711056, 0.00583715))));
 }
 
 void fragment() {
-	if (v_fade_in < 1.0) {
-		if (dissolve_threshold(FRAGCOORD.xy) >= v_fade_in) {
+	if (v_fade_in < 1.0 || (dissolve_out && v_fade_out > 0.0)) {
+		float thr = dissolve_threshold(FRAGCOORD.xy);
+		if (thr >= v_fade_in || (dissolve_out && thr < v_fade_out)) {
 			discard;
 		}
 	}
+	float fog_mix = dissolve_out ? 0.0 : v_fade_out;
 	vec4 t;
 	bool bark = v_uv.x < -0.5 || force_bark;
 	if (bark) {
@@ -354,7 +359,7 @@ void fragment() {
 	// alike, so their match holds.
 	vec3 albedo = min(t.rgb * COLOR.rgb * tint * albedo_gain, vec3(1.0));
 #ifdef VERTEX_LIT
-	ALBEDO = mix(albedo * v_lit, fog_tint, v_fade_out);
+	ALBEDO = mix(albedo * v_lit, fog_tint, fog_mix);
 #else
 #ifdef IMPOSTOR
 	vec4 nt = textureLod(normal_atlas, v_uv / impostor_band, v_lod.y);
@@ -368,6 +373,6 @@ void fragment() {
 		float beat = 0.8 + 0.2 * sin(TIME * 1.3 + v_world.x * 0.7 + v_world.z * 0.9);
 		light += vec3(v_glow * glow_strength * beat);
 	}
-	ALBEDO = mix(moon_lit(albedo, light), fog_tint, v_fade_out);
+	ALBEDO = mix(moon_lit(albedo, light), fog_tint, fog_mix);
 #endif
 }

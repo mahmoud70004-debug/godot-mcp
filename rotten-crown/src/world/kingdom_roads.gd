@@ -275,9 +275,8 @@ static func _lanterns(parent: Node3D, terrain: TerrainBuilder) -> void:
 
 # --- Pumpkin road (and its stretch outside the gate) --------------------------------
 
-## Worn wheel ruts, puddles and loose edge stones along MAIN_ROAD.
+## Loose edge stones along MAIN_ROAD (ruts and puddles removed in V10).
 static func _ruts(details: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> void:
-	var ruts := RetroMaterials.flat(Color(0.1, 0.085, 0.07))
 	var path := OverworldSpec.sample_path(OverworldSpec.MAIN_ROAD, 1.2)
 	for i in path.size() - 1:
 		var p: Vector2 = path[i]
@@ -289,13 +288,15 @@ static func _ruts(details: Node3D, terrain: TerrainBuilder, rng: RandomNumberGen
 		for side: float in [-0.75, 0.75]:
 			if rng.randf() < 0.45:
 				continue
-			var q := p + nrm * (side + rng.randf_range(-0.08, 0.08)) + dir * rng.randf_range(-0.2, 0.2)
-			PartBuilder.box(details, Vector3(rng.randf_range(0.14, 0.24), 0.02, rng.randf_range(0.5, 1.0)),
-				terrain.ground(q.x, q.y) - Vector3(0, 0.003, 0), ruts, Vector3(0, yaw + rng.randf_range(-0.08, 0.08), 0))
+			# V10: the dark rut boxes read as black holes at night; removed. The draws stay so
+			# the rest of the road's random layout (edge stones) is unchanged.
+			for _k in 5:
+				rng.randf()
 		if rng.randf() < 0.09:
-			var q := p + nrm * rng.randf_range(-0.9, 0.9)
-			ThornfieldProps.splat(details, ThornfieldProps.puddle_mat(), terrain.ground(q.x, q.y) + Vector3(0, 0.03, 0),
-				rng.randf_range(0.8, 1.5), rng, rng.randf_range(1.2, 2.2), yaw)
+			# V10: puddles (near-black planes) removed for the same reason; draws kept (position,
+			# size, stretch, the splat's seed, and its spin when the road heading is negative).
+			for _k in (5 if yaw < 0.0 else 4):
+				rng.randf()
 		if rng.randf() < 0.16:
 			var q := p + nrm * (2.0 if rng.randf() < 0.5 else -2.0) * rng.randf_range(0.9, 1.15)
 			var s := rng.randf_range(0.18, 0.32)

@@ -1,6 +1,6 @@
 // Kingdom ground: four small scanned textures (nearest-filtered) blended by
 // vertex paint (R road/mud, G pale dry field, B forest floor, remainder grass)
-// with a dithered, pixel-quantized transition so edges stay crisp and retro.
+// with soft, noise-broken transitions (V10; was a pixel dither that read as a chessboard).
 // Inside the kingdom forest the paint alpha also carries the floor (ForestBuilder):
 // alpha 1 = untouched; 1 -> 0.5 = more moss in blotches over dark loam; below 0.5 =
 // the amber leaf litter of the Cellar Hollow.
@@ -65,41 +65,42 @@ float bayer4(vec2 p) {
 
 void fragment() {
 	vec2 uv = world_pos.xz;
-	// Dither threshold on an 8 px/m world grid so blends read as chunky pixel art (V6:
-	// 16 px/m went below one screen pixel a few metres out and read as grain).
-	float d = bayer4(floor(world_pos.xz * 8.0)) - 0.5;
+	// V10: layers meet along soft, ragged edges (two octaves of value noise push each boundary
+	// back and forth by up to ~0.5 m) instead of the old 8 px/m Bayer dither, which read as a
+	// chessboard wherever a path edge came close to the camera.
+	float n = blotch(world_pos.xz * 1.7) * 0.6 + blotch(world_pos.xz * 5.3) * 0.4 - 0.5;
 	vec3 grass = texture(grass_tex, uv * grass_scale).rgb * grass_albedo;
 	// Keep the night mood: pull the scan's green toward blue-grey.
 	grass = mix(vec3(dot(grass, vec3(0.3, 0.59, 0.11))) * vec3(0.92, 1.0, 1.08), grass, 0.55);
 	vec3 col = grass;
-	if (paint.b + d * 0.3 > 0.5) {
-		col = texture(forest_tex, uv * forest_scale).rgb * forest_albedo;
+	float w_forest = smoothstep(0.4, 0.6, paint.b + n * 0.3);
+	if (w_forest > 0.0) {
+		vec3 base = texture(forest_tex, uv * forest_scale).rgb;
+		vec3 fc = base * forest_albedo;
 		if (floor_mix > 0.004) {
-			vec3 base = texture(forest_tex, uv * forest_scale).rgb;
 			float moss_amt = min(floor_mix * 2.0, 1.0);
 			float amber = clamp(floor_mix * 2.0 - 1.0, 0.0, 1.0);
-			float n = blotch(world_pos.xz * 0.11) * 0.7 + blotch(world_pos.xz * 0.43) * 0.3;
-			col = base * loam_albedo;
-			if (n + d * 0.2 < moss_amt * 0.6) {
-				col = texture(grass_tex, uv * 0.23).rgb * moss_albedo;
-			}
-			if (amber + d * 0.3 > 0.5 + n * 0.3) {
-				col = base * amber_albedo;
-			}
+			float bn = blotch(world_pos.xz * 0.11) * 0.7 + blotch(world_pos.xz * 0.43) * 0.3;
+			fc = base * loam_albedo;
+			fc = mix(fc, texture(grass_tex, uv * 0.23).rgb * moss_albedo, smoothstep(0.06, -0.06, bn + n * 0.2 - moss_amt * 0.6));
+			fc = mix(fc, base * amber_albedo, smoothstep(-0.06, 0.06, amber + n * 0.3 - 0.5 - bn * 0.3));
 		}
+		col = mix(col, fc, w_forest);
 	}
-	if (paint.g + d * 0.3 > 0.5) {
-		col = texture(dry_tex, uv * dry_scale).rgb * dry_albedo;
+	float w_dry = smoothstep(0.4, 0.6, paint.g + n * 0.3);
+	if (w_dry > 0.0) {
+		col = mix(col, texture(dry_tex, uv * dry_scale).rgb * dry_albedo, w_dry);
 	}
 	col *= GROUND_GAIN;
-	if (paint.r + d * 0.3 > 0.5) {
+	float w_road = smoothstep(0.4, 0.6, paint.r + n * 0.3);
+	if (w_road > 0.0) {
 		vec3 road = texture(road_tex, uv * road_scale).rgb * road_albedo;
 		float luma = dot(road, vec3(0.3, 0.59, 0.11));
 		// The same road changes with the land it crosses: a pale, moonlit dirt
 		// path under the trees, a worn grey track through the dry fields.
 		road = mix(road, vec3(luma) * vec3(1.6, 1.66, 1.8), smoothstep(0.2, 0.6, paint.b));
 		road = mix(road, mix(vec3(luma) * vec3(1.12, 1.16, 1.26), col, 0.35), smoothstep(0.2, 0.6, paint.g));
-		col = road;
+		col = mix(col, road, w_road);
 	}
 	ALBEDO = col;
 	ROUGHNESS = 1.0;

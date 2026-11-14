@@ -26,10 +26,10 @@ const FOG_CURVE := 1.5
 ## Fade band of the far tree cards into the fog colour before the fog line, and the
 ## dissolve band of the near/far tree swap.
 const FAR_FADE := 7.0
-## 0: the near tree and its card swap in one frame at the same distance (V6: the 3 m
-## dither cross-dissolve read as a grainy ghost tree on phones; the card is painted from
-## the same mesh, so the swap barely shows in the fog).
-const SWAP_FADE := 0.0
+## Cross-dissolve band (m) of the near tree into its card, just beyond the near reach (V10: the
+## one-frame swap read as leaves popping in; the band now uses an even noise pattern, not the
+## V6 Bayer grid, and the mesh dissolves out exactly where the card dissolves in).
+const SWAP_FADE := 5.0
 ## Detailed tree meshes up to (Low, Medium, High) metres.
 const NEAR_TREES := [16.0, 20.0, 24.0]
 ## Forest floor (cards, small kits) / large floor kits end where the depth fog has reached
@@ -297,7 +297,8 @@ func _apply_ranges(force: bool) -> void:
 		var gi := e[0] as GeometryInstance3D
 		if not is_instance_valid(gi):
 			continue
-		var end := minf(float(e[2]), float(reaches[e[1]]) + float(e[3]))
+		var band := SWAP_FADE if e[1] == Kind.NEAR_TREES else 0.0
+		var end := minf(float(e[2]) + band, float(reaches[e[1]]) + band + float(e[3]))
 		if not is_equal_approx(gi.visibility_range_end, end):
 			gi.visibility_range_end = end
 
@@ -307,10 +308,11 @@ func _apply_shader_ranges() -> void:
 	var near := reach(Kind.NEAR_TREES)
 	var far := maxf(distance, near + FAR_FADE)
 	for mat: ShaderMaterial in _mats.get(Kind.NEAR_TREES, []):
-		mat.set_shader_parameter("lod_end", near)
+		mat.set_shader_parameter("lod_end", near + SWAP_FADE)
 		mat.set_shader_parameter("fade_out", SWAP_FADE)
+		mat.set_shader_parameter("dissolve_out", true)
 	for mat: ShaderMaterial in _mats.get(Kind.FAR_TREES, []):
-		mat.set_shader_parameter("lod_begin", near - SWAP_FADE)
+		mat.set_shader_parameter("lod_begin", near)
 		mat.set_shader_parameter("fade_in", SWAP_FADE)
 		mat.set_shader_parameter("lod_end", far)
 		mat.set_shader_parameter("fade_out", FAR_FADE)

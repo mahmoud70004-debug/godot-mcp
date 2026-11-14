@@ -18,10 +18,10 @@ const FRAMES := 3
 const WARM_LAYER := 1 << 19
 
 
-## Await this behind a fade. `root` is scanned for GeometryInstance3D nodes.
-static func warm(root: Node, camera: Camera3D) -> void:
-	if camera == null or not camera.is_inside_tree():
-		return
+## Hide the world from `camera` and every light under `root` (they see only WARM_LAYER) until
+## warm() finishes. Call it as the scene enters the tree: the frames before the warm-up then draw
+## nothing instead of the whole world and its shadows (seconds on a phone, all under black).
+static func hold(root: Node, camera: Camera3D) -> Dictionary:
 	var lights := root.find_children("*", "Light3D", true, false)
 	var light_masks: Array[int] = []
 	for l in lights:
@@ -29,6 +29,19 @@ static func warm(root: Node, camera: Camera3D) -> void:
 		(l as Light3D).light_cull_mask = WARM_LAYER
 	var camera_mask := camera.cull_mask
 	camera.cull_mask = WARM_LAYER
+	return {"lights": lights, "light_masks": light_masks, "camera_mask": camera_mask}
+
+
+## Await this behind a fade. `root` is scanned for GeometryInstance3D nodes. `held` is what
+## hold() returned, if it was called earlier (the masks it saved are the ones restored).
+static func warm(root: Node, camera: Camera3D, held: Dictionary = {}) -> void:
+	if camera == null or not camera.is_inside_tree():
+		return
+	if held.is_empty():
+		held = hold(root, camera)
+	var lights: Array = held["lights"]
+	var light_masks: Array = held["light_masks"]
+	var camera_mask: int = held["camera_mask"]
 	var holder := Node3D.new()
 	holder.name = "ShaderPrewarm"
 	camera.add_child(holder)

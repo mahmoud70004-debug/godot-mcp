@@ -62,7 +62,7 @@ func _build_text() -> String:
 func _on_new_game() -> void:
 	GameState.new_game()
 	GameState.set_flag("waking_up")
-	SceneLoader.change_scene(FIRST_SCENE, 1.2)
+	SceneLoader.change_scene(FIRST_SCENE, 0.5)
 
 
 func _on_continue() -> void:
