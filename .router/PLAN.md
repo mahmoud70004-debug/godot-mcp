@@ -550,7 +550,7 @@ Spec = the user's message (tasks fully specified; cinematic choices left to me).
 
 ---
 
-# V11 - tree overhaul (user request 2026-11-14) - AWAITING APPROVAL
+# V11 - tree overhaul (user request 2026-11-14) - APPROVED 2026-11-14 (user: go, save progress often, do not stop to ask)
 References: .router/ref/v11_trees_pixel_tunnel.jpg (gnarled wide trunks, claw roots, canopy closing into a
 tunnel, trees fused into walls beside the path), v11_trees_amber_fog.jpg (huge trunks, dense overlapping
 leaves in the foreground, depth in fog).

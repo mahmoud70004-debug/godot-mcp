@@ -113,6 +113,21 @@ const ZONE_REGIONS := {
 }
 const KINGSWOOD_REGION := "res://data/regions/kingswood.tres"
 
+## V11 - the forest is a wall. Walkable ground = every clearing (T0) plus each road/trail's
+## clearance and a VERGE beside it; where that ground meets the forest stands a continuous row
+## of giant trees (roots and trunks overlapping) and an unbroken collider chain, so the wood
+## funnels the player along the paths. The forest deeper than VISIBLE_DEPTH m behind the wall
+## is never walked and mostly hidden: only HIDDEN_KEEP of its trees stay (skyline).
+const VERGE := 1.6
+const WALL_STEP := 2.7
+const WALL_SCALE := Vector2(1.55, 2.1)
+## Wall style weights [TALL, BROAD, BARE, ELDER, HOLLOW, SNAG, BIRCH]: the wide, gnarled ones.
+const WALL_STYLE := [0.2, 0.45, 0.0, 0.08, 0.27, 0.0, 0.0]
+const VISIBLE_DEPTH := 24
+const HIDDEN_KEEP := 0.3
+## Every lattice tree is this much larger than before V11.
+const GROW := 1.3
+
 static var _map: Dictionary = {}
 static var _tiers := PackedByteArray()
 static var _shapes := {}
@@ -263,6 +278,68 @@ static func _tier_cached(x: float, z: float) -> int:
 	return tier_grid()[iz * int(wr.size.x) + ix]
 
 
+# --- Walkable ground and the tree wall (V11) ------------------------------------------
+
+## The wall trees: giants on the wall line, WALL_STEP apart (their trunks and root flares
+## overlap), leaning over the walkable side. Own random stream.
+static func _walls(trees: Array, grid_hash: Dictionary, terrain: TerrainBuilder, blocked: PackedByteArray, wr: Rect2) -> int:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = SEED + 91
+	var w := int(wr.size.x)
+	var h := int(wr.size.y)
+	var depth := ForestWall.depth_grid()
+	var walk := ForestWall.walk_grid()
+	var placed := {}
+	var count := 0
+	for iz in range(1, h - 1):
+		for ix in range(1, w - 1):
+			if depth[iz * w + ix] != 1:
+				continue
+			var roll := rng.randf()
+			var pick := rng.randf()
+			var jitter := rng.randf_range(-0.5, 0.5)
+			var lean := rng.randf_range(0.04, 0.12)
+			var stretch := rng.randf_range(0.95, 1.15)
+			var off := Vector2(rng.randf_range(-0.3, 0.3), rng.randf_range(-0.3, 0.3))
+			# Away from the walkable ground.
+			var out := Vector2.ZERO
+			for dz in range(-2, 3):
+				for dx in range(-2, 3):
+					if walk[(iz + clampi(dz, -iz, h - 1 - iz)) * w + ix + clampi(dx, -ix, w - 1 - ix)] == 1:
+						out -= Vector2(dx, dz)
+			out = out.normalized() if out.length_squared() > 0.01 else Vector2.RIGHT
+			var cell := Vector2(ix + 0.5, iz + 0.5) + wr.position
+			var zone := zone_at(cell.x, cell.y)
+			var tier := maxi(_tier_cached(cell.x, cell.y), 1)
+			var style := _pick_style(3, zone, pick) if ZONE_STYLE.has(zone) else _weighted(WALL_STYLE, pick)
+			var scale := lerpf(WALL_SCALE.x, WALL_SCALE.y, roll)
+			if style == ForestTrees.Style.ELDER:
+				scale = lerpf(1.0, 1.25, roll)
+			var radius := ForestTrees.radius(style) * scale
+			var p := cell + off + out * (radius * 0.75 + 0.2)
+			var key := Vector2i((p / WALL_STEP).floor())
+			var free := true
+			for dz in range(-1, 2):
+				for dx in range(-1, 2):
+					for q: Vector2 in placed.get(key + Vector2i(dx, dz), []):
+						if q.distance_squared_to(p) < WALL_STEP * WALL_STEP:
+							free = false
+			if not free:
+				continue
+			var d_wall := minf(minf(p.x - wr.position.x, wr.end.x - p.x), minf(p.y - wr.position.y, wr.end.y - p.y))
+			if d_wall < WALL_CLEAR + radius or _is_blocked(blocked, p, radius + BLOCK_PAD) or ForestWall.depth_at(p) == 0:
+				continue
+			var tree := _make_tree(terrain, p, atan2(out.y, -out.x) + jitter, scale, style, tier, lean, stretch)
+			tree.append(_tint(rng, zone))
+			tree.append(_rot(rng, p, tier))
+			_insert(trees, grid_hash, tree)
+			if not placed.has(key):
+				placed[key] = []
+			(placed[key] as Array).append(p)
+			count += 1
+	return count
+
+
 # --- Terrain --------------------------------------------------------------------
 
 ## The terrain must reach the far wall (the default spec stops short of it).
@@ -349,6 +426,7 @@ static func build(root: Node3D, terrain: TerrainBuilder, _shared_rng: RandomNumb
 	var trees := scatter(terrain, blocked)
 	_markers(forest, terrain)
 	_chunks(forest, trees)
+	print("ForestBuilder: %d wall collider boxes" % ForestWall.colliders(forest, terrain))
 	ForestFloor.build(forest, trees, terrain, blocked)
 	var per_style := []
 	per_style.resize(STYLES.size())
@@ -381,6 +459,8 @@ static func scatter(terrain: TerrainBuilder, blocked: PackedByteArray) -> Array:
 		paths.append(line[0])
 	for name: String in LANDMARK_ELDERS:
 		_landmark(trees, grid_hash, terrain, blocked, name, rng)
+	var wall_count := _walls(trees, grid_hash, terrain, blocked, wr)
+	print("ForestBuilder: %d wall trees" % wall_count)
 	for gz in nz:
 		for gx in nx:
 			var origin := wr.position + Vector2(gx, gz) * lattice
@@ -391,7 +471,7 @@ static func scatter(terrain: TerrainBuilder, blocked: PackedByteArray) -> Array:
 				continue
 			var style := _pick_style(tier0, zone_at(first.x, first.y), rng.randf())
 			var srange: Vector2 = TIER_SCALE[tier0]
-			var scale := rng.randf_range(srange.x, srange.y)
+			var scale := rng.randf_range(srange.x, srange.y) * GROW
 			if style == ForestTrees.Style.ELDER:
 				scale = rng.randf_range(0.85, 1.15)
 			var yaw := rng.randf() * TAU
@@ -403,6 +483,11 @@ static func scatter(terrain: TerrainBuilder, blocked: PackedByteArray) -> Array:
 				var tier := tier0 if attempt == 0 else tier_at(p.x, p.y)
 				if tier <= 0:
 					continue
+				var deep := ForestWall.depth_at(p)
+				if deep == 0:
+					continue  # walkable ground (verge) stays free of trunks
+				if deep > VISIBLE_DEPTH and float(extra[3]) > HIDDEN_KEEP:
+					break  # behind the wall, out of sight: thinned
 				var y := yaw
 				var t := tilt
 				# Beside a path the tree leans over it: the canopy closes in, the trunk stays clear.
@@ -417,62 +502,7 @@ static func scatter(terrain: TerrainBuilder, blocked: PackedByteArray) -> Array:
 				tree.append(_rot(rng, p, tier))
 				_insert(trees, grid_hash, tree)
 				break
-	_corridors(trees, grid_hash, terrain, blocked, wr)
 	return trees
-
-
-## The corridor pass: along both sides of every road and trail, a dense row of trunks just
-## outside the clearance (leaning over the path) and a looser row behind it. Own random
-## stream (the lattice above does not move); every tree passes the same _fits() rules.
-static func _corridors(trees: Array, grid_hash: Dictionary, terrain: TerrainBuilder, blocked: PackedByteArray, wr: Rect2) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = SEED + 77
-	for line: Array in road_lines():
-		var pts: Array = line[0]
-		var clear: float = line[1]
-		for k in pts.size() - 1:
-			var a := _v2(pts[k])
-			var b := _v2(pts[k + 1])
-			var dir := (b - a).normalized()
-			var side := Vector2(-dir.y, dir.x)
-			var length := a.distance_to(b)
-			var d := rng.randf() * CORRIDOR_STEP
-			while d < length:
-				var c := a + dir * d
-				d += CORRIDOR_STEP * rng.randf_range(0.8, 1.2)
-				for sgn: float in [-1.0, 1.0]:
-					for row in 2:
-						var roll := rng.randf()
-						var pick := rng.randf()
-						var scale_roll := rng.randf()
-						var depth := rng.randf_range(0.35, 1.7) if row == 0 else rng.randf_range(2.6, CORRIDOR)
-						var jitter := rng.randf_range(-0.6, 0.6)
-						var lean := rng.randf_range(0.05, 0.13)
-						var stretch := rng.randf_range(0.92, 1.1)
-						var along := rng.randf_range(-0.5, 0.5)
-						if roll > (0.92 if row == 0 else 0.55):
-							continue
-						var edge := c + side * sgn * clear
-						var tier0 := tier_at(edge.x, edge.y)
-						if tier0 <= 0:
-							continue
-						var zone := zone_at(edge.x, edge.y)
-						var style := _pick_style(tier0, zone, pick) if tier0 == 3 and ZONE_STYLE.has(zone) else _weighted(CORRIDOR_STYLE, pick)
-						var srange: Vector2 = TIER_SCALE[maxi(tier0, 2)]
-						var scale := lerpf(srange.x, srange.y, scale_roll)
-						var radius := ForestTrees.radius(style) * scale
-						var p := c + dir * along + side * sgn * (clear + radius + depth)
-						var tier := tier_at(p.x, p.y)
-						if tier <= 0:
-							continue
-						# Lean over the path (towards -side * sgn).
-						var to_path := -side * sgn
-						var tree := _make_tree(terrain, p, atan2(-to_path.y, to_path.x) + jitter, scale, style, tier, lean, stretch)
-						if not _fits(tree, trees, grid_hash, blocked, wr):
-							continue
-						tree.append(_tint(rng, zone_at(p.x, p.y)))
-						tree.append(_rot(rng, p, tier))
-						_insert(trees, grid_hash, tree)
 
 
 ## [foot, yaw, scale, style, tier, collider centre, basis] of a tree at p.
@@ -824,6 +854,8 @@ static func _trunks(node: Node3D, trees: Array, members: Array) -> void:
 	for i: int in members:
 		var t: Array = trees[i]
 		var s: float = t[2]
+		if ForestWall.depth_at(Vector2((t[0] as Vector3).x, (t[0] as Vector3).z)) > 5:
+			continue  # behind the wall: nobody reaches it
 		var radius := snappedf(ForestTrees.radius(int(t[3])) * s, 0.05)
 		var height := snappedf(3.2 * s, 0.2)
 		var key := "%.2f/%.1f" % [radius, height]
