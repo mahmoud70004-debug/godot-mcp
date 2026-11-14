@@ -6,9 +6,17 @@ extends RefCounted
 ## collider chain on the wall line. ForestBuilder plants the giant wall trees on that line.
 
 const WALL_HEIGHT := 4.0
+## Just inside the kingdom gate, on the King's Road: the walkable ground is flooded from here.
+const SPAWN := Vector2(1.0, 64.0)
+## The straight run up to the citadel's front gate (the paving bends just short of it).
+const GATE_APPROACH := [Vector2(125.0, 186.0), Vector2(125.0, 208.0)]
+## Walkable islands smaller than this (m2) are slivers, not places: dropped, not joined.
+const MIN_ISLAND := 40
+const MARKER_GLADE := 5.0
 
 static var _walk := PackedByteArray()
 static var _depth := PackedByteArray()
+static var _links: Array = []
 
 
 static func _v2(a: Variant) -> Vector2:
@@ -17,7 +25,8 @@ static func _v2(a: Variant) -> Vector2:
 	return Vector2(float(a[0]), float(a[1]))
 
 
-## 1 per 1 m cell of the wall rect the player can stand on (see VERGE), cached.
+## 1 per 1 m cell of the wall rect the player can stand on (see VERGE), cached. Clearings no
+## road reaches are joined to the rest by a straight trail (links()); slivers are dropped.
 static func walk_grid() -> PackedByteArray:
 	if _walk.is_empty():
 		var wr := ForestBuilder.wall_rect()
@@ -27,20 +36,122 @@ static func walk_grid() -> PackedByteArray:
 		_walk.resize(w * h)
 		for i in w * h:
 			_walk[i] = 1 if tiers[i] == 0 else 0
-		for line: Array in ForestBuilder.road_lines():
-			var pts: Array = line[0]
-			var r := float(line[1]) + ForestBuilder.VERGE
-			for k in pts.size() - 1:
-				var a := _v2(pts[k]) - wr.position
-				var b := _v2(pts[k + 1]) - wr.position
-				var n := maxi(int(ceil(a.distance_to(b) / 0.5)), 1)
-				for j in n + 1:
-					var c := a.lerp(b, float(j) / n)
-					for iz in range(maxi(int(floor(c.y - r)), 0), mini(int(floor(c.y + r)), h - 1) + 1):
-						for ix in range(maxi(int(floor(c.x - r)), 0), mini(int(floor(c.x + r)), w - 1) + 1):
-							if Vector2(ix + 0.5, iz + 0.5).distance_squared_to(c) <= r * r:
-								_walk[iz * w + ix] = 1
+		var lines := ForestBuilder.map_road_lines()
+		# The King's Road as it is really paved, and the straight run up to the citadel gate.
+		lines.append([KingdomRoads.pave_line(), ForestBuilder.ROAD_CLEAR])
+		lines.append([GATE_APPROACH, ForestBuilder.ROAD_CLEAR])
+		for line: Array in lines:
+			_stamp(line[0], float(line[1]) + ForestBuilder.VERGE, w, h, wr.position)
+		# Spawn / pickup spots placed straight into the wood get a small glade of their own.
+		for m: Array in ForestBuilder.EXTRA_MARKERS:
+			if str(m[1]) == "":
+				_stamp([m[2], m[2]], MARKER_GLADE, w, h, wr.position)
+		_links.clear()
+		var start := _cell(SPAWN - wr.position, w)
+		for _round in 64:
+			var seen := _flood(start, w, h)
+			var link := _nearest_island(seen, w, h)
+			if link.is_empty():
+				break
+			var a: Vector2 = link[0]
+			var b: Vector2 = link[1]
+			if int(link[2]) < MIN_ISLAND:
+				_erase_island(_cell(b, w), w, h)
+				continue
+			_links.append([a + wr.position, b + wr.position])
+			_stamp([a + wr.position, b + wr.position], ForestBuilder.TRAIL_CLEAR + ForestBuilder.VERGE, w, h, wr.position)
 	return _walk
+
+
+## The trails cut to join cut-off clearings: [[Vector2 from, Vector2 to], ...] (world x, z).
+static func links() -> Array:
+	walk_grid()
+	return _links
+
+
+static func _cell(p: Vector2, w: int) -> int:
+	return int(floor(p.y)) * w + int(floor(p.x))
+
+
+static func _stamp(pts: Array, r: float, w: int, h: int, origin: Vector2) -> void:
+	for k in pts.size() - 1:
+		var a := _v2(pts[k]) - origin
+		var b := _v2(pts[k + 1]) - origin
+		var n := maxi(int(ceil(a.distance_to(b) / 0.5)), 1)
+		for j in n + 1:
+			var c := a.lerp(b, float(j) / n)
+			for iz in range(maxi(int(floor(c.y - r)), 0), mini(int(floor(c.y + r)), h - 1) + 1):
+				for ix in range(maxi(int(floor(c.x - r)), 0), mini(int(floor(c.x + r)), w - 1) + 1):
+					if Vector2(ix + 0.5, iz + 0.5).distance_squared_to(c) <= r * r:
+						_walk[iz * w + ix] = 1
+
+
+static func _neighbours(i: int, w: int, h: int) -> Array:
+	var ix := i % w
+	var out := []
+	if ix > 0:
+		out.append(i - 1)
+	if ix < w - 1:
+		out.append(i + 1)
+	if i >= w:
+		out.append(i - w)
+	if i < w * (h - 1):
+		out.append(i + w)
+	return out
+
+
+## 1 for every walkable cell joined to `start`.
+static func _flood(start: int, w: int, h: int) -> PackedByteArray:
+	var seen := PackedByteArray()
+	seen.resize(w * h)
+	seen[start] = 1
+	var frontier := PackedInt32Array([start])
+	while not frontier.is_empty():
+		var next := PackedInt32Array()
+		for i in frontier:
+			for j: int in _neighbours(i, w, h):
+				if _walk[j] == 1 and seen[j] == 0:
+					seen[j] = 1
+					next.append(j)
+		frontier = next
+	return seen
+
+
+## The walkable island nearest to the flooded ground: [cell centre on the main ground,
+## cell centre on the island, the island's size in cells], or [] when there is none.
+static func _nearest_island(seen: PackedByteArray, w: int, h: int) -> Array:
+	var from := PackedInt32Array()
+	from.resize(w * h)
+	from.fill(-1)
+	var frontier := PackedInt32Array()
+	for i in w * h:
+		if seen[i] == 1:
+			from[i] = i
+			frontier.append(i)
+	while not frontier.is_empty():
+		var next := PackedInt32Array()
+		for i in frontier:
+			for j: int in _neighbours(i, w, h):
+				if from[j] != -1:
+					continue
+				from[j] = from[i]
+				if _walk[j] == 1:
+					var size := 0
+					var island := _flood(j, w, h)
+					for k in w * h:
+						size += island[k]
+					var a := from[i]
+					return [Vector2(a % w + 0.5, a / w + 0.5), Vector2(j % w + 0.5, j / w + 0.5), size]
+				next.append(j)
+		frontier = next
+	return []
+
+
+static func _erase_island(start: int, w: int, h: int) -> void:
+	var island := _flood(start, w, h)
+	for k in w * h:
+		if island[k] == 1:
+			_walk[k] = 0
 
 
 ## Cells (4-connected steps, capped at 255) from each cell to walkable ground: 0 on it, 1 for

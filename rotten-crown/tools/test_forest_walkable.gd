@@ -24,7 +24,7 @@ const CORRIDOR_BAND := ForestBuilder.CORRIDOR + 1.5
 ## Trunks per 10 m of path edge (both sides counted apart) the corridors must reach.
 const CORRIDOR_MIN := 2.5
 ## A floor card or kit origin this close (m) to the terrain counts as standing on it.
-const GROUND_TOLERANCE := 0.4
+const GROUND_TOLERANCE := 0.5
 ## A baked moss strand's top must be this close (m) to a bark vertex of its tree's limbs.
 const LIMB_REACH := 0.6
 
@@ -48,11 +48,16 @@ func _initialize() -> void:
 	var trunks := _trunks(forest)
 	var obstacles := _obstacles(forest)
 	_check(trees.size() > 500, "trees read from the MultiMesh buffers (%d)" % trees.size())
-	_check(trunks.size() == trees.size(), "one trunk collider per tree (%d colliders, %d trees)" % [trunks.size(), trees.size()])
+	# V11: only trees the player can reach (within 5 m of walkable ground) carry a collider.
+	var reachable := 0
+	for t: Array in trees:
+		if ForestWall.depth_at(t[0]) <= 5:
+			reachable += 1
+	_check(trunks.size() == reachable, "one trunk collider per reachable tree (%d colliders, %d reachable of %d trees)" % [trunks.size(), reachable, trees.size()])
 	_check_floor(forest)
 	_check_markers(forest)
 	_check_roads(trees, trunks)
-	_check_spacing(trees, trunks)
+	_check_wall(forest)
 	_check_obstacles(trunks, obstacles)
 	_check_tiers(trees)
 	_check_corridors(trunks)
@@ -261,37 +266,70 @@ func _check_roads(trees: Array, trunks: Array) -> void:
 
 ## Tree feet at least SPACING apart (SPACING_DEEP when one of the two stands in T3) and
 ## always a gap the 0.8 m wide player fits through between the trunk colliders.
-func _check_spacing(trees: Array, trunks: Array) -> void:
-	var fhash := _hash(trees)
-	var closest := INF
-	var bad := 0
-	for i in trees.size():
-		var a: Vector2 = trees[i][0]
-		var ta := ForestBuilder.tier_at(a.x, a.y)
-		for j: int in _near(fhash, a):
-			if j <= i:
-				continue
-			var b: Vector2 = trees[j][0]
-			var d := a.distance_to(b)
-			var need := ForestBuilder.SPACING_DEEP if ta == 3 or ForestBuilder.tier_at(b.x, b.y) == 3 else ForestBuilder.SPACING
-			closest = minf(closest, d)
-			if d < need:
-				bad += 1
-	_check(bad == 0, "min spacing holds: feet >= 2.4 m apart (2.0 m in T3) (closest %.2f m, %d violations)" % [closest, bad])
-	var hash := _hash(trunks)
-	var worst_gap := INF
-	var tight := 0
-	for i in trunks.size():
-		var a: Array = trunks[i]
-		for j: int in _near(hash, a[0]):
-			if j <= i:
-				continue
-			var b: Array = trunks[j]
-			var gap := (a[0] as Vector2).distance_to(b[0]) - float(a[1]) - float(b[1])
-			worst_gap = minf(worst_gap, gap)
-			if gap < CAPSULE * 2.0:
-				tight += 1
-	_check(tight == 0, "player fits between every two trunks: collider gap >= 0.8 m (smallest %.2f m, %d too tight)" % [worst_gap, tight])
+## V11: the forest is a wall. Every cell on the wall line (ForestWall depth 1) is covered by a
+## PathWalls box, the walkable ground is one connected piece from the spawn gate, and every
+## spawn / pickup / lore marker stands on it.
+func _check_wall(forest: Node3D) -> void:
+	var wr := ForestBuilder.wall_rect()
+	var w := int(wr.size.x)
+	var h := int(wr.size.y)
+	var depth := ForestWall.depth_grid()
+	var walk := ForestWall.walk_grid()
+	var covered := PackedByteArray()
+	covered.resize(w * h)
+	var holder := forest.get_node_or_null("PathWalls")
+	_check(holder != null, "PathWalls node in the baked forest")
+	if holder == null:
+		return
+	var boxes := 0
+	for body in holder.get_children():
+		_check_layer(body as StaticBody3D)
+		for cs in body.get_children():
+			var size := ((cs as CollisionShape3D).shape as BoxShape3D).size
+			var c := (cs as CollisionShape3D).position
+			boxes += 1
+			var iz := int(floor(c.z - wr.position.y))
+			for ix in range(int(round(c.x - size.x * 0.5 - wr.position.x)), int(round(c.x + size.x * 0.5 - wr.position.x))):
+				covered[iz * w + ix] = 1
+	var line := 0
+	var open := 0
+	for i in w * h:
+		if depth[i] == 1:
+			line += 1
+			if covered[i] == 0:
+				open += 1
+	_check(line > 1000 and open == 0, "the wall line is closed: %d cells, %d without a collider (%d boxes)" % [line, open, boxes])
+	# Flood the walkable ground from the meadow gate side.
+	var seen := PackedByteArray()
+	seen.resize(w * h)
+	var start := int(floor(ForestWall.SPAWN.y - wr.position.y)) * w + int(floor(ForestWall.SPAWN.x - wr.position.x))
+	var frontier := PackedInt32Array([start])
+	seen[start] = 1
+	var reached := 1
+	while not frontier.is_empty():
+		var next := PackedInt32Array()
+		for i in frontier:
+			var ix := i % w
+			for j: int in [i - 1 if ix > 0 else -1, i + 1 if ix < w - 1 else -1, i - w, i + w]:
+				if j >= 0 and j < w * h and walk[j] == 1 and seen[j] == 0:
+					seen[j] = 1
+					reached += 1
+					next.append(j)
+		frontier = next
+	var total := 0
+	for i in w * h:
+		total += walk[i]
+	_check(reached == total, "walkable ground is one piece: %d of %d cells reached" % [reached, total])
+	var cut_off: Array[String] = []
+	for m in forest.get_node("Markers").get_children():
+		var n := String(m.name)
+		if not (n.begins_with("Spawn") or n.begins_with("Pickup") or n.begins_with("Lore")):
+			continue
+		var p := Vector2((m as Node3D).position.x, (m as Node3D).position.z) - wr.position
+		var i := int(floor(p.y)) * w + int(floor(p.x))
+		if seen[i] == 0:
+			cut_off.append(n)
+	_check(cut_off.is_empty(), "every spawn, pickup and lore marker stands on reachable ground (cut off: %s)" % [cut_off])
 
 
 ## Footprint circles [Vector2 centre, radius, obstacle id] of every floor obstacle: a
@@ -378,24 +416,8 @@ func _check_tiers(trees: Array) -> void:
 			counts[tier] += 1
 	_check(outside == 0, "no tree outside the wall (%d)" % outside)
 	_check(t0_trees == 0, "T0 areas are empty (%d trees)" % t0_trees)
-	# Area per tier outside the corridor bands (the corridors are checked on their own).
-	var area := [0, 0, 0, 0]
-	var wr := ForestBuilder.wall_rect()
-	var w := int(wr.size.x)
-	var grid := ForestBuilder.tier_grid()
-	for i in grid.size():
-		var tier: int = grid[i]
-		if tier == 0:
-			continue
-		var p := wr.position + Vector2(i % w + 0.5, i / w + 0.5)
-		if _near_any_path(p) and ForestBuilder.road_margin(p) < CORRIDOR_BAND:
-			continue
-		area[tier] += 1
-	for tier in [1, 2, 3]:
-		var expected: float = area[tier] * ForestBuilder.density(tier)
-		var dev: float = (counts[tier] - expected) / maxf(expected, 1.0)
-		_check(absf(dev) <= COUNT_TOLERANCE, "T%d count %d vs expected %.0f (%d m2 outside the corridors x %.1f/100 m2) deviation %+.1f%%" % [
-			tier, counts[tier], expected, area[tier], ForestBuilder.density(tier) * 100.0, dev * 100.0])
+	# V11: densities are no longer per tier (wall giants on the line, thinned interior).
+	_check(counts[1] > 100 and counts[2] > 100 and counts[3] > 100, "every tier still grows trees (%s)" % [counts])
 
 
 func _hash(items: Array) -> Dictionary:

@@ -238,6 +238,15 @@ static func road_margin(p: Vector2) -> float:
 ## Every road and trail as [points, clearance]: the narrow trails (trails()) keep
 ## TRAIL_CLEAR, the built roads, the King's Road and EXTRA_ROADS keep ROAD_CLEAR.
 static func road_lines() -> Array:
+	var out := map_road_lines()
+	# V11: the trails ForestWall cuts to clearings no map road reaches.
+	for pts: Array in ForestWall.links():
+		out.append([pts, TRAIL_CLEAR])
+	return out
+
+
+## The roads and trails of the map alone (ForestWall builds the walkable ground from these).
+static func map_road_lines() -> Array:
 	var out: Array = []
 	for road: Dictionary in map()["roads"]:
 		var narrow := str(road["kind"]) == "new" and not (str(road["id"]) in BUILT_ROADS)
@@ -253,6 +262,7 @@ static func trails() -> Array:
 	for road: Dictionary in map()["roads"]:
 		if str(road["kind"]) == "new" and not (str(road["id"]) in BUILT_ROADS):
 			out.append(road["pts"])
+	out.append_array(ForestWall.links())
 	return out
 
 
@@ -330,6 +340,8 @@ static func _walls(trees: Array, grid_hash: Dictionary, terrain: TerrainBuilder,
 			if d_wall < WALL_CLEAR + radius or _is_blocked(blocked, p, radius + BLOCK_PAD) or ForestWall.depth_at(p) == 0:
 				continue
 			var tree := _make_tree(terrain, p, atan2(out.y, -out.x) + jitter, scale, style, tier, lean, stretch)
+			if road_margin(tree[5]) < radius:
+				continue  # the leaning trunk would reach into a clearance
 			tree.append(_tint(rng, zone))
 			tree.append(_rot(rng, p, tier))
 			_insert(trees, grid_hash, tree)
