@@ -76,6 +76,7 @@ static var _cache: Dictionary = {}
 static var _mats: Dictionary = {}
 static var _impostor_size: Dictionary = {}
 static var _sculpts: Dictionary = {}
+static var _feet: Dictionary = {}
 
 
 ## One style, built on first use (`lod` 0; 1 is a coarser copy kept for experiments):
@@ -104,6 +105,19 @@ static func radius(style: int) -> float:
 	if p.has("stems"):
 		return 0.45
 	return float(p["r0"]) * 0.95
+
+
+## How far a style's roots reach from its foot at scale 1 (sculpted trunks: the claw roots of
+## the mesh; procedural stems: the collider radius). Placement keeps this off the paths.
+static func foot(style: int) -> float:
+	if not _feet.has(style):
+		var reach := radius(style)
+		var v: Array = _sculpt(style).get("v", [])
+		for k in v.size() / 3:
+			if float(v[k * 3 + 1]) < 1.0:
+				reach = maxf(reach, Vector2(v[k * 3], v[k * 3 + 2]).length())
+		_feet[style] = reach
+	return _feet[style]
 
 
 ## Size (width, height) of a style's impostor card at scale 1.
@@ -218,7 +232,7 @@ static func _build(style: int, lod: int) -> Dictionary:
 ## and keeps its procedural stem.
 static func _sculpt(style: int) -> Dictionary:
 	if not _sculpts.has(style):
-		var path := "res://data/trees/trunk_%s.json" % String(NAMES[style]).to_lower()
+		var path := "res://data/trees".path_join("trunk_%s.json" % String(NAMES[style]).to_lower())
 		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
 		_sculpts[style] = data if data is Dictionary else {}
 	return _sculpts[style]
@@ -242,8 +256,19 @@ static func _sculpted_trunk(ctx: Dictionary, data: Dictionary) -> Vector2:
 	for cl: Array in data.get("clumps", []):
 		clumps.append([Vector3(cl[0], cl[1], cl[2]), float(cl[3]) * LEAF_GROW])
 	var hangs: PackedVector3Array = ctx["hangs"]
+	# Moss hangs from the low mesh itself: each anchor moves to the nearest bark vertex.
+	var bark: PackedVector3Array = acc["v"]
 	for h: Array in data.get("hangs", []):
-		hangs.append(Vector3(h[0], h[1], h[2]))
+		var at := Vector3(h[0], h[1], h[2])
+		var best := at
+		var best_d := INF
+		for k in range(first, bark.size()):
+			var d := at.distance_squared_to(bark[k])
+			if d < best_d:
+				best_d = d
+				best = bark[k]
+		if not hangs.has(best):
+			hangs.append(best)
 	ctx["hangs"] = hangs
 	var base: Array = data.get("base", [0.0, 0.0])
 	return Vector2(base[0], base[1])

@@ -752,7 +752,9 @@ func _wrong(forest: Node3D) -> void:
 		if zone == "" or ForestBuilder.road_distance(Vector2(foot.x, foot.z)) < 7.0:
 			continue
 		var style: int = t[3]
-		if int(faces.get(zone, 0)) > 0 and style in [ForestTrees.Style.ELDER, ForestTrees.Style.BROAD]:
+		# Sculpted trunks carry their own hollows and faces: no relief is laid over them.
+		if int(faces.get(zone, 0)) > 0 and style in [ForestTrees.Style.ELDER, ForestTrees.Style.BROAD] \
+				and not (ForestTrees.tree(style, 0)["face"] as Dictionary).is_empty():
 			faces[zone] = int(faces[zone]) - 1
 			var holder := Node3D.new()
 			holder.name = "Face_%d" % (int(_stats["wrong"]) + 1)

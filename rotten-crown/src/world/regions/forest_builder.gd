@@ -119,6 +119,10 @@ const KINGSWOOD_REGION := "res://data/regions/kingswood.tres"
 ## funnels the player along the paths. The forest deeper than VISIBLE_DEPTH m behind the wall
 ## is never walked and mostly hidden: only HIDDEN_KEEP of its trees stay (skyline).
 const VERGE := 1.6
+## Sculpted roots: the share of a tree's root reach kept off the walkable ground (the claw tips
+## are thin) and how far the front wall row may let them onto the verge (m).
+const ROOT_REACH := 0.8
+const ROOT_VERGE := 1.3
 ## The wall, row by row: [cells behind the walkable ground, spacing (m), scale range].
 const WALL_ROWS := [[1, 2.7, Vector2(1.55, 2.1)], [5, 3.0, Vector2(1.35, 1.9)], [9, 3.3, Vector2(1.25, 1.75)]]
 ## Wall style weights [TALL, BROAD, BARE, ELDER, HOLLOW, SNAG, BIRCH]: the wide, gnarled ones.
@@ -332,7 +336,9 @@ static func _walls(trees: Array, grid_hash: Dictionary, terrain: TerrainBuilder,
 					scale = lerpf(1.0, 1.25, roll)
 				var radius := ForestTrees.radius(style) * scale
 				var crown := ForestTrees.impostor_size(style).x * 0.5 * scale
-				var p := cell + off + (out * (radius * 0.75 + 0.2) if row_depth == 1 else Vector2.ZERO)
+				# The front row stands back by its roots' reach: the claws end on the verge, not on the path.
+				var back := maxf(radius * 0.75 + 0.2, ForestTrees.foot(style) * scale * ROOT_REACH - ROOT_VERGE)
+				var p := cell + off + (out * back if row_depth == 1 else Vector2.ZERO)
 				var tier := maxi(tier_at(p.x, p.y), 1)
 				var key := Vector2i((p / 3.5).floor())
 				var free := true
@@ -348,8 +354,8 @@ static func _walls(trees: Array, grid_hash: Dictionary, terrain: TerrainBuilder,
 						or ForestWall.depth_at(p) == 0:
 					continue
 				var tree := _make_tree(terrain, p, atan2(out.y, -out.x) + jitter, scale, style, tier, lean, stretch)
-				if road_margin(tree[5]) < radius:
-					continue  # the leaning trunk would reach into a clearance
+				if road_margin(tree[5]) < radius or road_margin(p) < ForestTrees.foot(style) * scale * ROOT_REACH - VERGE:
+					continue  # the leaning trunk or its roots would reach into a clearance
 				tree.append(_tint(rng, zone))
 				# The green rot stays rare on the giants: on a trunk this size it floods the frame.
 				var rot := _rot(rng, p, tier)
@@ -541,6 +547,8 @@ static func _fits(tree: Array, trees: Array, grid_hash: Dictionary, blocked: Pac
 	var p := Vector2(foot.x, foot.z)
 	var col: Vector2 = tree[5]
 	var radius := ForestTrees.radius(int(tree[3])) * float(tree[2])
+	if road_margin(p) < ForestTrees.foot(int(tree[3])) * float(tree[2]) * ROOT_REACH - VERGE:
+		return false  # roots on a path
 	for q: Vector2 in [p, col]:
 		if road_margin(q) < radius:
 			return false
