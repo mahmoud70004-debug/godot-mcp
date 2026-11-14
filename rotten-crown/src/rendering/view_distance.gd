@@ -312,8 +312,10 @@ func _apply_shader_ranges() -> void:
 		mat.set_shader_parameter("fade_out", SWAP_FADE)
 		mat.set_shader_parameter("dissolve_out", true)
 	for mat: ShaderMaterial in _mats.get(Kind.FAR_TREES, []):
+		# The card is whole from the near reach on (no dither): the mesh's leaves grow in front
+		# of it over the band and it is cut once nothing of it can show.
 		mat.set_shader_parameter("lod_begin", near)
-		mat.set_shader_parameter("fade_in", SWAP_FADE)
+		mat.set_shader_parameter("fade_in", 0.0)
 		mat.set_shader_parameter("lod_end", far)
 		mat.set_shader_parameter("fade_out", FAR_FADE)
 	for kind in [Kind.FLOOR, Kind.FLOOR_LARGE]:

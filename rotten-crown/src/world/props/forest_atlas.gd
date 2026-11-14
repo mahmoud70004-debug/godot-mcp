@@ -38,9 +38,9 @@ const ROT_GREEN := Color(0.36, 0.6, 0.1)
 ## (hundreds of overlapping leaves on twigs; tools/blender/trees/render_tree_textures.py),
 ## tinted per kind: [source, tint].
 const LEAF_MASS := {
-	"leaf_dark": ["res://assets/textures/forest_src/leaf_mass_a.png", Color(0.95, 1.12, 1.12)],
-	"leaf_birch": ["res://assets/textures/forest_src/leaf_mass_c.png", Color(1.3, 1.36, 1.0)],
-	"leaf_dying": ["res://assets/textures/forest_src/leaf_mass_b.png", Color(1.35, 0.98, 0.62)],
+	"leaf_dark": ["res://assets/textures/forest_src/leaf_mass_a.png", Color(0.76, 0.9, 0.9)],
+	"leaf_birch": ["res://assets/textures/forest_src/leaf_mass_c.png", Color(1.05, 1.1, 0.82)],
+	"leaf_dying": ["res://assets/textures/forest_src/leaf_mass_b.png", Color(1.1, 0.8, 0.5)],
 }
 
 static var _image: Image

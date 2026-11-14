@@ -338,9 +338,17 @@ float dissolve_threshold(vec2 frag) {
 }
 
 void fragment() {
-	if (v_fade_in < 1.0 || (dissolve_out && v_fade_out > 0.0)) {
-		float thr = dissolve_threshold(FRAGCOORD.xy);
-		if (thr >= v_fade_in || (dissolve_out && thr < v_fade_out)) {
+	if (v_fade_in < 1.0) {
+		if (dissolve_threshold(FRAGCOORD.xy) >= v_fade_in) {
+			discard;
+		}
+	}
+	// V12b: a near tree's leaves come and go leaf by leaf (cells of the leaf texture, not screen
+	// dots) in front of its card, which stays whole behind them until the mesh is complete; the
+	// trunk does not dissolve at all.
+	if (dissolve_out && v_fade_out > 0.0 && v_uv.x >= -0.5) {
+		vec2 cell = floor(v_uv * vec2(textureSize(atlas, 0)) / 7.0);
+		if (fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453) < v_fade_out) {
 			discard;
 		}
 	}

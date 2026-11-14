@@ -448,6 +448,42 @@ static func _clump(acc: Dictionary, c: Vector3, s: float, tile: String, rng: Ran
 		var idx: PackedInt32Array = acc["i"]
 		# Both sides (the tree shader culls back faces: the trunks are closed).
 		idx.append_array([base, base + 1, base + 2, base, base + 2, base + 3, base, base + 2, base + 1, base, base + 3, base + 2])
+	if near:
+		_leaf_body(acc, c, s, r, rng)
+
+
+## V12b: the solid heart of a clump - a closed, lumpy octahedron wrapped in the leaf mass - so a
+## clump has a body from every side (from below too) and the cards around it are only its ragged
+## rim, not the whole clump.
+static func _leaf_body(acc: Dictionary, c: Vector3, s: float, r: Rect2, rng: RandomNumberGenerator) -> void:
+	var rad := s * 0.36
+	var tips: Array[Vector3] = []
+	for axis: Vector3 in [Vector3.RIGHT, Vector3.LEFT, Vector3.UP, Vector3.DOWN, Vector3.BACK, Vector3.FORWARD]:
+		var squash := 0.72 if absf(axis.y) > 0.5 else 1.0
+		tips.append(c + (axis * squash * rng.randf_range(0.82, 1.18)
+			+ Vector3(rng.randf_range(-0.22, 0.22), rng.randf_range(-0.15, 0.15), rng.randf_range(-0.22, 0.22))) * rad)
+	var faces := [[0, 2, 4], [4, 2, 1], [1, 2, 5], [5, 2, 0], [4, 3, 0], [1, 3, 4], [5, 3, 1], [0, 3, 5]]
+	var v: PackedVector3Array = acc["v"]
+	var idx: PackedInt32Array = acc["i"]
+	for f: Array in faces:
+		var a: Vector3 = tips[f[0]]
+		var b: Vector3 = tips[f[1]]
+		var d: Vector3 = tips[f[2]]
+		var n := (b - a).cross(d - a).normalized()
+		if n.dot((a + b + d) / 3.0 - c) < 0.0:
+			var swap := b
+			b = d
+			d = swap
+			n = -n
+		var right := Vector3.UP.cross(n)
+		right = right.normalized() if right.length_squared() > 0.001 else Vector3.RIGHT
+		var up := n.cross(right)
+		var base := v.size()
+		for p: Vector3 in [a, b, d]:
+			var q := p - c
+			var uv := Vector2(0.5 + q.dot(right) / (s * 0.95), 0.5 - q.dot(up) / (s * 0.95))
+			_vert(acc, p, (q.normalized() * 0.7 + n * 0.3).normalized(), Color.WHITE, r.position + uv.clamp(Vector2(0.06, 0.06), Vector2(0.94, 0.94)) * r.size)
+		idx.append_array([base, base + 2, base + 1])
 
 
 ## Every other clump, grown to cover the dropped one (mid copy).
