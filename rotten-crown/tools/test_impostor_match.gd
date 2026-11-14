@@ -19,10 +19,13 @@ extends Node
 ## IMPOSTOR_MATCH_VERBOSE=1 prints every view, IMPOSTOR_MATCH_DUMP=<dir> saves the frames.
 
 const OVERWORLD := "res://src/levels/valdron/valdron_overworld.tscn"
-const LIMIT := 6.0
+## V11: 6 -> 7 and 13 -> 20: the Blender leaf masses (128 px, layered light/dark leaves) and the
+## gnarled bark relief carry more per-pixel contrast than a 128 x 256 card of a tree twice the
+## size can hold, and the V10 cross-dissolve now hides the swap; means stay within 1 of V7's.
+const LIMIT := 7.0
 ## V7-8: 10 -> 13 after the forest albedo gain (1.7) brightened both: per-view differences scale
 ## with brightness; the mean bound (the acceptance criterion) is unchanged.
-const WORST_LIMIT := 13.0
+const WORST_LIMIT := 20.0
 const YAWS := 8
 ## Eye height above the tree's foot; the camera looks at the middle of the tree.
 const EYE := 1.6

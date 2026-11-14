@@ -343,7 +343,9 @@ static func _walls(trees: Array, grid_hash: Dictionary, terrain: TerrainBuilder,
 			if road_margin(tree[5]) < radius:
 				continue  # the leaning trunk would reach into a clearance
 			tree.append(_tint(rng, zone))
-			tree.append(_rot(rng, p, tier))
+			# The green rot stays rare on the giants: on a trunk this size it floods the frame.
+			var rot := _rot(rng, p, tier)
+			tree.append(rot * 0.5 if pick < 0.1 else 0.0)
 			_insert(trees, grid_hash, tree)
 			if not placed.has(key):
 				placed[key] = []

@@ -20,11 +20,18 @@ const NAMES := ["Tall", "Broad", "Bare", "Elder", "Hollow", "Snag", "Birch"]
 ## ForestBuilder adds the cell spread to the node ranges.
 const NEAR_END := 26.0
 const FAR_END := 78.0
+## V11: every leaf clump is this much larger, so neighbouring clumps (and neighbouring trees)
+## overlap into one dense canopy at no extra triangles.
+const LEAF_GROW := 1.3
+## Mirror of forest.gdshaderinc's bark_gain / bark_detail defaults (the impostor bake uses them).
+const BARK_GAIN := 1.3
+const BARK_DETAIL := 0.55
 const SOLID_SHADER := preload("res://assets/shaders/forest_solid.gdshader")
 const CARD_SHADER := preload("res://assets/shaders/forest_card.gdshader")
 const FLOOR_SHADER := preload("res://assets/shaders/forest_floor_card.gdshader")
 const FAR_SHADER := preload("res://assets/shaders/forest_far.gdshader")
-const BARK_TEX := "res://assets/textures/world/bark_brown_02.png"
+## V11: deep gnarled ridges with knots (Blender script tools/blender/trees/render_tree_textures.py).
+const BARK_TEX := "res://assets/textures/world/bark_gnarled.png"
 ## Marker UV of solid (non-atlas) vertices: the shader maps the bark scan in world space.
 const SOLID_UV := Vector2(-1.0, -1.0)
 const MOSS := Color(0.2, 0.33, 0.28)
@@ -340,7 +347,7 @@ static func _limbs(ctx: Dictionary, spine: PackedVector3Array, rads: PackedFloat
 		az += TAU / count + rng.randf_range(-0.5, 0.5)
 	# The leader's tip carries a clump too.
 	if String(p["leaf"]) != "" and not bool(p.get("broken", false)):
-		var size: Vector2 = p["leaf_size"]
+		var size: Vector2 = (p["leaf_size"] as Vector2) * LEAF_GROW
 		var clumps: Array = ctx["clumps"]
 		clumps.append([spine[spine.size() - 1], rng.randf_range(size.x, size.y)])
 
@@ -370,7 +377,7 @@ static func _limb(ctx: Dictionary, start: Vector3, d0: Vector3, d1: Vector3, len
 	_tube(ctx["trunk"], pts, rads, 4 if radius > 0.2 else 3, colour)
 	var hangs: PackedVector3Array = ctx["hangs"]
 	var leafy := String(p["leaf"]) != ""
-	var size: Vector2 = p.get("leaf_size", Vector2.ONE)
+	var size: Vector2 = (p.get("leaf_size", Vector2.ONE) as Vector2) * LEAF_GROW
 	var clumps: Array = ctx["clumps"]
 	for k in range(1, pts.size()):
 		var t := float(k) / steps
@@ -657,7 +664,7 @@ static func paint_impostors(img: Image, nimg: Image) -> void:
 
 
 ## Mean albedo factor of the bark scan as the tree shader uses it (forest.gdshaderinc
-## defaults: mix(0.7, luma x bark_gain, bark_detail)).
+## defaults: mix(0.7, luma x bark_gain, bark_detail); BARK_GAIN / BARK_DETAIL mirror them).
 static func _bark_grain_mean() -> float:
 	var tex := load(BARK_TEX) as Texture2D
 	var im := tex.get_image() if tex else null
@@ -671,9 +678,9 @@ static func _bark_grain_mean() -> float:
 	for y in range(0, im.get_height(), 2):
 		for x in range(0, im.get_width(), 2):
 			var c := im.get_pixel(x, y)
-			sum += (c.r * 0.3 + c.g * 0.59 + c.b * 0.11) * 2.0
+			sum += (c.r * 0.3 + c.g * 0.59 + c.b * 0.11) * BARK_GAIN
 			n += 1
-	return lerpf(0.7, sum / maxf(n, 1.0), 0.35)
+	return lerpf(0.7, sum / maxf(n, 1.0), BARK_DETAIL)
 
 
 static func _raster(img: Image, src: Image, cell: Rect2i, zbuf: PackedFloat32Array, nbuf: PackedVector4Array, tri: Array,

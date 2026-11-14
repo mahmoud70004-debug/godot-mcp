@@ -78,10 +78,10 @@ uniform float fade_out = 0.0;
 uniform bool dissolve_out = false;
 // Atlas tile size (UV units) for TILED cards.
 uniform vec2 tile_size = vec2(0.25, 0.25);
-uniform float bark_scale = 0.9;
-uniform float bark_gain = 2.0;
+uniform float bark_scale = 0.5;
+uniform float bark_gain = 1.3;
 // How much of the bark scan shows (the rest is flat vertex colour). Low: flat-shaded forms.
-uniform float bark_detail = 0.35;
+uniform float bark_detail = 0.55;
 uniform float glow_strength = 1.25;
 // Rot swelling in metres (vertex shader only).
 uniform float pulse = 0.025;

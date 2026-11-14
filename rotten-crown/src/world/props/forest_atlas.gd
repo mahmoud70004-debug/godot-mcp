@@ -22,7 +22,7 @@ const SIZE := Vector2(WIDTH, HEIGHT)
 const TILE := 64
 ## Tile name -> top-left corner in tiles (64 px units).
 const TILES := {
-	"leaf_dark": Vector2i(0, 8), "leaf_birch": Vector2i(1, 8), "leaf_dying": Vector2i(2, 8), "fern": Vector2i(3, 8),
+	"leaf_dark": Vector2i(8, 8), "leaf_birch": Vector2i(10, 8), "leaf_dying": Vector2i(12, 8), "fern": Vector2i(3, 8),
 	"bush": Vector2i(4, 8), "bramble": Vector2i(5, 8), "weeds": Vector2i(6, 8), "moss": Vector2i(7, 8),
 	"litter": Vector2i(0, 9), "litter_amber": Vector2i(1, 9), "rot": Vector2i(2, 9), "tuft": Vector2i(3, 9),
 }
@@ -34,6 +34,14 @@ const STYLE_COUNT := 7
 ## The normal texture is this many times smaller than the impostor band.
 const NORMAL_DIV := 2
 const ROT_GREEN := Color(0.36, 0.6, 0.1)
+## V11: the leaf tiles are 128 px canopy masses rendered in Blender from real 3D foliage
+## (hundreds of overlapping leaves on twigs; tools/blender/trees/render_tree_textures.py),
+## tinted per kind: [source, tint].
+const LEAF_MASS := {
+	"leaf_dark": ["res://assets/textures/forest_src/leaf_mass_a.png", Color(0.95, 1.12, 1.12)],
+	"leaf_birch": ["res://assets/textures/forest_src/leaf_mass_c.png", Color(1.3, 1.36, 1.0)],
+	"leaf_dying": ["res://assets/textures/forest_src/leaf_mass_b.png", Color(1.35, 0.98, 0.62)],
+}
 
 static var _image: Image
 static var _texture: ImageTexture
@@ -81,6 +89,8 @@ static func image() -> Image:
 		_leaves(_image, _rect("leaf_dark"), rng, [Color(0.14, 0.22, 0.23), Color(0.2, 0.32, 0.3), Color(0.28, 0.43, 0.38), Color(0.4, 0.55, 0.48)], 1500, 1.0)
 		_leaves(_image, _rect("leaf_birch"), rng, [Color(0.22, 0.3, 0.24), Color(0.32, 0.42, 0.3), Color(0.44, 0.52, 0.36), Color(0.56, 0.62, 0.44)], 650, 0.7)
 		_leaves(_image, _rect("leaf_dying"), rng, [Color(0.16, 0.12, 0.09), Color(0.26, 0.19, 0.12), Color(0.36, 0.27, 0.15), Color(0.3, 0.3, 0.18)], 520, 0.85)
+		for tile: String in LEAF_MASS:
+			_leaf_mass(_image, _rect(tile), str(LEAF_MASS[tile][0]), LEAF_MASS[tile][1])
 		_fern(_image, _rect("fern"), rng)
 		_bush(_image, _rect("bush"), rng)
 		_bramble(_image, _rect("bramble"), rng)
@@ -116,9 +126,33 @@ static func impostor_view_offset() -> Vector2:
 	return Vector2(float(STYLE_COUNT * IMPOSTOR.x) / WIDTH, float(IMPOSTOR.y) / HEIGHT)
 
 
+## A Blender canopy mass over the code-painted leaves of its tile (kept only as a fallback).
+static func _leaf_mass(img: Image, r: Rect2i, path: String, tint: Color) -> void:
+	var tex := load(path) as Texture2D
+	if tex == null:
+		return
+	var src := tex.get_image()
+	if src.is_compressed():
+		src.decompress()
+	src.convert(Image.FORMAT_RGBA8)
+	if src.get_size() != r.size:
+		src.resize(r.size.x, r.size.y, Image.INTERPOLATE_NEAREST)
+	for y in r.size.y:
+		for x in r.size.x:
+			var c := src.get_pixel(x, y)
+			if c.a < 0.5:
+				img.set_pixel(r.position.x + x, r.position.y + y, Color(c.r * tint.r, c.g * tint.g, c.b * tint.b, 0.0))
+			else:
+				# Four tones, like the rest of the atlas (pixel art, not a photo).
+				var v := Color(c.r * tint.r, c.g * tint.g, c.b * tint.b, 1.0)
+				var q := 6.0
+				img.set_pixel(r.position.x + x, r.position.y + y, Color(roundf(v.r * q * 2.4) / (q * 2.4), roundf(v.g * q * 2.4) / (q * 2.4), roundf(v.b * q * 2.4) / (q * 2.4), 1.0))
+
+
 static func _rect(tile: String) -> Rect2i:
 	var t: Vector2i = TILES[tile]
-	return Rect2i(t * TILE, Vector2i(TILE, TILE))
+	var n := 2 if LEAF_MASS.has(tile) else 1
+	return Rect2i(t * TILE, Vector2i(TILE, TILE) * n)
 
 
 # --- Mipmaps ----------------------------------------------------------------------
