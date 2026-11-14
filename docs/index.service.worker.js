@@ -4,7 +4,7 @@
 // Incrementing CACHE_VERSION will kick off the install event and force
 // previously cached resources to be updated from the network.
 /** @type {string} */
-const CACHE_VERSION = '1794659102|4329761';
+const CACHE_VERSION = '1794673592|7277209';
 /** @type {string} */
 const CACHE_PREFIX = 'Rotten Crown-sw-cache-';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
