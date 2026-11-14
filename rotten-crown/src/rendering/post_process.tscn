@@ -19,6 +19,9 @@ shader_parameter/rain_amount = 0.0
 shader_parameter/flash = 0.0
 shader_parameter/grade_lut = ExtResource("2_lut")
 shader_parameter/grade_amount = 1.0
+shader_parameter/cine_vignette = 1.0
+shader_parameter/cine_edge_color = Color(0.05, 0.08, 0.16, 1)
+shader_parameter/cine_fringe = 0.004
 
 [node name="PostProcess" type="CanvasLayer"]
 layer = 1

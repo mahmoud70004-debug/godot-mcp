@@ -28,6 +28,11 @@ uniform float flash : hint_range(0.0, 1.0) = 0.0;
 // grade_amount 1 replaces desaturation/contrast/tint (the LUT owns colour); 0 = the old grade.
 uniform sampler2D grade_lut : filter_linear, repeat_disable;
 uniform float grade_amount : hint_range(0.0, 1.0) = 0.0;
+// V9 cinema (with the grade): an oval lens vignette that sinks the frame edge into deep night
+// blue instead of black, and a faint lens fringe (red/blue split) that grows towards the corners.
+uniform float cine_vignette : hint_range(0.0, 1.0) = 0.0;
+uniform vec3 cine_edge_color : source_color = vec3(0.05, 0.08, 0.16);
+uniform float cine_fringe : hint_range(0.0, 0.01) = 0.0;
 
 const float BAYER[16] = float[16](
 	0.0, 8.0, 2.0, 10.0,
@@ -76,6 +81,12 @@ void fragment() {
 	// Corruption: faint horizontal smear.
 	uv.x += (rand(vec2(floor(FRAGCOORD.y * 0.5), floor(TIME * 12.0))) - 0.5) * 0.004 * corruption;
 	vec3 col = textureLod(screen_texture, uv, 0.0).rgb;
+	vec2 lens = SCREEN_UV - 0.5;
+	if (cine_fringe > 0.0) {
+		vec2 shift = lens * dot(lens, lens) * 4.0 * cine_fringe;
+		col.r = textureLod(screen_texture, uv + shift, 0.0).r;
+		col.b = textureLod(screen_texture, uv - shift, 0.0).b;
+	}
 
 	vec3 lifted = lift + col * (1.0 - lift);
 	if (grade_amount < 1.0) {
@@ -114,6 +125,12 @@ void fragment() {
 	vec2 v = SCREEN_UV - 0.5;
 	float vignette = 1.0 - dot(v, v) * vignette_strength * 2.2;
 	col *= clamp(vignette, 0.0, 1.0);
+	if (cine_vignette > 0.0) {
+		// Oval (wider than tall, like the frame), soft from the middle third to the corners.
+		float r = length(lens * vec2(1.0, 1.35)) * 1.6;
+		float edge = smoothstep(0.45, 1.25, r) * cine_vignette;
+		col = mix(col, col * 0.35 + cine_edge_color * 0.5, edge);
+	}
 
 	if (grain_strength > 0.0) {
 		col += (rand(FRAGCOORD.xy + fract(TIME) * vec2(91.7, 37.3)) - 0.5) * grain_strength;

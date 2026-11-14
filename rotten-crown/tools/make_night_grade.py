@@ -32,6 +32,8 @@ SRC_RECTS = [(0.0, 0.30, 1.0, 0.62), (0.0, 0.62, 0.55, 1.0)]
 WARM_HUE = (0.0, 58.0)
 WARM_SAT = (0.28, 0.5)
 WARM_SAT_GAIN = 1.1
+# V9: the user asked for "a little more blue" on top of the fitted grade (cool colours only).
+BLUE_SHIFT = (0.95, 0.99, 1.09)
 
 
 def load(path: pathlib.Path) -> np.ndarray:
@@ -137,7 +139,7 @@ class Grade:
 
     def apply(self, c: np.ndarray) -> np.ndarray:
         xs = np.linspace(0.0, 1.0, 256)
-        cool = self.transfer(c)
+        cool = np.clip(self.transfer(c) * np.array(BLUE_SHIFT), 0.0, 1.0)
         l0 = luma(c)
         l1 = np.interp(l0, xs, self.lcurve)
         warm = c * (l1 / np.maximum(l0, 1e-4))[..., None]

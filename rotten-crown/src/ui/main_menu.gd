@@ -44,6 +44,8 @@ func _keep_title_colours() -> void:
 		return
 	var mat := screen.material.duplicate() as ShaderMaterial
 	mat.set_shader_parameter("grade_amount", 0.0)
+	mat.set_shader_parameter("cine_vignette", 0.0)
+	mat.set_shader_parameter("cine_fringe", 0.0)
 	screen.material = mat
 
 
