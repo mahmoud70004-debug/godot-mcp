@@ -8,6 +8,7 @@
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/bonfire.wav" id="6_fire"]
 [ext_resource type="AudioStream" path="res://assets/audio/ambience/night_wind.wav" id="7_wind"]
 [ext_resource type="NoiseTexture2D" path="res://assets/textures/cloud_noise.tres" id="8_cloud_noise"]
+[ext_resource type="Script" path="res://src/rendering/moonlight.gd" id="9_moonlight"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("3_sky")
@@ -76,6 +77,14 @@ light_energy = 1.15
 shadow_enabled = true
 directional_shadow_mode = 0
 directional_shadow_max_distance = 40.0
+
+[node name="MoonlightModel" type="Node" parent="." node_paths=PackedStringArray("light", "environment")]
+script = ExtResource("9_moonlight")
+light = NodePath("../Moonlight")
+environment = NodePath("../WorldEnvironment")
+cloud_strength = 0.0
+wind = Vector4(0.8, 0.6, 0, 1)
+use_shade_map = false
 
 [node name="Blockout" parent="." instance=ExtResource("90_set")]
 

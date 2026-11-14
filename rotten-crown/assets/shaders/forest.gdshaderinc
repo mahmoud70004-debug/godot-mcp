@@ -7,12 +7,14 @@
 // - Lighting (V7): every family is UNSHADED and evaluates the one moonlight model itself
 //   (assets/shaders/moonlight.gdshaderinc): the moon key (lambert, wrapped for leaves and
 //   cards) x the baked canopy shade x the cloud shadow, plus the hemispheric sky ambient.
-//   The key and ambient are evaluated per pixel (the shade per vertex) on meshes and on
-//   impostors, which take their normals from a baked normal atlas (ForestAtlas), so a tree
-//   and its impostor are lit by the same function. No light pass
-//   ever touches the forest; the player's carried lantern (the only lamp that reaches the
-//   trees: < 0.1 % of the forest is within a fixed lantern's range) is evaluated here as a
-//   small omni light at the camera with Godot's attenuation curve.
+//   The key and ambient are evaluated per pixel (the shade per vertex) on trees and on
+//   impostors (the floor cards and kits per vertex, VERTEX_LIT), which take their normals from a baked normal atlas (ForestAtlas) laid on the
+//   card's own bake axes (turned half way to the camera, IMPOSTOR_VIEW_TURN), so a tree and its
+//   impostor are lit by the same function and the lit side mostly stays put in the world. The light is applied with moon_lit() (one pow per pixel).
+//   No light pass ever touches the forest; the player's carried lantern (the only lamp that
+//   reaches the trees: < 0.1 % of the forest is within a fixed lantern's range) is evaluated
+//   per vertex from the lantern globals (pushed by its FlickerLight, flicker included; off
+//   when none) with Godot's omni attenuation curve.
 //   The canopy shade fades out up the tree (crown_shade metres above the instance origin):
 //   trunk feet under a canopy are shaded, crown tops stay moonlit.
 // - No fills or rims: the only emission is the green rot glow (v_glow), by design.
@@ -50,9 +52,17 @@
 #ifdef IMPOSTOR
 #define TREE_SWAY
 #endif
+// The floor (cards, kits) is lit per vertex like V6 (small, many, never compared with an
+// impostor); trees and impostors per pixel.
+#ifndef TREE
+#ifndef IMPOSTOR
+#define VERTEX_LIT
+#endif
+#endif
 
-// Display-space gain on every forest albedo (mesh and impostor alike; V7-8 calibration).
-uniform float albedo_gain = 1.7;
+// Display-space gain on every forest albedo (mesh and impostor alike; V7-8 calibration, 1.7 -> 2.0
+// in V7-R with the one sky ambient: the forest lost its own brighter ambient).
+uniform float albedo_gain = 2.0;
 uniform sampler2D atlas : source_color, filter_nearest_mipmap;
 // Mipmapped (nearest within a level): chunky up close, no shimmering grain far away.
 uniform sampler2D bark_tex : source_color, filter_nearest_mipmap, repeat_enable;
@@ -91,18 +101,15 @@ uniform float moss_sway = 2.5;
 uniform float card_sway = 1.5;
 // The hanging moss strip in the atlas (v0, v size): a strand's top is anchored.
 uniform vec2 hang_uv_y = vec2(0.0, 0.25);
-// The carried lantern (player.tscn Head/Lantern): sRGB colour, energy, range, attenuation,
-// offset from the camera (view space). Energy 0 switches it off.
-uniform vec3 lantern_color = vec3(1.0, 0.72, 0.42);
-uniform float lantern_energy = 0.55;
-uniform float lantern_range = 5.5;
-uniform float lantern_attenuation = 1.6;
-uniform vec3 lantern_offset = vec3(-0.25, -0.45, -0.2);
 #ifdef IMPOSTOR
+// Share (0..1) of the way the impostor's normal frame turns from the card's bake side towards
+// the camera (see vertex()).
+const float IMPOSTOR_VIEW_TURN = 0.5;
 // Impostor normals (ForestAtlas.normal_texture): rgb = normal in the bake view (x right,
 // y up, z towards the viewer) * 0.5 + 0.5, a = 1 leaf / 0 bark. It covers the atlas'
-// impostor band (UV / impostor_band).
-uniform sampler2D normal_atlas : filter_linear_mipmap;
+// impostor band (UV / impostor_band). Nearest within a mip level like the colour atlas (V7-R:
+// trilinear filtering of this fetch was the single largest per-pixel cost on software GL).
+uniform sampler2D normal_atlas : filter_nearest_mipmap;
 uniform vec2 impostor_band = vec2(1.0, 0.8);
 // Atlas offsets from a style's +Z view to its +X view (u) and to the far-side views (v).
 uniform vec2 impostor_view_offset = vec2(0.4375, 0.4);
@@ -117,12 +124,19 @@ varying float v_fade_out;
 #ifdef IMPOSTOR
 varying vec3 v_right;
 varying vec3 v_toward;
+// Mip level of the colour atlas (x) and the normal atlas (y) for this card at this distance:
+// one per vertex instead of screen derivatives per pixel (the card faces the camera).
+varying vec2 v_lod;
 varying float v_canopy;
 varying float v_cloud;
 varying float v_height;
 #else
 varying float v_shade;
 varying vec3 v_lantern;
+#ifdef VERTEX_LIT
+// moon_lit()'s light factor (display space), per vertex.
+varying vec3 v_lit;
+#endif
 #endif
 
 // How much moonlight reaches a point: the canopy shade fading out up the crown x cloud.
@@ -138,20 +152,34 @@ vec3 forest_moon(vec3 n, float shade, float wrap) {
 	return moon_color.rgb * ndl * shade + moon_ambient(n);
 }
 
-// The carried lantern on a point (linear), Godot's omni attenuation.
-vec3 forest_lantern(vec3 pos, vec3 n, float wrap, mat4 inv_view) {
-	vec3 to = (inv_view * vec4(lantern_offset, 1.0)).xyz - pos;
+// The carried lantern on a point (linear), Godot's omni attenuation (lantern_light.a > 0).
+vec3 forest_lantern(vec3 pos, vec3 n, float wrap) {
+	vec3 to = lantern_pos.xyz - pos;
 	float d = length(to);
-	float nd = d / lantern_range;
+	float nd = d / lantern_light.a;
 	nd *= nd;
 	nd *= nd;
 	nd = max(1.0 - nd, 0.0);
-	float att = nd * nd * pow(max(d, 0.0001), -lantern_attenuation);
+	float att = nd * nd * pow(max(d, 0.0001), -lantern_pos.w);
 	float ndl = max((dot(n, to / max(d, 0.0001)) + wrap) / (1.0 + wrap), 0.0);
-	return moon_to_linear(lantern_color) * lantern_energy * att * ndl;
+	return lantern_light.rgb * att * ndl;
+}
+
+// inverse(mat3(m)) * v for a rotation x scale basis (orthogonal columns, no shear): each
+// column's share of v over its squared length.
+vec3 forest_unbasis(mat4 m, vec3 v) {
+	vec3 c0 = m[0].xyz;
+	vec3 c1 = m[1].xyz;
+	vec3 c2 = m[2].xyz;
+	return vec3(dot(c0, v) / max(dot(c0, c0), 1e-8), dot(c1, v) / max(dot(c1, c1), 1e-8), dot(c2, v) / max(dot(c2, c2), 1e-8));
 }
 
 void vertex() {
+#ifdef IMPOSTOR
+	// Which card quad this vertex belongs to, read before the wind moves it (the ZY quad sits at
+	// x = 0 exactly; sway would push its top vertices past any small threshold).
+	bool quad_x = abs(VERTEX.x) > 0.01;
+#endif
 	vec3 origin = MODEL_MATRIX[3].xyz;
 	vec3 cam = INV_VIEW_MATRIX[3].xyz;
 	float d = distance(origin, cam);
@@ -190,64 +218,102 @@ void vertex() {
 	v_fade_in = fade_in > 0.0 ? clamp((d - lod_begin) / fade_in, 0.0, 1.0) : 1.0;
 	v_fade_out = fade_out > 0.0 ? clamp((d - (lod_end - fade_out)) / fade_out, 0.0, 1.0) : 0.0;
 	bool drawn = d >= lod_begin && d < lod_end;
+	v_world = vec3(0.0);
+	v_wnormal = vec3(0.0, 1.0, 0.0);
+#ifdef IMPOSTOR
+	v_right = vec3(1.0, 0.0, 0.0);
+	v_toward = vec3(0.0, 0.0, 1.0);
+	v_lod = vec2(0.0);
+	v_canopy = 1.0;
+	v_cloud = 1.0;
+	v_height = 0.0;
+#else
+	v_shade = 1.0;
+	v_lantern = vec3(0.0);
+#ifdef VERTEX_LIT
+	v_lit = vec3(0.0);
+#endif
+#endif
 	if (!drawn) {
+		// Collapsed to a point: no pixels, so none of the work below.
 		VERTEX = vec3(0.0);
-	} else if (v_glow > 0.01) {
-		VERTEX += NORMAL * v_glow * pulse * sin(TIME * 1.3 + origin.x * 0.7 + origin.z * 0.9 + VERTEX.y * 2.5);
-	}
-	vec3 world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	float height = world.y - origin.y;
-	// Wind, in world metres, brought back into the instance's space.
-	vec3 sway = vec3(0.0);
+	} else {
+		if (v_glow > 0.01) {
+			VERTEX += NORMAL * v_glow * pulse * sin(TIME * 1.3 + origin.x * 0.7 + origin.z * 0.9 + VERTEX.y * 2.5);
+		}
+		vec3 world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+		float height = world.y - origin.y;
+		// Wind, in world metres, brought back into the instance's space.
+		vec3 sway = vec3(0.0);
 #ifdef TREE_SWAY
-	float h01 = clamp((height - sway_height.x) / (sway_height.y - sway_height.x), 0.0, 1.25);
-	sway = wind_offset(origin, h01);
+		float h01 = clamp((height - sway_height.x) / (sway_height.y - sway_height.x), 0.0, 1.25);
+		sway = wind_offset(origin, h01);
 #endif
 #ifdef TREE
-	if (UV2.y > 0.0) {
-		// Moss strand: swings from its anchored top.
-		float s = clamp((UV.y - hang_uv_y.x) / hang_uv_y.y, 0.0, 1.0);
-		sway += wind_offset(origin + vec3(UV2.y * 9.0, 0.0, 0.0), 1.0) * moss_sway * s;
-	} else if (leaf) {
-		sway += wind_offset(world, h01) * leaf_flutter;
-	}
+		if (UV2.y > 0.0) {
+			// Moss strand: swings from its anchored top.
+			float s = clamp((UV.y - hang_uv_y.x) / hang_uv_y.y, 0.0, 1.0);
+			sway += wind_offset(origin + vec3(UV2.y * 9.0, 0.0, 0.0), 1.0) * moss_sway * s;
+		} else if (leaf) {
+			sway += wind_offset(world, h01) * leaf_flutter;
+		}
 #endif
 #ifdef CARD_SWAY
-	sway = wind_offset(origin, clamp(card_h, 0.0, 1.0)) * card_sway;
+		sway = wind_offset(origin, clamp(card_h, 0.0, 1.0)) * card_sway;
 #endif
-	if (drawn) {
-		VERTEX += inverse(mat3(MODEL_MATRIX)) * sway;
+		VERTEX += forest_unbasis(MODEL_MATRIX, sway);
 		world += sway;
-	}
-	v_world = world;
-	v_wnormal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+		v_world = world;
+		v_wnormal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
 #ifdef IMPOSTOR
-	// Each card quad shows the tree as baked from the side the camera is on (ForestAtlas: the
-	// quad in the XY plane its +Z / -Z views, the one in the ZY plane its +X / -X views):
-	// the normal atlas' x runs along the quad's u axis, z towards the viewer. Rebuild those
-	// axes in world space for this camera.
-	bool quad_x = abs(VERTEX.x) > 0.01;
-	vec3 axis = quad_x ? MODEL_MATRIX[0].xyz : MODEL_MATRIX[2].xyz;
-	vec3 facing = quad_x ? MODEL_MATRIX[2].xyz : MODEL_MATRIX[0].xyz;
-	if (!quad_x) {
-		v_uv.x += impostor_view_offset.x;
-	}
-	if (dot(cam - origin, facing) < 0.0) {
-		v_uv.y += impostor_view_offset.y;
-	}
-	vec3 toward = cam - origin;
-	toward.y = 0.0;
-	toward = normalize(toward + vec3(0.0001, 0.0, 0.0));
-	vec3 across = vec3(-toward.z, 0.0, toward.x);
-	v_right = dot(axis, across) < 0.0 ? -across : across;
-	v_toward = toward;
-	v_canopy = moon_canopy(origin);
-	v_cloud = moon_cloud(origin);
-	v_height = height;
+		// Each card quad shows the tree as baked from the side the camera is on (ForestAtlas: the
+		// quad in the XY plane its +Z / -Z views, the one in the ZY plane its +X / -X views):
+		// the normal atlas' x runs along the quad's u axis, z towards the side shown. The frame is
+		// built from the card's own axes (fixed in the world for that side), not the camera's.
+		vec3 axis = normalize(quad_x ? MODEL_MATRIX[0].xyz : MODEL_MATRIX[2].xyz);
+		vec3 facing = normalize(quad_x ? MODEL_MATRIX[2].xyz : MODEL_MATRIX[0].xyz);
+		if (!quad_x) {
+			v_uv.x += impostor_view_offset.x;
+		}
+		if (dot(cam - origin, facing) < 0.0) {
+			v_uv.y += impostor_view_offset.y;
+			facing = -facing;
+		}
+		// Seen from a diagonal the tree's visible surfaces face the camera more than the bake
+		// side does: the frame turns half way towards the camera (the lit side follows the view
+		// at half rate, the other half stays fixed in the world; a full turn would light the
+		// card like a billboard, none matches the mesh worst on diagonals).
+		vec3 to_cam = cam - origin;
+		to_cam.y = 0.0;
+		to_cam = normalize(to_cam + vec3(0.0001, 0.0, 0.0));
+		// (to_cam is on the shown side, facing was flipped to it: the mix never cancels.)
+		v_toward = normalize(mix(facing, to_cam, IMPOSTOR_VIEW_TURN));
+		v_right = normalize(axis - v_toward * dot(axis, v_toward));
+		// Atlas texels per screen pixel: texels per metre on the card x metres per pixel at d.
+		vec2 tex = vec2(textureSize(atlas, 0));
+		float m_per_px = 2.0 * d / (PROJECTION_MATRIX[1][1] * VIEWPORT_SIZE.y);
+		float width = length(quad_x ? MODEL_MATRIX[0].xyz : MODEL_MATRIX[2].xyz);
+		float tpm = max(tile_size.y * tex.y / length(MODEL_MATRIX[1].xyz), tile_size.x * tex.x / width);
+		float lod = max(log2(max(tpm * m_per_px, 1.0)), 0.0);
+		vec2 ntex = vec2(textureSize(normal_atlas, 0));
+		v_lod = vec2(lod, max(lod + log2(ntex.y / (tex.y * impostor_band.y)), 0.0));
+		v_canopy = moon_canopy(origin);
+		v_cloud = moon_cloud(origin);
+		v_height = height;
 #else
-	v_shade = forest_shade(moon_canopy(world), moon_cloud(world), height);
-	v_lantern = lantern_energy > 0.0 ? forest_lantern(world, v_wnormal, leaf ? leaf_wrap : bark_wrap, INV_VIEW_MATRIX) : vec3(0.0);
+		v_shade = forest_shade(moon_canopy(world), moon_cloud(world), height);
+		if (lantern_light.a > 0.0) {
+			v_lantern = forest_lantern(world, v_wnormal, leaf ? leaf_wrap : bark_wrap);
+		}
+#ifdef VERTEX_LIT
+		vec3 vl = forest_moon(v_wnormal, v_shade, leaf ? leaf_wrap : bark_wrap) + v_lantern;
+		if (v_glow > 0.0) {
+			vl += vec3(v_glow * glow_strength * (0.8 + 0.2 * sin(TIME * 1.3 + world.x * 0.7 + world.z * 0.9)));
+		}
+		v_lit = pow(max(vl, vec3(0.0)), vec3(1.0 / 2.2));
 #endif
+#endif
+	}
 }
 
 float dissolve_threshold(vec2 frag) {
@@ -264,32 +330,44 @@ void fragment() {
 		}
 	}
 	vec4 t;
-	if (v_uv.x < -0.5 || force_bark) {
+	bool bark = v_uv.x < -0.5 || force_bark;
+	if (bark) {
 		vec2 buv = abs(v_wnormal.y) > 0.75 ? v_world.xz : vec2(v_world.x + v_world.z, v_world.y);
 		// Grain only (grey): the colour (bark, moss, rot) is the vertex colour's.
 		float grain = dot(texture(bark_tex, buv * bark_scale).rgb, vec3(0.3, 0.59, 0.11)) * bark_gain;
 		t = vec4(vec3(mix(0.7, grain, bark_detail)), 1.0);
 	} else {
+#ifdef IMPOSTOR
+		t = textureLod(atlas, v_uv, v_lod.x);
+#else
 		t = texture(atlas, v_uv);
+#endif
 	}
+#ifdef CUTOUT
+	// Cut before any lighting (the alpha-cut pixels are most of a leaf card).
+	if (t.a < 0.5) {
+		discard;
+	}
+#endif
 	// V7-8: the painted bark/leaf colours were chosen under the old fill light and read
 	// near-black under the plain moon model; one gain (display space) lifts mesh and impostor
 	// alike, so their match holds.
 	vec3 albedo = min(t.rgb * COLOR.rgb * tint * albedo_gain, vec3(1.0));
+#ifdef VERTEX_LIT
+	ALBEDO = mix(albedo * v_lit, fog_tint, v_fade_out);
+#else
 #ifdef IMPOSTOR
-	vec4 nt = texture(normal_atlas, v_uv / impostor_band);
+	vec4 nt = textureLod(normal_atlas, v_uv / impostor_band, v_lod.y);
 	vec3 nb = nt.rgb * 2.0 - 1.0;
 	vec3 n = normalize(v_right * nb.x + vec3(0.0, nb.y, 0.0) + v_toward * nb.z);
 	vec3 light = forest_moon(n, forest_shade(v_canopy, v_cloud, v_height), mix(bark_wrap, leaf_wrap, nt.a));
 #else
-	bool bark = v_uv.x < -0.5 || force_bark;
 	vec3 light = forest_moon(normalize(v_wnormal), v_shade, bark ? bark_wrap : leaf_wrap) + v_lantern;
 #endif
-	float beat = 0.8 + 0.2 * sin(TIME * 1.3 + v_world.x * 0.7 + v_world.z * 0.9);
-	vec3 lit = moon_to_display(moon_to_linear(albedo) * (light + vec3(v_glow * glow_strength * beat)));
-	ALBEDO = mix(lit, fog_tint, v_fade_out);
-#ifdef CUTOUT
-	ALPHA = t.a;
-	ALPHA_SCISSOR_THRESHOLD = 0.5;
+	if (v_glow > 0.0) {
+		float beat = 0.8 + 0.2 * sin(TIME * 1.3 + v_world.x * 0.7 + v_world.z * 0.9);
+		light += vec3(v_glow * glow_strength * beat);
+	}
+	ALBEDO = mix(moon_lit(albedo, light), fog_tint, v_fade_out);
 #endif
 }

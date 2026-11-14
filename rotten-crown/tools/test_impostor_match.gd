@@ -8,7 +8,7 @@ extends Node
 ## High) and from eight directions around the tree, renders the near mesh and then its
 ## impostor card with the shared forest materials under the overworld moon (moon direction,
 ## colour and sky ambient read from valdron_overworld.tscn, the same global shader
-## parameters as in game), once in the open and once under a half canopy shade, and
+## parameters as in game; the sky ambient from its Environment as Moonlight derives it), once in the open and once under a half canopy shade, and
 ## compares the mean display colour of the tree's pixels above the ground (exposure + tonemap of the
 ## overworld environment; no fog, no wind, no clouds, white instance tint, no moss: the
 ## impostor has none by design).
@@ -128,27 +128,30 @@ func _environment() -> Environment:
 	return env
 
 
-## Moon direction / colour (linear, as Moonlight pushes them) and the sky ambient of the
-## overworld; no clouds, no wind.
+## Moon direction / colour (linear, as Moonlight pushes them) and the sky ambient Moonlight
+## derives from the overworld Environment (its own ambient, before any region blend); no
+## clouds, no wind, no lantern.
 func _set_moon() -> void:
 	var rot: Variant = _overworld_property("Moonlight", "rotation")
 	var col: Variant = _overworld_property("Moonlight", "light_color")
 	var energy: Variant = _overworld_property("Moonlight", "light_energy")
-	var basis := Basis.from_euler(rot as Vector3 if rot != null else Vector3(-0.524, -2.634, 0.0))
+	var basis := Basis.from_euler(rot as Vector3 if rot != null else MoonShadeBaker.MOON_ROTATION)
 	var c := (col as Color if col != null else Color(0.58, 0.7, 1.0)).srgb_to_linear()
 	var e := float(energy) if energy != null else 1.15
 	var model := Moonlight.new()
-	var top: Variant = _overworld_property("MoonlightModel", "ambient_top")
-	var bottom: Variant = _overworld_property("MoonlightModel", "ambient_bottom")
-	var amb_top: Color = top if top != null else model.ambient_top
-	var amb_bottom: Color = bottom if bottom != null else model.ambient_bottom
+	var gain_v: Variant = _overworld_property("MoonlightModel", "ambient_gain")
+	var bottom_v: Variant = _overworld_property("MoonlightModel", "ambient_bottom_factor")
+	var gain: float = float(gain_v) if gain_v != null else model.ambient_gain
+	var bottom: float = float(bottom_v) if bottom_v != null else model.ambient_bottom_factor
 	model.free()
+	var top := Moonlight.sky_ambient(_overworld_property("WorldEnvironment", "environment") as Environment, gain)
 	RenderingServer.global_shader_parameter_set(&"moon_dir", basis.z.normalized())
 	RenderingServer.global_shader_parameter_set(&"moon_color", Color(c.r * e, c.g * e, c.b * e, 1.0))
-	RenderingServer.global_shader_parameter_set(&"sky_ambient_top", amb_top)
-	RenderingServer.global_shader_parameter_set(&"sky_ambient_bottom", amb_bottom)
+	RenderingServer.global_shader_parameter_set(&"sky_ambient_top", top)
+	RenderingServer.global_shader_parameter_set(&"sky_ambient_bottom", Color(top.r * bottom, top.g * bottom, top.b * bottom, 1.0))
 	RenderingServer.global_shader_parameter_set(&"cloud_strength", 0.0)
 	RenderingServer.global_shader_parameter_set(&"wind", Vector4(1.0, 0.0, 0.0, 0.0))
+	RenderingServer.global_shader_parameter_set(&"lantern_light", Vector4.ZERO)
 
 
 ## A uniform canopy shade over the test area.

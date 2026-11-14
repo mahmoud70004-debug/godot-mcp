@@ -117,8 +117,7 @@ directional_shadow_max_distance = 40.0
 script = ExtResource("36_moonlight")
 light = NodePath("../Moonlight")
 environment = NodePath("../WorldEnvironment")
-ambient_top = Color(0.26, 0.3, 0.44, 1)
-ambient_bottom = Color(0.1, 0.1, 0.12, 1)
+ambient_gain = 1.5
 
 [node name="World" parent="." instance=ExtResource("2_world")]
 

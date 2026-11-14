@@ -443,6 +443,16 @@ Budgets (Low, probe): <= 200 draws and <= 300k primitives at every pose; pck gro
   is multiplied by shade x cloud while lanterns (omni) stay normal. Unshaded families (impostors, grass) call moon_shade() by hand
   with the same uniforms (globals via RenderingServer global shader parameters, so one place drives all).
 - Real-time moon shadows: measure Low with a 1024 atlas / 15 m; enable on Low only if frame time +<= 12%, else canopy map only on Low.
+- V7-R one sky ambient: the Environment ambient (region-blended colour x energy, lightning boost) is the only knob.
+  Moonlight derives sky_ambient_top = srgb_to_linear(colour) x energy x ambient_gain (overworld 1.5) and bottom = top x
+  ambient_bottom_factor (0.33) every frame. Measured on Compatibility: the renderer applies srgb_to_linear(colour) x energy
+  x linear albedo; lit EMISSION and unshaded ALBEDO are written as display values. The terrain turns the renderer ambient off
+  (ambient_light_disabled) and adds moon_ambient(n) to DIFFUSE_LIGHT in light() with the moon (exact, no pow). The ONE
+  exception: lit StandardMaterial props (houses, walls) keep the plain flat Environment ambient (no ambient_gain).
+  Calibration: Kingswood / Whispering Wood ambient greyer (same props luminance), forest albedo_gain 1.7 -> 2.0.
+  Grass families: painted colours belong to moon_ref_irr (Moonlight's base moon + the scene's own ambient), wind sway to
+  wind_ref (its base wind). Cloud drift is a pushed offset (cloud_offset) from Moonlight's clock (process ALWAYS, starts at 0),
+  not TIME, so the CPU cloud cover and the drawn shadows always agree. Carried lantern = globals from player FlickerLight.
 
 ### Contracts
 - Global shader params (project.godot [shader_globals], set by new src/rendering/moonlight.gd [Moonlight] autoload-free node in the

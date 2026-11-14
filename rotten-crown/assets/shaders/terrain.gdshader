@@ -5,7 +5,9 @@
 // alpha 1 = untouched; 1 -> 0.5 = more moss in blotches over dark loam; below 0.5 =
 // the amber leaf litter of the Cellar Hollow.
 shader_type spatial;
-render_mode diffuse_lambert, specular_disabled;
+// The renderer's flat Environment ambient is off: the sky ambient comes from the moon model
+// (moon_ambient(), added in light() with the moon), the same as every other family.
+render_mode diffuse_lambert, specular_disabled, ambient_light_disabled;
 
 #include "res://assets/shaders/moonlight.gdshaderinc"
 
@@ -18,8 +20,8 @@ uniform float grass_scale = 0.16;
 uniform float dry_scale = 0.2;
 uniform float forest_scale = 0.2;
 uniform float road_scale = 0.28;
-// V7: renamed from *_tint (the baked world stores the old tint values per material, so a new name
-// is what lets these defaults take effect without a re-bake).
+// V7: renamed from *_tint. The bake stores every uniform's value in the baked materials, so a
+// change to these defaults only shows after a re-bake (tools/bake_world.sh overworld).
 uniform vec3 grass_albedo : source_color = vec3(0.64, 0.74, 0.82);
 uniform vec3 dry_albedo : source_color = vec3(0.66, 0.68, 0.75);
 uniform vec3 forest_albedo : source_color = vec3(0.64, 0.7, 0.78);
@@ -35,13 +37,14 @@ const float GROUND_GAIN = 2.2;
 varying vec3 world_pos;
 varying vec3 paint;
 varying float floor_mix;
-varying vec3 light_world_pos;
+// The cloud shadow, per vertex: the clouds are ~80 m features, the ground grid is 2 m.
+varying float v_cloud;
 
 void vertex() {
 	world_pos = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
-	light_world_pos = world_pos;
 	paint = COLOR.rgb;
 	floor_mix = 1.0 - COLOR.a;
+	v_cloud = moon_cloud(world_pos);
 }
 
 float blotch(vec2 p) {
@@ -103,15 +106,18 @@ void fragment() {
 }
 
 // The moon (the directional light) goes through the shared model: lambert as Godot's
-// diffuse_lambert (light colour / PI), times the baked canopy + cloud shade, combined with
-// the real-time shadow as min() so the two never double-darken. Lantern omnis stay plain lambert.
-const float FORCE_SHADE = -1.0;
+// diffuse_lambert (light colour / PI), times the baked canopy shade (per pixel: its dapples are
+// finer than the ground grid) x the cloud shadow, combined with the real-time shadow as min()
+// so the two never double-darken; with it comes the hemispheric sky ambient (moon_ambient(),
+// linear, multiplied by the linear albedo like the renderer's own ambient), once per pixel.
+// Lantern omnis stay plain lambert. Needs the scene's moon (a directional light): without one
+// the ground gets no ambient either.
 void light() {
 	float ndl = clamp(dot(NORMAL, LIGHT), 0.0, 1.0);
 	float att = ATTENUATION;
 	if (LIGHT_IS_DIRECTIONAL) {
-		float shade = FORCE_SHADE >= 0.0 ? FORCE_SHADE : moon_shade(light_world_pos);
-		att = min(att, shade);
+		att = min(att, moon_canopy(world_pos) * v_cloud);
+		DIFFUSE_LIGHT += moon_ambient((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
 	}
 	DIFFUSE_LIGHT += LIGHT_COLOR * ndl * att / PI;
 }

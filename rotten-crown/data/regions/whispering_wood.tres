@@ -15,6 +15,6 @@ view_distance = 34
 fog_sky = 0.8
 mist_density = 0.2
 horizon_haze = 1
-ambient_color = Color(0.184, 0.241, 0.46, 1)
+ambient_color = Color(0.229, 0.245, 0.298, 1)
 rain = 0.0
 planned_phase = 3

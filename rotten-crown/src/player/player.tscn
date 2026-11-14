@@ -69,6 +69,7 @@ base_energy = 0.55
 flicker_amount = 0.2
 flicker_speed = 3.0
 gutter_chance = 0.0
+drives_shader_lantern = true
 
 [node name="Hurtbox" type="Area3D" parent="." node_paths=PackedStringArray("health")]
 collision_layer = 16

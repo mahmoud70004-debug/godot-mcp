@@ -6,8 +6,9 @@ extends RefCounted
 ## alpha-cut surface: one draw per style) and an impostor painted into the shared
 ## ForestAtlas (two crossed cards, drawn by ForestBuilder for every style at once).
 ## All of it uses the forest shaders (assets/shaders/forest*.gdshader*): unshaded, lit by
-## the one moonlight model (per vertex on the mesh, per pixel on the impostor from its baked
-## normals), vertex-colour bark / moss / rot (rot glows per instance), wind sway, no shadows.
+## the one moonlight model (per pixel on the mesh from its normals, per pixel on the impostor
+## from its baked normals; the canopy shade per vertex), vertex-colour bark / moss / rot (rot
+## glows per instance), wind sway, no shadows.
 ##
 ## Tree frame: origin on the ground at the trunk centre, +X the side it leans to; the
 ## trunk is buried to y = -0.9 so it sits on slopes. Physics is ForestBuilder's job.

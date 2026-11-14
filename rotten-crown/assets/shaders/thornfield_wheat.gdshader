@@ -39,21 +39,12 @@ uniform float fade_start = 1000.0;
 uniform float fade_end = 1001.0;
 
 
-// V7 moonlight model: the shader's painted colours are the CLEAR-moon look; this scales them by
-// the model's light (moon key with wrapped lambert x canopy shade x cloud + hemispheric sky
-// ambient) relative to the reference light (project defaults, open ground, no cloud), so a
-// clear moon leaves the colours as authored and shade / clouds / a dimmed moon follow the globals.
-// The factor is a display-space multiplier (linear ratio ^ 1/2.2), computed per vertex.
-const vec3 MOON_REF_IRR = vec3(0.387, 0.5431, 1.1067);
+// V7 moonlight model: the shader's painted colours are the look under the scene's reference
+// light (moon_ref_irr: its base moon and ambient, open ground, no cloud); moon_light_ratio()
+// scales them by the model's light at the tuft (moon key with wrapped lambert x canopy shade x
+// cloud + hemispheric sky ambient), so shade, clouds, a dimmed moon and darker regions follow
+// the globals. The factor is a display-space multiplier, computed per vertex.
 uniform float light_gain = 0.88;
-
-vec3 grass_light(vec3 wp, vec3 cam) {
-	vec3 to_cam = vec3(cam.x - wp.x, 0.0, cam.z - wp.z);
-	vec3 n = normalize(mix(vec3(0.0, 1.0, 0.0), to_cam / max(length(to_cam), 0.001), 0.3));
-	float ndl = max((dot(n, moon_dir) + 0.5) / 1.5, 0.0);
-	vec3 ratio = moon_irradiance(ndl, n, wp) / MOON_REF_IRR;
-	return pow(ratio, vec3(1.0 / 2.2)) * light_gain;
-}
 
 varying float v_light;
 varying vec3 v_lit;
@@ -69,9 +60,8 @@ void vertex() {
 	float h = 1.0 - UV.y;
 	float tuft_h = COLOR.g * 2.0;
 	// Direction and strength follow the global wind (project default 0 = the authored look).
-	bool driven = wind.z > 0.0001;
-	vec2 wd = driven ? normalize(wind.xy) : normalize(wind_dir);
-	float wk = driven ? wind.z / 0.12 : 1.0;
+	vec2 wd = wind_dir_or(wind_dir);
+	float wk = wind_scale();
 	float phase = dot(wp.xz, wd) * gust_scale * 6.2832 - TIME * gust_speed;
 	float gust = sin(phase) * 0.5 + 0.5;
 	gust *= gust;
@@ -81,12 +71,13 @@ void vertex() {
 	VERTEX.y -= bend * bend * tuft_h * 0.45;
 	float dist = length((MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz);
 	VERTEX.y -= smoothstep(fade_start, fade_end, dist) * h * tuft_h;
-	// Moonlight (shade, clouds, moon) at the tuft, not the bent tip.
-	v_lit = grass_light(wp, CAMERA_POSITION_WORLD);
-	v_light = moon_shade(wp);
+	// Moonlight (shade, clouds, moon) at the tuft, not the bent tip; skipped for culled tufts.
+	v_culled = chunk_range > 0.0 && distance(CAMERA_POSITION_WORLD, CUSTOM0.xyz) > chunk_range ? 1.0 : 0.0;
+	float shade = v_culled > 0.5 ? 0.0 : moon_shade(wp);
+	v_lit = v_culled > 0.5 ? vec3(0.0) : moon_light_ratio(wp, CAMERA_POSITION_WORLD, shade) * light_gain;
+	v_light = shade;
 	v_gust = gust;
 	world_pos = wp;
-	v_culled = chunk_range > 0.0 && distance(CAMERA_POSITION_WORLD, CUSTOM0.xyz) > chunk_range ? 1.0 : 0.0;
 	// A culled tuft collapses to a point: no pixels are rasterised for it at all.
 	if (v_culled > 0.5) {
 		VERTEX = vec3(0.0);

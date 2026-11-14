@@ -185,6 +185,10 @@ sky_ambient_bottom={
 "type": "color",
 "value": Color(0.05, 0.055, 0.07, 1)
 }
+moon_ref_irr={
+"type": "vec3",
+"value": Vector3(0.387, 0.5431, 1.1067)
+}
 shade_map={
 "type": "sampler2D",
 "value": ""
@@ -197,7 +201,7 @@ cloud_tex={
 "type": "sampler2D",
 "value": ""
 }
-cloud_scroll={
+cloud_offset={
 "type": "vec2",
 "value": Vector2(0, 0)
 }
@@ -212,4 +216,16 @@ cloud_strength={
 wind={
 "type": "vec4",
 "value": Vector4(0.8, 0.6, 0, 1)
+}
+wind_ref={
+"type": "float",
+"value": 0.12
+}
+lantern_pos={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 1)
+}
+lantern_light={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
 }

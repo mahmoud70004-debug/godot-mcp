@@ -47,6 +47,8 @@ const GRASS_CHUNK_HALF := 8.5
 const MIST_BELOW_EYE := 2.2
 
 enum Kind { SCENERY, TERRAIN, NEAR_TREES, FAR_TREES, FLOOR, FLOOR_LARGE, GRASS }
+## The forest material kinds that fade into the fog colour (fog_tint) before their cut-off.
+const FOG_FADE_KINDS: Array[Kind] = [Kind.NEAR_TREES, Kind.FAR_TREES, Kind.FLOOR, Kind.FLOOR_LARGE]
 
 @export var environment: WorldEnvironment
 ## Root of the baked world (its meshes get the ranges).
@@ -136,9 +138,12 @@ func _process(_delta: float) -> void:
 		for mat in _horizon_mats:
 			mat.set_shader_parameter("haze_color", env.fog_light_color)
 			mat.set_shader_parameter("haze", _haze)
-		# The far tree cards fade into the fog colour (no dither) before their cut-off.
-		for mat: ShaderMaterial in _mats.get(Kind.FAR_TREES, []):
-			mat.set_shader_parameter("fog_tint", env.fog_light_color)
+		# Every forest family fades into the fog colour (no dither) before its cut-off: far
+		# tree cards over FAR_FADE, floor cards and kits over FLOOR_FADE (near trees have no
+		# band today, SWAP_FADE 0, but get the colour too so a band would fade right).
+		for kind in FOG_FADE_KINDS:
+			for mat: ShaderMaterial in _mats.get(kind, []):
+				mat.set_shader_parameter("fog_tint", env.fog_light_color)
 		if horizon:
 			horizon.visible = _haze < 0.99
 	var key := Vector3(snappedf(distance, 0.25), _range_floor, _quality())
@@ -313,7 +318,7 @@ func _apply_shader_ranges() -> void:
 		var r := reach(kind)
 		for mat: ShaderMaterial in _mats.get(kind, []):
 			mat.set_shader_parameter("lod_end", r)
-			mat.set_shader_parameter("fade_out", 3.0)
+			mat.set_shader_parameter("fade_out", FLOOR_FADE)
 	# Grass chunks (12 m) are cut by their centre at `grass`: every tuft has sunk into the
 	# ground (shader fade) before the nearest corner of a chunk can reach that line.
 	var grass := reach(Kind.GRASS)
