@@ -70,6 +70,7 @@ static func build(root: Node3D) -> TerrainBuilder:
 	_world_edge(root, terrain)
 	# After everything solid is placed (the forest keeps clear of it), before the last merge.
 	ForestBuilder.build(root, terrain, rng)
+	WallGrowth.build(root, terrain)
 	MeshMerger.merge_static(shared, MeshMerger.cell_for(REGION_RANGE), REGION_RANGE)
 	terrain.paint = ground_paint
 	_split_overlit_terrain(root, terrain)
