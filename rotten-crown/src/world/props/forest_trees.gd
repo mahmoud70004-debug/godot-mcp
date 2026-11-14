@@ -75,6 +75,7 @@ const STYLES := {
 static var _cache: Dictionary = {}
 static var _mats: Dictionary = {}
 static var _impostor_size: Dictionary = {}
+static var _sculpts: Dictionary = {}
 
 
 ## One style, built on first use (`lod` 0; 1 is a coarser copy kept for experiments):
@@ -179,6 +180,8 @@ static func _build(style: int, lod: int) -> Dictionary:
 			var spine := _stem(ctx, out * 0.22, out, r0 * rng.randf_range(0.85, 1.15), float(p["fork"]) * rng.randf_range(0.8, 1.05))
 			if k == 0:
 				base = Vector2(spine[0].x, spine[0].z) * 0.0
+	elif not _sculpt(style).is_empty():
+		base = _sculpted_trunk(ctx, _sculpt(style))
 	else:
 		var spine := _stem(ctx, Vector3.ZERO, Vector3.RIGHT, r0, float(p["fork"]))
 		var at := _ring_at(spine, 1.6)
@@ -207,6 +210,43 @@ static func _build(style: int, lod: int) -> Dictionary:
 	var tris := (trunk["i"] as PackedInt32Array).size() / 3
 	return {"mesh": mesh, "radius": radius(style), "base": base, "hangs": ctx["hangs"], "strands": strands, "face": ctx["face"],
 		"tris": tris}
+
+
+## V13: a trunk sculpted in Blender (tools/blender/trees/sculpt_trunks.py ->
+## res://data/trees/trunk_<style>.json: low-poly mesh with the sculpt's cavities baked into the
+## vertex colours and its normals, leaf clump centres, moss anchors), or {} when the style has none
+## and keeps its procedural stem.
+static func _sculpt(style: int) -> Dictionary:
+	if not _sculpts.has(style):
+		var path := "res://data/trees/trunk_%s.json" % String(NAMES[style]).to_lower()
+		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
+		_sculpts[style] = data if data is Dictionary else {}
+	return _sculpts[style]
+
+
+## Adds the sculpted trunk to ctx (bark vertices, clumps, moss anchors); returns the trunk centre
+## at 1.6 m (x, z).
+static func _sculpted_trunk(ctx: Dictionary, data: Dictionary) -> Vector2:
+	var acc: Dictionary = ctx["trunk"]
+	var v: Array = data["v"]
+	var n: Array = data["n"]
+	var c: Array = data["c"]
+	var first := (acc["v"] as PackedVector3Array).size()
+	for k in v.size() / 3:
+		_vert(acc, Vector3(v[k * 3], v[k * 3 + 1], v[k * 3 + 2]), Vector3(n[k * 3], n[k * 3 + 1], n[k * 3 + 2]).normalized(),
+			Color(c[k * 3], c[k * 3 + 1], c[k * 3 + 2]), SOLID_UV)
+	var idx: PackedInt32Array = acc["i"]
+	for i: float in data["i"]:
+		idx.append(first + int(i))
+	var clumps: Array = ctx["clumps"]
+	for cl: Array in data.get("clumps", []):
+		clumps.append([Vector3(cl[0], cl[1], cl[2]), float(cl[3]) * LEAF_GROW])
+	var hangs: PackedVector3Array = ctx["hangs"]
+	for h: Array in data.get("hangs", []):
+		hangs.append(Vector3(h[0], h[1], h[2]))
+	ctx["hangs"] = hangs
+	var base: Array = data.get("base", [0.0, 0.0])
+	return Vector2(base[0], base[1])
 
 
 ## Vertices per baked moss strand (two crossed quads).
