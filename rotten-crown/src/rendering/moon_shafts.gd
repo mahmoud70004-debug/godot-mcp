@@ -7,7 +7,7 @@ extends MeshInstance3D
 
 const SHADER := preload("res://assets/shaders/moon_shafts.gdshader")
 ## Marching steps (Low, Medium, High).
-const STEPS := [8, 10, 14]
+const STEPS := [6, 10, 14]
 @export var strength := 0.6
 
 var _mat: ShaderMaterial

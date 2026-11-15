@@ -211,3 +211,11 @@
 - ForestWall.inner_dark: tree tint x lerp(1, 0.22, smoothstep(2, 13, depth behind the wall)) for wall rows and scatter trees.
 - Tests: layout 0, forest 0, impostor 0, validate/gdlint, web smoke/touch/swap PASS, web A/B (shafts on/off) renders without errors; web_perf Low: spawn 2.75 both, hollowmere 3 vs 3.25 (noise).
 - Limits: rays exist only when the moon is in front of the camera; no volumetric light when looking away.
+
+## V20 - volumetric moonlight in the air + moon glints (published 2026-11-15T13:47:24Z)
+- User: V19 radial shafts were only an on-screen effect when seeing the moon; wanted the light baked into the air, dynamic with the moon direction, in the fog/void, any viewing direction; plus realistic moon reflection like the armour reference.
+- MoonShadeBaker now writes RGB8: R shade (unchanged for all shaders), G ground height (HEIGHT_MIN -12, RANGE 48).
+- moon_shafts.gdshader rewritten: world-space ray march per pixel from the depth buffer (reverse Z with finite far: z = n f / (d (f-n) + n)); a sample P at height h is lit when ground point G = P - moon_dir * h / moon_dir.y is lit in the shade map (and under the cloud shadow); haze thicker in shade, thinning to the roof (17 m); HG forward scattering mixed with an even floor so it never vanishes looking away; interleaved gradient noise; steps 6/10/14.
+- forest.gdshaderinc: forest_glint (Blinn-Phong moon glints, bark 0.38, leaf 0.3) for mesh and impostor.
+- Tests: layout 0, forest 0, impostor 0 (bare/snag closer to limits), validate/gdlint, smoke/touch/swap PASS (swap FAILed once in a chained run, passed twice in isolation: timing under load). web_perf Low (8 steps): 2.5/2.5 vs 3/2.75 with ?perf=noshafts; Low set to 6 steps afterwards, not re-measured.
+- Limits: shafts follow the baked shade map, valid for the fixed moon direction (MOON_ROTATION); dense groves are dark in the map so beams appear at gaps, roads, clearings, village streets.

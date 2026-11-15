@@ -9,7 +9,7 @@
 // shafts stand in the world: they fill the gaps between trunks and leaves exactly where the light
 // really reaches the floor, from every viewing direction, and move with the clouds. They scatter
 // forward (brighter looking towards the moon) but never vanish looking away.
-// Cost: `steps` samples per pixel of the 640x360 viewport (8 / 10 / 14 by quality); the march ends
+// Cost: `steps` samples per pixel of the 640x360 viewport (6 / 10 / 14 by quality); the march ends
 // at the opaque surface (the depth buffer) so nothing in front is lit through a trunk.
 shader_type spatial;
 render_mode unshaded, blend_add, depth_test_disabled, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
