@@ -43,12 +43,12 @@ func _ready() -> void:
 	_base_region = region
 	Events.region_zone_entered.connect(_on_zone_entered)
 	Events.region_zone_exited.connect(_on_zone_exited)
-	_apply_dev_perf_flags()
-	_exempt_follow_nodes_from_interpolation()
 	if moon_shafts:
 		var shafts := MoonShafts.new()
 		shafts.name = "MoonShafts"
 		add_child(shafts)
+	_apply_dev_perf_flags()
+	_exempt_follow_nodes_from_interpolation()
 	if player:
 		prewarming = true
 		_held = ShaderPrewarm.hold(self, player.camera)
@@ -88,7 +88,7 @@ func _wake_up() -> void:
 		Events.dialogue_requested.emit(wake_dialogue.lines)
 
 
-## Dev aid for profiling: RC_PERF="nosky,nograss,nohorizon,nopost,nofog".
+## Dev aid for profiling: RC_PERF="nosky,nograss,nohorizon,nopost,nofog,noshafts".
 func _apply_dev_perf_flags() -> void:
 	var raw := OS.get_environment("RC_PERF")
 	if OS.has_feature("web"):
@@ -108,6 +108,8 @@ func _apply_dev_perf_flags() -> void:
 			(node as Node3D).visible = false
 		if flags.has("nohorizon") and node.name == "Horizon":
 			(node as Node3D).visible = false
+		if flags.has("noshafts") and node is MoonShafts:
+			node.queue_free()
 		if flags.has("nopost") and node.name == "PostProcess":
 			(node as CanvasLayer).visible = false
 		if node is GeometryInstance3D:

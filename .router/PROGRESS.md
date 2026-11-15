@@ -204,3 +204,10 @@
 - ForestAtlas._hanging: pixel vines with leaf pairs. WallGrowth picks up the new clumps.
 - Tests: layout 0, forest 0, impostor 0 (birch needed darker tones + softer normals), validate/gdlint, web smoke/touch/swap PASS. web_perf Low: spawn 3.25, hollowmere 3.75 (V17: 3 / 1.75).
 - Rust: answered as discussion only (GDExtension unavailable in the web build: "no GDExtension support"; GPU cost is not language-bound).
+
+## V19 - moon shafts + inner darkness (published 2026-11-15T12:52:39Z)
+- User: real moon rays between trees/leaves (Minecraft night shaders), lighting dark voids without raising overall brightness; darker interior in the gaps between the path-funnelling trees.
+- assets/shaders/moon_shafts.gdshader + src/rendering/moon_shafts.gd (MoonShafts, enabled by Level.moon_shafts in valdron_overworld.tscn): full-screen additive spatial quad, radial march towards the moon (moon_dir) over the DEPTH buffer: sky = depth 0 (reversed Z in 4.7 Compatibility; `depth_texture` read; found by debugging: depth ~0 for sky, first guess 1.0 was wrong), air weighting by pixel distance (no glow on near trunks / far fogged silhouettes), thin drifting beams, nothing when moon behind camera, strength follows moon light energy. Steps 8/12/16 by quality. Dev flag ?perf=noshafts.
+- ForestWall.inner_dark: tree tint x lerp(1, 0.22, smoothstep(2, 13, depth behind the wall)) for wall rows and scatter trees.
+- Tests: layout 0, forest 0, impostor 0, validate/gdlint, web smoke/touch/swap PASS, web A/B (shafts on/off) renders without errors; web_perf Low: spawn 2.75 both, hollowmere 3 vs 3.25 (noise).
+- Limits: rays exist only when the moon is in front of the camera; no volumetric light when looking away.
