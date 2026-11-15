@@ -7,7 +7,9 @@ extends RefCounted
 ## Moonlight node's `shade_map` / `shade_rect` globals, so it costs nothing at runtime
 ## and every quality level gets the same dappled light.
 ##
-## Grayscale L8: 1.0 = full moonlight on the ground, 0.0 = full shade. Pixel (ix, iz)
+## RGB8: R 1.0 = full moonlight on the ground, 0.0 = full shade (all the lighting shaders read only
+## R); G (V20) = the ground height there, (y - HEIGHT_MIN) / HEIGHT_RANGE, for the volumetric moon
+## shafts (MoonShafts) to know how high above the ground an air sample is. Pixel (ix, iz)
 ## covers world x = RECT.x + ix / PX_PER_M, z = RECT.y + iz / PX_PER_M (row 0 = south).
 ##
 ## What casts, each projected along the moon direction onto the ground:
@@ -26,6 +28,9 @@ const MOON_ROTATION := Vector3(-0.524, -2.634, 0.0)
 ## World rect (x0, z0, x1, z1) of the map; the Moonlight node's shade_rect default.
 const RECT := Vector4(-260.0, 30.0, 260.0, 520.0)
 const PX_PER_M := 2.0
+## G channel: ground height encoding (m).
+const HEIGHT_MIN := -12.0
+const HEIGHT_RANGE := 48.0
 const OUT_PATH := "res://assets/textures/world/moon_shade.png"
 const SEED := 7177
 ## Opacity of one tree's leaf clumps (leaves let some moonlight through), of its bark,
@@ -106,7 +111,7 @@ static func bake(root: Node3D, terrain: TerrainBuilder = null, path := OUT_PATH)
 	for k in BLUR_PASSES:
 		_blur(shade, dim, BLUR_RADIUS)
 	var bytes := PackedByteArray()
-	bytes.resize(shade.size())
+	bytes.resize(shade.size() * 3)
 	var total := 0.0
 	var dark := 0
 	for i in shade.size():
@@ -114,8 +119,13 @@ static func bake(root: Node3D, terrain: TerrainBuilder = null, path := OUT_PATH)
 		total += v
 		if v < 0.5:
 			dark += 1
-		bytes[i] = int(v * 255.0 + 0.5)
-	var img := Image.create_from_data(dim.x, dim.y, false, Image.FORMAT_L8, bytes)
+		bytes[i * 3] = int(v * 255.0 + 0.5)
+		var h := 0.0
+		if terrain:
+			h = terrain.height_at(RECT.x + (float(i % dim.x) + 0.5) / PX_PER_M, RECT.y + (float(floori(float(i) / dim.x)) + 0.5) / PX_PER_M)
+		bytes[i * 3 + 1] = int(clampf((h - HEIGHT_MIN) / HEIGHT_RANGE, 0.0, 1.0) * 255.0 + 0.5)
+		bytes[i * 3 + 2] = 0
+	var img := Image.create_from_data(dim.x, dim.y, false, Image.FORMAT_RGB8, bytes)
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(path.get_base_dir()))
 	var err := img.save_png(path)
 	var stats := {"trees": trees.size(), "structures": counts.x, "kits": counts.y, "size": dim,

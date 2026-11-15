@@ -1,13 +1,14 @@
 class_name MoonShafts
 extends MeshInstance3D
-## V19: the moonlight shafts of the night (assets/shaders/moon_shafts.gdshader): a full-screen
-## additive quad that follows the active camera. Steps follow the graphics quality, the strength
-## follows the moon's brightness (thick clouds dim it), and quality Low can run fewer steps.
+## V20: the volumetric moonlight shafts of the night (assets/shaders/moon_shafts.gdshader): a
+## full-screen additive quad that follows the active camera and marches the haze from the baked canopy
+## shade map. Steps follow the graphics quality, the strength follows the moon's brightness (thick
+## clouds dim it), the camera's near / far plane feed the depth reconstruction.
 
 const SHADER := preload("res://assets/shaders/moon_shafts.gdshader")
 ## Marching steps (Low, Medium, High).
-const STEPS := [8, 12, 16]
-@export var strength := 0.45
+const STEPS := [8, 10, 14]
+@export var strength := 0.6
 
 var _mat: ShaderMaterial
 var _peak := 0.001
@@ -34,6 +35,8 @@ func _ready() -> void:
 
 func _apply_quality() -> void:
 	_mat.set_shader_parameter("steps", STEPS[clampi(Settings.quality, 0, 2)])
+	_mat.set_shader_parameter("height_min", MoonShadeBaker.HEIGHT_MIN)
+	_mat.set_shader_parameter("height_range", MoonShadeBaker.HEIGHT_RANGE)
 
 
 func _process(_delta: float) -> void:
@@ -43,6 +46,8 @@ func _process(_delta: float) -> void:
 		return
 	visible = true
 	global_position = cam.global_position
+	_mat.set_shader_parameter("cam_near", cam.near)
+	_mat.set_shader_parameter("cam_far", cam.far)
 	if _moon != null:
 		_peak = maxf(_peak, _moon.light_energy)
 		_mat.set_shader_parameter("strength", strength * clampf(_moon.light_energy / _peak, 0.0, 1.0))

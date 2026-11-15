@@ -167,6 +167,17 @@ vec3 forest_moon(vec3 n, float shade, float wrap) {
 	return moon_color.rgb * ndl * shade + moon_ambient(n);
 }
 
+// V20: the moon catching the surface (linear, added after the albedo): Blinn-Phong glints of the
+// moon key on ridges of bark and on each leaf lobe's dome (the normals carry the relief), only
+// where moonlight reaches (shade) and the surface faces the moon. Gloss per surface kind.
+uniform float glint_bark : hint_range(0.0, 2.0) = 0.38;
+uniform float glint_leaf : hint_range(0.0, 2.0) = 0.3;
+vec3 forest_glint(vec3 n, vec3 view, float shade, float gloss) {
+	vec3 h = normalize(moon_dir + view);
+	float s = pow(max(dot(n, h), 0.0), 26.0);
+	return moon_color.rgb * (s * gloss * shade * smoothstep(0.0, 0.3, dot(n, moon_dir)));
+}
+
 // The carried lantern on a point (linear), Godot's omni attenuation (lantern_light.a > 0).
 vec3 forest_lantern(vec3 pos, vec3 n, float wrap) {
 	vec3 to = lantern_pos.xyz - pos;
@@ -380,11 +391,14 @@ void fragment() {
 #ifdef VERTEX_LIT
 	ALBEDO = mix(albedo * v_lit, fog_tint, fog_mix);
 #else
+	vec3 glint = vec3(0.0);
 #ifdef IMPOSTOR
 	vec4 nt = textureLod(normal_atlas, v_uv / impostor_band, v_lod.y);
 	vec3 nb = nt.rgb * 2.0 - 1.0;
 	vec3 n = normalize(v_right * nb.x + vec3(0.0, nb.y, 0.0) + v_toward * nb.z);
-	vec3 light = forest_moon(n, forest_shade(v_canopy, v_cloud, v_height), mix(bark_wrap, leaf_wrap, nt.a));
+	float imp_shade = forest_shade(v_canopy, v_cloud, v_height);
+	vec3 light = forest_moon(n, imp_shade, mix(bark_wrap, leaf_wrap, nt.a));
+	glint = forest_glint(n, normalize(CAMERA_POSITION_WORLD - v_world), imp_shade, mix(glint_bark, glint_leaf, nt.a));
 #else
 	vec3 n = normalize(v_wnormal);
 #ifdef TREE
@@ -412,11 +426,14 @@ void fragment() {
 	}
 #endif
 	vec3 light = forest_moon(n, v_shade, bark ? bark_wrap : leaf_wrap) + v_lantern;
+#ifdef TREE
+	glint = forest_glint(n, normalize(CAMERA_POSITION_WORLD - v_world), v_shade, bark ? glint_bark : glint_leaf);
+#endif
 #endif
 	if (v_glow > 0.0) {
 		float beat = 0.8 + 0.2 * sin(TIME * 1.3 + v_world.x * 0.7 + v_world.z * 0.9);
 		light += vec3(v_glow * glow_strength * beat);
 	}
-	ALBEDO = mix(moon_lit(albedo, light), fog_tint, fog_mix);
+	ALBEDO = mix(moon_lit(albedo, light) + moon_to_display(glint), fog_tint, fog_mix);
 #endif
 }
