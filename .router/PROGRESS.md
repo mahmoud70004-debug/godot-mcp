@@ -191,3 +191,8 @@
 - New src/world/props/wall_growth.gd (WallGrowth) + assets/shaders/forest_growth.gdshader (forest_card without ViewDistance LOD bands): 4 variants (creepers, leaf mantle, crown spill, drooping boughs + moss), 198 sites on the kingdom wall where tier >= 1, south outer face gets spill only; MultiMesh per (60 m chunk, variant), 115 nodes. Called from OverworldBuilder after ForestBuilder.
 - Tests: layout 0, forest 0, impostor 0, validate/gdlint clean, web smoke/touch/swap PASS. web_perf Low: spawn 2.25, hollowmere 1.75 (V15: 2.5 / 3; V14: 3 / 1.75 - noise range).
 - Open: same growth on village buildings / citadel walls; router-reviewer pass V8-V16.
+
+## V17 - growth on the towers (published 2026-11-15T11:28:07Z)
+- Probe (trees' nearest foot to every collider, fixed from the first attempt): structures near trees are the kingdom wall/towers, the Outer Ward (7-11 m walls, but its west/east/north walls stand 20 m clear of the wood and its front is a dressed face of buttresses/machicolations: left alone), Thornfield/Hollowmere low colliders (2.7-4.2 m, trees 4-13 m away): not worth growth.
+- WallGrowth generalised by kind (wall 10.5 m, tower 19 m x 5.2 m); 13 tower faces + 195 wall sites, 122 chunk draws.
+- Tests: layout 0, forest 0, impostor 0, validate/gdlint clean, web smoke/touch/swap PASS. web_perf Low: spawn 3, hollowmere 1.75.
