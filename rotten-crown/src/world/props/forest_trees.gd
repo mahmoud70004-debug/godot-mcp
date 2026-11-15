@@ -23,6 +23,9 @@ const FAR_END := 78.0
 ## V11: every leaf clump is this much larger, so neighbouring clumps (and neighbouring trees)
 ## overlap into one dense canopy at no extra triangles.
 const LEAF_GROW := 1.3
+## V18: cards in a clump's shell (near / far copy).
+const CLUMP_CARDS := 5
+const CLUMP_CARDS_FAR := 3
 ## Mirror of forest.gdshaderinc's bark_gain / bark_detail defaults (the impostor bake uses them).
 const BARK_GAIN := 1.3
 const BARK_DETAIL := 0.55
@@ -492,24 +495,49 @@ static func _root(ctx: Dictionary, foot: Vector3, ang: float, r0: float) -> void
 ## Leaf clump: crossed upright quads (+ one tilted flat quad on the near copy), normals
 ## pointing out of the clump and down (seen from below the canopy is its dark side).
 static func _clump(acc: Dictionary, c: Vector3, s: float, tile: String, rng: RandomNumberGenerator, near: bool) -> void:
+	# V18: a clump is a shell of small cut-out cards (leaf lobes in clusters with holes, like the
+	# jungle leaves of a voxel game, but as free-standing foliage): each card sits tangent to a
+	# lumpy ball, so every direction sees a card face-on, the holes show the cards behind and the
+	# dark heart, and neighbouring clumps interlock. Shade goes with depth: inner darker, outer
+	# and upper lighter (vertex colour).
 	var r := ForestAtlas.uv_rect(tile)
 	var corners := [Vector2(-0.5, 0.5), Vector2(0.5, 0.5), Vector2(0.5, -0.5), Vector2(-0.5, -0.5)]
-	var uvs := [Vector2(0.0, 0.0), Vector2(1.0, 0.0), Vector2(1.0, 1.0), Vector2(0.0, 1.0)]
-	var yaw0 := rng.randf() * TAU
-	for q in (3 if near else 2):
-		var tilt := PI * 0.5 + rng.randf_range(-0.35, 0.35) if q == 2 else rng.randf_range(-0.3, 0.3)
-		var b := Basis(Vector3.UP, yaw0 + q * PI * 0.5) * Basis(Vector3.RIGHT, tilt)
-		var centre := c + Vector3(rng.randf_range(-0.2, 0.2), rng.randf_range(-0.15, 0.15), rng.randf_range(-0.2, 0.2)) * s
+	var count := CLUMP_CARDS if near else CLUMP_CARDS_FAR
+	var inner := 1 if near else 0
+	var golden := PI * (3.0 - sqrt(5.0))
+	var spin := rng.randf() * TAU
+	for q in count + inner:
+		var is_inner := q >= count
+		var dir: Vector3
+		if is_inner:
+			dir = Vector3(rng.randf_range(-1.0, 1.0), rng.randf_range(0.0, 1.0), rng.randf_range(-1.0, 1.0)).normalized()
+		else:
+			var yv := 1.0 - 2.0 * (float(q) + 0.5) / float(count)
+			var rad := sqrt(maxf(1.0 - yv * yv, 0.0))
+			dir = Vector3(cos(spin + q * golden) * rad, yv * 0.8, sin(spin + q * golden) * rad).normalized()
+			dir = (dir + Vector3(rng.randf_range(-0.25, 0.25), rng.randf_range(-0.2, 0.2), rng.randf_range(-0.25, 0.25))).normalized()
+		var reach := s * (0.08 if is_inner else rng.randf_range(0.2, 0.3))
+		var size := s * (0.6 if is_inner else rng.randf_range(0.56, 0.72))
+		var centre := c + dir * reach
+		var right := Vector3.UP.cross(dir)
+		right = right.normalized() if right.length_squared() > 0.01 else Vector3.RIGHT
+		var up := dir.cross(right)
+		var roll := rng.randf() * TAU
+		var rr := right * cos(roll) + up * sin(roll)
+		var uu := dir.cross(rr)
+		# Depth shade: outer shell lighter towards the sky, the inner card in the dark.
+		var k := 0.5 if is_inner else clampf(0.78 + dir.y * 0.16 + rng.randf_range(-0.08, 0.08), 0.6, 1.05)
+		var col := Color(k * 0.97, k * 1.02, k * 0.95, 1.0)
 		var v: PackedVector3Array = acc["v"]
 		var base := v.size()
-		var flip := rng.randf() < 0.5
-		for k in 4:
-			var cv: Vector2 = corners[k]
-			var pos := centre + b * Vector3(cv.x * s, cv.y * s, 0.0)
-			var t: Vector2 = uvs[k]
-			if flip:
-				t.x = 1.0 - t.x
-			_vert(acc, pos, (pos - c - Vector3(0.0, s * 0.3, 0.0)).normalized(), Color.WHITE, r.position + t * r.size)
+		var turn := rng.randi() % 4
+		for kk in 4:
+			var cv: Vector2 = corners[kk]
+			var pos := centre + (rr * cv.x + uu * cv.y) * size
+			var t := Vector2(cv.x + 0.5, 0.5 - cv.y)
+			for _t in turn:
+				t = Vector2(1.0 - t.y, t.x)
+			_vert(acc, pos, (pos - c - Vector3(0.0, s * 0.25, 0.0)).normalized(), col, r.position + t * r.size)
 		var idx: PackedInt32Array = acc["i"]
 		# Both sides (the tree shader culls back faces: the trunks are closed).
 		idx.append_array([base, base + 1, base + 2, base, base + 2, base + 3, base, base + 2, base + 1, base, base + 3, base + 2])
@@ -547,7 +575,7 @@ static func _leaf_body(acc: Dictionary, c: Vector3, s: float, r: Rect2, rng: Ran
 		for p: Vector3 in [a, b, d]:
 			var q := p - c
 			var uv := Vector2(0.5 + q.dot(right) / (s * 0.95), 0.5 - q.dot(up) / (s * 0.95))
-			_vert(acc, p, (q.normalized() * 0.7 + n * 0.3).normalized(), Color.WHITE, r.position + uv.clamp(Vector2(0.06, 0.06), Vector2(0.94, 0.94)) * r.size)
+			_vert(acc, p, (q.normalized() * 0.7 + n * 0.3).normalized(), Color(0.46, 0.5, 0.46, 1.0), r.position + uv.clamp(Vector2(0.06, 0.06), Vector2(0.94, 0.94)) * r.size)
 		idx.append_array([base, base + 2, base + 1])
 
 

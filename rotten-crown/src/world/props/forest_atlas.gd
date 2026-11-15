@@ -476,17 +476,36 @@ static func _tuft(img: Image, r: Rect2i, rng: RandomNumberGenerator) -> void:
 		_line(img, r, p, p + Vector2(lean * h, -h), col)
 
 
-## Beard moss hanging from a branch: tapering grey-green strands.
+## Hanging growth from a branch (V18): vine strands in the same coarse, lit-from-upper-left pixel
+## style as the leaf tiles - a thin dark stem with leaf pairs along it, ragged tips, gaps between
+## strands - instead of a few grey-green threads. Anchored at the top (the shader pins y = 0).
 static func _hanging(img: Image, r: Rect2i, rng: RandomNumberGenerator) -> void:
-	for s in 16:
-		var x := r.position.x + rng.randf_range(3.0, r.size.x - 3.0)
-		var length := rng.randf_range(0.4, 1.0) * r.size.y
-		var col := Color(0.28, 0.36, 0.3).darkened(rng.randf_range(0.0, 0.5))
-		var y := float(r.position.y)
-		var sway := rng.randf_range(-0.12, 0.12)
-		while y < r.position.y + length:
-			var t := (y - r.position.y) / length
-			_put(img, r, x + sin(y * 0.3 + s) * 1.2 + sway * (y - r.position.y), y, col)
-			if t < 0.5 and rng.randf() < 0.4:
-				_put(img, r, x + 1.0, y, col.darkened(0.2))
-			y += 1.0
+	var tones := [Color(0.13, 0.2, 0.16), Color(0.21, 0.31, 0.23), Color(0.31, 0.44, 0.31), Color(0.43, 0.57, 0.4)]
+	var strands := 6
+	for s in strands:
+		var x := r.position.x + 2.0 + (float(s) + rng.randf_range(0.1, 0.9)) * (r.size.x - 4.0) / strands
+		var length := rng.randf_range(0.45, 1.0) * r.size.y
+		var y := 0
+		var drift := rng.randf_range(-0.12, 0.12)
+		while float(y) < length:
+			var cx := int(roundf(x + sin(float(y) * 0.22 + s * 1.7) * 1.0 + drift * y))
+			_put(img, r, cx, r.position.y + y, tones[0])
+			if y % 4 == 1:
+				# A leaf pair: two tilted 2 x 2 lobes, lit rim top-left, dark underside bottom-right.
+				for side in [-1, 1]:
+					var lx: int = cx + side * 1
+					var ly := r.position.y + y
+					var tone: int = 2 if side < 0 else 1
+					for dx in 2:
+						for dy in 2:
+							var px := lx + (dx if side > 0 else -dx)
+							var py := ly + dy - (1 if rng.randf() < 0.5 else 0)
+							var t := clampi(tone + (1 if dx == 0 and dy == 0 else 0) - (1 if dx == 1 and dy == 1 else 0), 0, 3)
+							if rng.randf() < 0.82:
+								_put(img, r, px, py, tones[t])
+			y += 1
+		# Ragged tip: a last leaf hanging off the end.
+		var ty := r.position.y + int(length)
+		var tx := int(roundf(x))
+		_put(img, r, tx, ty, tones[1])
+		_put(img, r, tx, ty + 1, tones[2])
