@@ -16,6 +16,8 @@ signal prewarmed
 @export var announce_on_start := false
 ## Optional: depth fog with view distances per region, and the draw ranges that follow it.
 @export var view_distance: ViewDistance
+## V19: screen-space moonlight shafts (MoonShafts) between the trees.
+@export var moon_shafts := false
 ## The knight's inner voice after waking up here (DialogueUI subtitles).
 @export var wake_dialogue: DialogueSequence
 
@@ -43,6 +45,10 @@ func _ready() -> void:
 	Events.region_zone_exited.connect(_on_zone_exited)
 	_apply_dev_perf_flags()
 	_exempt_follow_nodes_from_interpolation()
+	if moon_shafts:
+		var shafts := MoonShafts.new()
+		shafts.name = "MoonShafts"
+		add_child(shafts)
 	if player:
 		prewarming = true
 		_held = ShaderPrewarm.hold(self, player.camera)

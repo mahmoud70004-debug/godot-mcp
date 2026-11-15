@@ -92,6 +92,7 @@ size = Vector3(120, 40, 117)
 
 [node name="ValdronOverworld" type="Node3D" node_paths=PackedStringArray("player", "environment", "weather", "view_distance")]
 script = ExtResource("1_level")
+moon_shafts = true
 region = ExtResource("11_r_meadows")
 player = NodePath("Player")
 environment = NodePath("WorldEnvironment")

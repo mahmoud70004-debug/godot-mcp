@@ -356,7 +356,7 @@ static func _walls(trees: Array, grid_hash: Dictionary, terrain: TerrainBuilder,
 				var tree := _make_tree(terrain, p, atan2(out.y, -out.x) + jitter, scale, style, tier, lean, stretch)
 				if road_margin(tree[5]) < radius or road_margin(p) < ForestTrees.foot(style) * scale * ROOT_REACH - VERGE:
 					continue  # the leaning trunk or its roots would reach into a clearance
-				tree.append(_tint(rng, zone))
+				tree.append(ForestWall.inner_dark(_tint(rng, zone), ForestWall.depth_at(p)))
 				# The green rot stays rare on the giants: on a trunk this size it floods the frame.
 				var rot := _rot(rng, p, tier)
 				tree.append(rot * 0.5 if pick < 0.1 else 0.0)
@@ -526,7 +526,7 @@ static func scatter(terrain: TerrainBuilder, blocked: PackedByteArray) -> Array:
 				var tree := _make_tree(terrain, p, y, scale, style, tier, t, stretch)
 				if not _fits(tree, trees, grid_hash, blocked, wr):
 					continue
-				tree.append(_tint(rng, zone_at(p.x, p.y)))
+				tree.append(ForestWall.inner_dark(_tint(rng, zone_at(p.x, p.y)), deep))
 				tree.append(_rot(rng, p, tier))
 				_insert(trees, grid_hash, tree)
 				break

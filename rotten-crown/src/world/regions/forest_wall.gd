@@ -232,3 +232,16 @@ static func colliders(forest: Node3D, terrain: TerrainBuilder) -> int:
 			(bodies[cell] as StaticBody3D).add_child(cs)
 			count += 1
 	return count
+
+
+## V19: the wood darkens with its depth behind the wall line: the gaps between the front giants
+## show an inner darkness (like the black interiors of old retro games), not lighter trees
+## behind them. Depth in cells (m) behind the walkable ground; fully dark from INNER_FULL.
+const INNER_START := 2.0
+const INNER_FULL := 13.0
+const INNER_MIN := 0.22
+
+
+static func inner_dark(c: Color, depth: int) -> Color:
+	var k := lerpf(1.0, INNER_MIN, smoothstep(INNER_START, INNER_FULL, float(depth)))
+	return Color(c.r * k, c.g * k, c.b * k)
