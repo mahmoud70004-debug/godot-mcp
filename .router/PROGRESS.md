@@ -196,3 +196,11 @@
 - Probe (trees' nearest foot to every collider, fixed from the first attempt): structures near trees are the kingdom wall/towers, the Outer Ward (7-11 m walls, but its west/east/north walls stand 20 m clear of the wood and its front is a dressed face of buttresses/machicolations: left alone), Thornfield/Hollowmere low colliders (2.7-4.2 m, trees 4-13 m away): not worth growth.
 - WallGrowth generalised by kind (wall 10.5 m, tower 19 m x 5.2 m); 13 tower faces + 195 wall sites, 122 chunk draws.
 - Tests: layout 0, forest 0, impostor 0, validate/gdlint clean, web smoke/touch/swap PASS. web_perf Low: spawn 3, hollowmere 1.75.
+
+## V18 - foliage rebuilt (published 2026-11-15T12:00:00Z)
+- User: leaves still read as flat split cards; wanted Minecraft-jungle-style leaf texture work (not blocks), denser but not noisy, incl. hanging leaves; asked opinion on Rust (discussion only).
+- tools/make_leaf_tiles.py: 32x32 coarse-texel tiles (x4), overlapping lobes with lit/dark rims, 4 tones, ~15-25% holes, leaf_mass_{a..d}(+_n) replaced; normals softened (0.9) so mesh/impostor shading agrees.
+- ForestTrees._clump: shell of CLUMP_CARDS 5 (far 3) small cards tangent to a lumpy ball + 1 dark inner card, depth-shaded vertex colours; body octahedron dark. Tri counts: Tall 878->1082, Broad 894->1122, Elder 1324->1612, Hollow 866->1082, Birch 1084->1408.
+- ForestAtlas._hanging: pixel vines with leaf pairs. WallGrowth picks up the new clumps.
+- Tests: layout 0, forest 0, impostor 0 (birch needed darker tones + softer normals), validate/gdlint, web smoke/touch/swap PASS. web_perf Low: spawn 3.25, hollowmere 3.75 (V17: 3 / 1.75).
+- Rust: answered as discussion only (GDExtension unavailable in the web build: "no GDExtension support"; GPU cost is not language-bound).
