@@ -15,10 +15,15 @@ extends RefCounted
 const SHADER := preload("res://assets/shaders/forest_growth.gdshader")
 const VARIANTS := 4
 const SEED := 48211
-## The wall face is HEIGHT m above the highest ground of its segment (KingdomWalls).
-const HEIGHT := KingdomWalls.WALL_HEIGHT
-## Width (m) a variant covers along the wall and the spacing range between sites.
-const WIDTH := 9.0
+## What the growth covers: [height (m), width (m), creeper stand-off (m) from the stone]. The wall
+## face is KingdomWalls.WALL_HEIGHT above the highest ground of its segment; the towers' shafts are
+## 19-21 m. Variants are built to the kind's size, not squashed from the wall's. (The Outer Ward is
+## left alone: its west, east and north walls stand 20 m clear of the wood and its front is a
+## dressed face of buttresses and machicolations.)
+const KINDS := {
+	&"wall": [KingdomWalls.WALL_HEIGHT, 9.0, 0.42],
+	&"tower": [19.0, 5.2, 0.42],
+}
 const SPACING := Vector2(7.0, 11.0)
 const OUTER_SPACING := Vector2(13.0, 19.0)
 ## Sites are grouped in chunks this long (one draw per variant per chunk in view).
@@ -29,7 +34,7 @@ const GATE_PAD := 30.0
 const STEM := Color(0.2, 0.2, 0.23)
 const TINT := Color(0.82, 0.88, 1.0)
 
-static var _meshes: Array = []
+static var _meshes: Dictionary = {}
 static var _material: ShaderMaterial
 
 
@@ -41,20 +46,22 @@ static func material() -> ShaderMaterial:
 	return _material
 
 
-## One variant's mesh. `spill_only`: just the crown over the top and the drooping boughs (the
-## outer face of the south front).
-static func mesh(variant: int, spill_only := false) -> ArrayMesh:
-	var key := variant + (VARIANTS if spill_only else 0)
-	if _meshes.is_empty():
-		_meshes.resize(VARIANTS * 2)
-	if _meshes[key] == null:
-		_meshes[key] = _build(variant, spill_only)
+## One variant's mesh of a kind. `spill_only`: just the crown over the top and the drooping boughs
+## (the outer face of the south front).
+static func mesh(kind: StringName, variant: int, spill_only := false) -> ArrayMesh:
+	var key := "%s/%d/%s" % [kind, variant, spill_only]
+	if not _meshes.has(key):
+		_meshes[key] = _build(kind, variant, spill_only)
 	return _meshes[key]
 
 
-static func _build(variant: int, spill_only: bool) -> ArrayMesh:
+static func _build(kind: StringName, variant: int, spill_only: bool) -> ArrayMesh:
+	var size_of: Array = KINDS[kind]
+	var height: float = size_of[0]
+	var width: float = size_of[1]
+	var proud: float = size_of[2]
 	var rng := RandomNumberGenerator.new()
-	rng.seed = SEED + variant * 977 + (31 if spill_only else 0)
+	rng.seed = SEED + variant * 977 + (31 if spill_only else 0) + int(height) * 13
 	var bark := ForestTrees._acc()
 	var leaves := ForestTrees._acc()
 	var hangs := PackedVector3Array()
@@ -64,24 +71,24 @@ static func _build(variant: int, spill_only: bool) -> ArrayMesh:
 	var tile := "leaf_dark"
 	if not spill_only:
 		# Creepers: woody stems wandering up the face, thick and rooted at the foot.
-		var stems := rng.randi_range(3, 5)
+		var stems := rng.randi_range(3, 5) if width > 6.0 else rng.randi_range(2, 3)
 		for s in stems:
-			var x := lerpf(-WIDTH * 0.42, WIDTH * 0.42, (s + rng.randf_range(0.15, 0.85)) / stems)
-			var top := HEIGHT * rng.randf_range(0.5, 1.0) if s > 0 else HEIGHT + 0.5
+			var x := lerpf(-width * 0.42, width * 0.42, (s + rng.randf_range(0.15, 0.85)) / stems)
+			var top := height * rng.randf_range(0.5, 1.0) if s > 0 else height + 0.5
 			var pts := PackedVector3Array()
 			var rads := PackedFloat32Array()
 			var r0 := rng.randf_range(0.16, 0.26)
 			var drift := rng.randf_range(-0.5, 0.5)
-			var n := 9
+			var n := 9 + int(height / 8.0)
 			pts.append(Vector3(x + rng.randf_range(-0.3, 0.3), -0.3, 0.75))
 			rads.append(r0 * 1.5)
 			for k in range(1, n + 1):
 				var t := float(k) / n
 				x += drift * 0.55 + rng.randf_range(-0.55, 0.55)
-				x = clampf(x, -WIDTH * 0.5, WIDTH * 0.5)
+				x = clampf(x, -width * 0.5, width * 0.5)
 				var y := top * t
 				# Over the mossy foot (it stands 0.3 m proud up to 1.4 m), then flat on the stone.
-				var z := 0.42 if y < 1.5 else 0.1 + r0 * 0.5
+				var z := proud if y < 1.5 else 0.1 + r0 * 0.5
 				pts.append(Vector3(x, y, z))
 				rads.append(lerpf(r0, 0.045, t))
 				if y > 1.6:
@@ -97,17 +104,17 @@ static func _build(variant: int, spill_only: bool) -> ArrayMesh:
 		# A skirt of leaves where the creepers leave the ground.
 		for k in 2:
 			var size := rng.randf_range(1.3, 1.9)
-			ForestTrees._clump(leaves, Vector3(rng.randf_range(-WIDTH * 0.4, WIDTH * 0.4), size * 0.3, 0.6), size, tile, rng, true)
+			ForestTrees._clump(leaves, Vector3(rng.randf_range(-width * 0.4, width * 0.4), size * 0.3, 0.6), size, tile, rng, true)
 	# The crown spilling over the wall walk.
 	var crowns := rng.randi_range(3, 5)
 	for k in crowns:
 		var size := rng.randf_range(3.0, 4.4)
-		var x := lerpf(-WIDTH * 0.45, WIDTH * 0.45, (k + rng.randf()) / crowns)
-		ForestTrees._clump(leaves, Vector3(x, HEIGHT + rng.randf_range(0.5, 1.6), rng.randf_range(0.1, 1.5)), size, tile, rng, true)
-		hangs.append(Vector3(x + rng.randf_range(-1.0, 1.0), HEIGHT + 0.2, rng.randf_range(0.45, 0.9)))
+		var x := lerpf(-width * 0.45, width * 0.45, (k + rng.randf()) / crowns)
+		ForestTrees._clump(leaves, Vector3(x, height + rng.randf_range(0.5, 1.6), rng.randf_range(0.1, 1.5)), size, tile, rng, true)
+		hangs.append(Vector3(x + rng.randf_range(-1.0, 1.0), height + 0.2, rng.randf_range(0.45, 0.9)))
 	# Boughs reaching in over the wall and drooping back down, heavy with leaves and moss.
 	for k in rng.randi_range(1, 2):
-		var x := rng.randf_range(-WIDTH * 0.35, WIDTH * 0.35)
+		var x := rng.randf_range(-width * 0.35, width * 0.35)
 		var reach := rng.randf_range(3.0, 5.2)
 		var drop := rng.randf_range(1.8, 4.2)
 		var side := rng.randf_range(-1.6, 1.6)
@@ -116,7 +123,7 @@ static func _build(variant: int, spill_only: bool) -> ArrayMesh:
 		var n := 6
 		for j in n + 1:
 			var t := float(j) / n
-			var p := Vector3(x + side * t, HEIGHT + 0.9 + sin(t * PI * 0.8) * 1.1 - drop * t * t, -0.8 + (reach + 0.8) * t)
+			var p := Vector3(x + side * t, height + 0.9 + sin(t * PI * 0.8) * 1.1 - drop * t * t, -0.8 + (reach + 0.8) * t)
 			pts.append(p)
 			rads.append(lerpf(0.2, 0.05, t))
 			if j >= 2:
@@ -138,8 +145,8 @@ static func _build(variant: int, spill_only: bool) -> ArrayMesh:
 	return out
 
 
-## Lays the growth along the kingdom wall (after the forest is placed: it only grows where the
-## wood stands against the wall). Returns the "WallGrowth" node.
+## Lays the growth on the kingdom wall, the Outer Ward walls and the towers (after the forest is
+## placed: it only grows where the wood stands against the stone). Returns the "WallGrowth" node.
 static func build(root: Node3D, terrain: TerrainBuilder) -> Node3D:
 	var node := Node3D.new()
 	node.name = "WallGrowth"
@@ -151,7 +158,7 @@ static func build(root: Node3D, terrain: TerrainBuilder) -> Node3D:
 	var s := KingdomWalls.SOUTH
 	var n := KingdomWalls.NORTH
 	var g := KingdomWalls.GAP
-	# [from, to, inward normal]: the same runs KingdomWalls builds.
+	# [from, to, face normal]: the same runs KingdomWalls builds (normal: towards the wood).
 	var runs := [
 		[Vector2(w, s), Vector2(-g, s), Vector2(0.0, 1.0)], [Vector2(g, s), Vector2(e, s), Vector2(0.0, 1.0)],
 		[Vector2(w, s), Vector2(w, n), Vector2(1.0, 0.0)], [Vector2(e, s), Vector2(e, n), Vector2(-1.0, 0.0)],
@@ -159,67 +166,114 @@ static func build(root: Node3D, terrain: TerrainBuilder) -> Node3D:
 	]
 	var sites := 0
 	for run: Array in runs:
-		sites += _run(node, terrain, rng, run[0], run[1], run[2], false)
+		sites += _run(node, terrain, rng, run[0], run[1], run[2], &"wall", KingdomWalls.THICKNESS, 7.0, NAN, false)
 		if is_equal_approx((run[0] as Vector2).y, s) and is_equal_approx((run[1] as Vector2).y, s):
-			sites += _run(node, terrain, rng, run[0], run[1], -(run[2] as Vector2), true)
+			sites += _run(node, terrain, rng, run[0], run[1], -(run[2] as Vector2), &"wall", KingdomWalls.THICKNESS, 7.0, NAN, true)
+	var wall_sites := sites
+	sites += _towers(node, terrain, rng)
+	print("WallGrowth: wall %d, towers %d" % [wall_sites, sites - wall_sites])
 	print("WallGrowth: %d sites, %d chunk draws" % [sites, node.get_child_count()])
 	return node
 
 
-static func _run(node: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator, a: Vector2, b: Vector2, inward: Vector2,
-		outer: bool) -> int:
+## Towers of the kingdom wall: growth up the face(s) turned to the wood. [centre, width, height, normals].
+static func _towers(node: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator) -> int:
+	var list := []
+	for z: float in KingdomWalls.TOWER_Z:
+		list.append([Vector2(KingdomWalls.WEST, z), 6.2, 19.0, [Vector2(1.0, 0.0)]])
+		list.append([Vector2(KingdomWalls.EAST, z), 6.2, 19.0, [Vector2(-1.0, 0.0)]])
+	for x: float in [KingdomWalls.WEST, KingdomWalls.EAST]:
+		var inward := Vector2(-signf(x), 0.0)
+		list.append([Vector2(x, KingdomWalls.SOUTH), 7.0, 21.0, [inward, Vector2(0.0, 1.0)]])
+		list.append([Vector2(x, KingdomWalls.NORTH), 7.0, 21.0, [inward, Vector2(0.0, -1.0)]])
+	var chunks := {}
+	var count := 0
+	for t: Array in list:
+		var c: Vector2 = t[0]
+		for nrm: Vector2 in t[3]:
+			var face := c + nrm * (float(t[1]) * 0.5 + 0.05)
+			var look := c
+			for q: Vector2 in t[3]:
+				look += q * 9.0  # corners: diagonally into the kingdom
+			if ForestBuilder.tier_at(look.x, look.y) < 1:
+				continue
+			var ground := terrain.height_at(face.x, face.y)
+			var base := terrain.height_at(c.x, c.y)
+			var wide := (float(t[1]) - 0.8) / float(KINDS[&"tower"][1])
+			_site(chunks, &"tower", rng.randi() % VARIANTS, face, nrm, wide, base + float(t[2]), ground - 0.15, false)
+			count += 1
+	_flush(node, chunks, "T")
+	return count
+
+
+static func _run(node: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerator, a: Vector2, b: Vector2, normal: Vector2,
+		kind: StringName, thick: float, probe: float, top_y: float, outer: bool) -> int:
+	var height: float = KINDS[kind][0]
 	var length := a.distance_to(b)
 	var dir := (b - a) / length
 	var segments := ceili(length / KingdomWalls.SEGMENT_LENGTH)
 	var spacing := OUTER_SPACING if outer else SPACING
-	var chunks := {}  # chunk index -> variant -> items
+	var chunks := {}
 	var count := 0
 	var d := rng.randf_range(2.0, spacing.x)
-	while d < length - TOWER_PAD:
+	var pad := TOWER_PAD if kind == &"wall" else 3.0
+	while d < length - pad:
 		var at := d
 		d += rng.randf_range(spacing.x, spacing.y)
 		var variant := rng.randi() % VARIANTS
-		var mirror := rng.randf() < 0.5
 		var wide := rng.randf_range(0.9, 1.2)
-		if at < TOWER_PAD or _near_tower(a + dir * at):
+		if at < pad or (kind == &"wall" and _near_tower(a + dir * at)):
 			continue
 		var p := a + dir * at
-		# Only where the wood stands against the wall (inside), not on the open gate court.
-		var inside := p + (inward if not outer else -inward) * 7.0
-		if ForestBuilder.tier_at(inside.x, inside.y) < 1:
+		# Only where the wood stands against the wall, not on the open gate court.
+		# The wood on the wall's far side (the spill of the south front's outer face is fed from behind).
+		var look := normal * probe * (-1.0 if outer else 1.0)
+		if ForestBuilder.tier_at(p.x + look.x, p.y + look.y) < 1:
 			continue
-		if absf(p.x) < GATE_PAD and is_equal_approx(p.y, KingdomWalls.SOUTH):
+		if kind == &"wall" and absf(p.x) < GATE_PAD and is_equal_approx(p.y, KingdomWalls.SOUTH):
 			continue
-		var seg := clampi(int(at / length * segments), 0, segments - 1)
-		var span := KingdomWalls._ground_span(terrain, a.lerp(b, float(seg) / segments), a.lerp(b, float(seg + 1) / segments))
-		var face := p + inward * (KingdomWalls.THICKNESS * 0.5)
+		var face := p + normal * (thick * 0.5)
 		var foot := terrain.height_at(face.x, face.y) - 0.15
-		var tall := (span.y + HEIGHT - foot) / HEIGHT
-		# Wall frame: x along the wall, z out of the face.
-		var x_axis := Vector3(dir.x, 0.0, dir.y) * (-wide if mirror else wide)
-		var z_axis := Vector3(inward.x, 0.0, inward.y)
-		var basis := Basis(x_axis, Vector3.UP * tall, z_axis)
-		if basis.determinant() < 0.0:
-			# Keep the winding: mirror along the wall by turning the variant round instead.
-			basis = Basis(-x_axis, Vector3.UP * tall, z_axis)
-			if basis.determinant() < 0.0:
-				basis = Basis(x_axis, Vector3.UP * tall, -z_axis)
-		var ci := int(at / CHUNK)
-		if not chunks.has(ci):
-			chunks[ci] = {}
-		var by: Dictionary = chunks[ci]
-		if not by.has(variant):
-			by[variant] = []
-		(by[variant] as Array).append(Transform3D(basis, Vector3(face.x, foot, face.y)))
+		var top := top_y
+		if is_nan(top):
+			var seg := clampi(int(at / length * segments), 0, segments - 1)
+			top = KingdomWalls._ground_span(terrain, a.lerp(b, float(seg) / segments), a.lerp(b, float(seg + 1) / segments)).y + height
+		_site(chunks, kind, variant, face, normal, wide, top, foot, outer)
 		count += 1
-	for ci: int in chunks:
-		var mid := a + dir * minf((ci + 0.5) * CHUNK, length)
-		var centre := Vector3(mid.x, terrain.height_at(mid.x, mid.y), mid.y)
-		var by: Dictionary = chunks[ci]
-		for variant: int in by:
-			node.add_child(_instances(mesh(variant, outer), by[variant], centre, "%s_%d_%d_%d" % ["Out" if outer else "In",
-				int(a.x + a.y * 3.0), ci, variant]))
+	_flush(node, chunks, "%s%d" % ["O" if outer else "I", int(a.x + a.y * 3.0)])
 	return count
+
+
+## Queues one growth instance: `face` on the stone, `normal` out of it (towards the wood), scaled
+## in width by `wide` and up to `top` from `foot`.
+static func _site(chunks: Dictionary, kind: StringName, variant: int, face: Vector2, normal: Vector2, wide: float, top: float,
+		foot: float, spill: bool) -> void:
+	var tall := (top - foot) / float(KINDS[kind][0])
+	# x along the face with x * up = normal (right-handed: the bark winding stays outward).
+	var along := Vector3(normal.y, 0.0, -normal.x)
+	var basis := Basis(along * wide, Vector3.UP * tall, Vector3(normal.x, 0.0, normal.y))
+	var key := "%s/%d/%d" % [kind, int(face.x / CHUNK), int(face.y / CHUNK)]
+	if not chunks.has(key):
+		chunks[key] = {}
+	var by: Dictionary = chunks[key]
+	var vkey := "%d/%s" % [variant, spill]
+	if not by.has(vkey):
+		by[vkey] = [kind, variant, []]
+	((by[vkey] as Array)[2] as Array).append(Transform3D(basis, Vector3(face.x, foot, face.y)))
+
+
+static func _flush(node: Node3D, chunks: Dictionary, tag: String) -> void:
+	for key: String in chunks:
+		var by: Dictionary = chunks[key]
+		for vkey: String in by:
+			var entry: Array = by[vkey]
+			var xforms: Array = entry[2]
+			var sum := Vector3.ZERO
+			for xf: Transform3D in xforms:
+				sum += xf.origin
+			var centre := sum / xforms.size()
+			var spill := vkey.ends_with("true")
+			node.add_child(_instances(mesh(entry[0], entry[1], spill), xforms, centre, entry[0], "%s_%s_%s" % [tag, key.replace("/", "_"), vkey.replace("/", "_")]))
 
 
 static func _near_tower(p: Vector2) -> bool:
@@ -231,14 +285,16 @@ static func _near_tower(p: Vector2) -> bool:
 	return minf(absf(p.x - KingdomWalls.WEST), absf(p.x - KingdomWalls.EAST)) < TOWER_PAD + 2.0
 
 
-static func _instances(m: Mesh, xforms: Array, centre: Vector3, id: String) -> MultiMeshInstance3D:
+static func _instances(m: Mesh, xforms: Array, centre: Vector3, kind: StringName, id: String) -> MultiMeshInstance3D:
 	var mm := MultiMesh.new()
 	mm.transform_format = MultiMesh.TRANSFORM_3D
 	mm.use_colors = true
 	mm.use_custom_data = true
 	mm.mesh = m
 	mm.instance_count = xforms.size()
-	var half := Vector3(WIDTH, HEIGHT, WIDTH)
+	var height: float = KINDS[kind][0]
+	var width: float = KINDS[kind][1]
+	var half := Vector3(width, height, width)
 	for i in xforms.size():
 		var xf: Transform3D = xforms[i]
 		xf.origin -= centre
@@ -246,7 +302,7 @@ static func _instances(m: Mesh, xforms: Array, centre: Vector3, id: String) -> M
 		# Every moss strand shows (custom.y = moss amount 1), no rot glow.
 		mm.set_instance_custom_data(i, Color(0.0, 1.0, 0.0, 0.0))
 		mm.set_instance_color(i, TINT)
-		half = half.max(xf.origin.abs() + Vector3(WIDTH, HEIGHT * 1.6, WIDTH))
+		half = half.max(xf.origin.abs() + Vector3(width, height * 1.6, width) * 1.3)
 	mm.custom_aabb = AABB(-half, half * 2.0)
 	var mmi := MultiMeshInstance3D.new()
 	mmi.name = "Growth_" + id
