@@ -8,8 +8,9 @@ extends Node
 ## the fog, nothing past it is drawn: every mesh under `world` gets a visibility range of
 ## (fog distance + its own half-size), and the forest / grass shaders get their per-instance
 ## cut-offs from the same number. The far tree cards fade into the fog colour before their
-## cut-off (V6: no dither, it read as grain) and the near trees swap to their cards at one
-## distance (V7: the cards are lit like their trees, so the swap does not show). The floor
+## cut-off (V6: no dither, it read as grain) and the near trees swap to their cards inside the
+## fog (V15: NEAR_FOG), dissolving out leaf by leaf over SWAP_FADE (V13); the cards are lit like
+## their trees (V7), so the swap does not show. The floor
 ## cards and kits never grow or shrink (V7): they end where the depth fog is already thick
 ## (FLOOR_FOG) and fade into the fog colour over FLOOR_FADE before that.
 ## The sky's horizon band and the painted far horizon take the fog colour, so whatever is
@@ -143,7 +144,7 @@ func _process(_delta: float) -> void:
 			mat.set_shader_parameter("haze", _haze)
 		# Every forest family fades into the fog colour (no dither) before its cut-off: far
 		# tree cards over FAR_FADE, floor cards and kits over FLOOR_FADE (near trees have no
-		# band today, SWAP_FADE 0, but get the colour too so a band would fade right).
+		# band: the swap dissolves leaf by leaf over SWAP_FADE, V13, so no fog fade, but they get the colour too).
 		for kind in FOG_FADE_KINDS:
 			for mat: ShaderMaterial in _mats.get(kind, []):
 				mat.set_shader_parameter("fog_tint", env.fog_light_color)

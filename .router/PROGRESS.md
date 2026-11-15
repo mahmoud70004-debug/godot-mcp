@@ -219,3 +219,11 @@
 - forest.gdshaderinc: forest_glint (Blinn-Phong moon glints, bark 0.38, leaf 0.3) for mesh and impostor.
 - Tests: layout 0, forest 0, impostor 0 (bare/snag closer to limits), validate/gdlint, smoke/touch/swap PASS (swap FAILed once in a chained run, passed twice in isolation: timing under load). web_perf Low (8 steps): 2.5/2.5 vs 3/2.75 with ?perf=noshafts; Low set to 6 steps afterwards, not re-measured.
 - Limits: shafts follow the baked shade map, valid for the fixed moon direction (MOON_ROTATION); dense groves are dark in the map so beams appear at gaps, roads, clearings, village streets.
+
+## V21/V22 - gentler volumetric light, shadow contrast, floating stick, review fixes (V22 published 2026-11-15T17:44:57Z)
+- User: V20 light looked artificial (white glowing patch at the end of the road); asked for contrasted shadows + deeper dreamy volumetric light, same colours; fix bugs, incl. "after swapping controls the right side does not move".
+- moon_shafts.gdshader: only light crossing the dark counts (lit column x dark ground below; open road/clearing add nothing), soft cap 0.20 (1-exp), distance fade 0.045, max 34 m, strength 1.0.
+- moonlight.gdshaderinc moon_shade_curve + global shade_contrast (Moonlight export 1.0, smoothstep(0.1, 0.7)): shadows deeper, lit patches at full moon.
+- Touch: could not reproduce the swap bug (web tests incl. two thumbs on a 915x412 @2.6 profile and ?quality=0 pass). Only plausible cause: the stick was fixed with a 67-unit hit circle, the rest of its side of the screen did nothing. Now a touch anywhere in the stick-side 40% floats the stick to the thumb (TouchJoystick._float); swap test checks it.
+- Review (router-reviewer on 30e7574~1..HEAD) fixes: bark mipmaps on, prewarm early-return leak, MoonShafts uniform caching + method signal + peak init, WallGrowth floori chunks + unique names, ForestWall MAX_ROUNDS 400 + warning, stale comments, __pycache__ untracked. Not done: textureGrad for derivatives inside branches (driver-dependent, plausible), dead CORRIDOR consts (a test uses them), forest_lantern branches, service-worker offline note.
+- Tests: layout 0, forest 0, impostor 0 (birch G mean 6.7 of 7.0), validate/gdlint, web smoke/touch/swap PASS (swap also at ?quality=0).

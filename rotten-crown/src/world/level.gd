@@ -16,7 +16,7 @@ signal prewarmed
 @export var announce_on_start := false
 ## Optional: depth fog with view distances per region, and the draw ranges that follow it.
 @export var view_distance: ViewDistance
-## V19: screen-space moonlight shafts (MoonShafts) between the trees.
+## V20: volumetric moonlight shafts (MoonShafts): a world-space march of the haze from the baked canopy shade.
 @export var moon_shafts := false
 ## The knight's inner voice after waking up here (DialogueUI subtitles).
 @export var wake_dialogue: DialogueSequence

@@ -36,12 +36,12 @@ static func hold(root: Node, camera: Camera3D) -> Dictionary:
 ## hold() returned, if it was called earlier (the masks it saved are the ones restored).
 static func warm(root: Node, camera: Camera3D, held: Dictionary = {}) -> void:
 	if camera == null or not camera.is_inside_tree():
+		# Whatever hold() hid must not stay hidden.
+		if not held.is_empty():
+			_release(held, camera)
 		return
 	if held.is_empty():
 		held = hold(root, camera)
-	var lights: Array = held["lights"]
-	var light_masks: Array = held["light_masks"]
-	var camera_mask: int = held["camera_mask"]
 	var holder := Node3D.new()
 	holder.name = "ShaderPrewarm"
 	camera.add_child(holder)
@@ -73,8 +73,15 @@ static func warm(root: Node, camera: Camera3D, held: Dictionary = {}) -> void:
 	for _i in FRAMES:
 		await RenderingServer.frame_post_draw
 	holder.queue_free()
+	_release(held, camera)
+
+
+## Gives the camera and the lights back the masks hold() saved.
+static func _release(held: Dictionary, camera: Camera3D) -> void:
 	if is_instance_valid(camera):
-		camera.cull_mask = camera_mask
+		camera.cull_mask = held["camera_mask"]
+	var lights: Array = held["lights"]
+	var light_masks: Array = held["light_masks"]
 	for i in lights.size():
 		if is_instance_valid(lights[i]):
 			(lights[i] as Light3D).light_cull_mask = light_masks[i]

@@ -9,7 +9,8 @@ extends RefCounted
 ## Layout (pixels): the top band (y 0-511) holds the impostors (128 x 256, ForestTrees style
 ## order; V7: twice the V6 64 x 128), four views per style, one per side of each crossed
 ## card quad: row y 0-255 seen from the tree's +Z (x 0-895) and +X (x 896-1791) sides, row
-## y 256-511 from -Z and -X; the hanging moss strip at x 1792; rows 8-9 hold 64 px tiles. Mipmapped (V7, the shaders sample nearest within a level) with the cut-out
+## y 256-511 from -Z and -X; the hanging moss strip at x 1792; rows 8-9 hold 64 px tiles (the leaf
+## masses are 128 px, two tiles wide and high). Mipmapped (V7, the shaders sample nearest within a level) with the cut-out
 ## coverage of every tile kept at each level, so far cards neither show giant pixels nor
 ## thin out. The impostors' light response (normal + leaf/bark) is a second, half-resolution
 ## texture over the impostor band (normal_texture()), so the far shader lights an impostor
@@ -180,7 +181,7 @@ static func _leaf_mass(img: Image, r: Rect2i, path: String, tint: Color) -> void
 			if c.a < 0.5:
 				img.set_pixel(r.position.x + x, r.position.y + y, Color(c.r * tint.r, c.g * tint.g, c.b * tint.b, 0.0))
 			else:
-				# Four tones, like the rest of the atlas (pixel art, not a photo).
+				# Quantised to a few levels, like the rest of the atlas (pixel art, not a photo).
 				var v := Color(c.r * tint.r, c.g * tint.g, c.b * tint.b, 1.0)
 				var q := 6.0
 				img.set_pixel(r.position.x + x, r.position.y + y, Color(roundf(v.r * q * 2.4) / (q * 2.4), roundf(v.g * q * 2.4) / (q * 2.4), roundf(v.b * q * 2.4) / (q * 2.4), 1.0))

@@ -145,7 +145,7 @@ static func _build(kind: StringName, variant: int, spill_only: bool) -> ArrayMes
 	return out
 
 
-## Lays the growth on the kingdom wall, the Outer Ward walls and the towers (after the forest is
+## Lays the growth on the kingdom wall and its towers (after the forest is
 ## placed: it only grows where the wood stands against the stone). Returns the "WallGrowth" node.
 static func build(root: Node3D, terrain: TerrainBuilder) -> Node3D:
 	var node := Node3D.new()
@@ -240,7 +240,7 @@ static func _run(node: Node3D, terrain: TerrainBuilder, rng: RandomNumberGenerat
 			top = KingdomWalls._ground_span(terrain, a.lerp(b, float(seg) / segments), a.lerp(b, float(seg + 1) / segments)).y + height
 		_site(chunks, kind, variant, face, normal, wide, top, foot, outer)
 		count += 1
-	_flush(node, chunks, "%s%d" % ["O" if outer else "I", int(a.x + a.y * 3.0)])
+	_flush(node, chunks, "%s%d_%d_%d_%d" % ["O" if outer else "I", int(a.x), int(a.y), int(b.x), int(b.y)])
 	return count
 
 
@@ -252,7 +252,7 @@ static func _site(chunks: Dictionary, kind: StringName, variant: int, face: Vect
 	# x along the face with x * up = normal (right-handed: the bark winding stays outward).
 	var along := Vector3(normal.y, 0.0, -normal.x)
 	var basis := Basis(along * wide, Vector3.UP * tall, Vector3(normal.x, 0.0, normal.y))
-	var key := "%s/%d/%d" % [kind, int(face.x / CHUNK), int(face.y / CHUNK)]
+	var key := "%s/%d/%d" % [kind, floori(face.x / CHUNK), floori(face.y / CHUNK)]
 	if not chunks.has(key):
 		chunks[key] = {}
 	var by: Dictionary = chunks[key]

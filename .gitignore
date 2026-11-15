@@ -34,3 +34,7 @@ graphify-out/.graphify_root
 
 # Agent worktrees (smart-task-router)
 .claude/worktrees/
+
+# Python bytecode
+__pycache__/
+*.pyc

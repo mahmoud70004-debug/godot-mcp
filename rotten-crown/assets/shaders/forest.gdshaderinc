@@ -41,7 +41,7 @@
 // - Range ends (V7): nothing grows, shrinks or dithers at its range. Every family fades
 //   into the fog colour (fog_tint) over fade_out before lod_end, where ViewDistance puts
 //   it inside thick fog. fade_in (a dither) is only used if the near/far swap is given a
-//   band again (ViewDistance.SWAP_FADE, 0 today: the swap is one frame at one distance).
+//   band again (ViewDistance.SWAP_FADE, 3 m today: the near mesh dissolves out leaf by leaf, the card stays whole).
 
 #include "res://assets/shaders/moonlight.gdshaderinc"
 

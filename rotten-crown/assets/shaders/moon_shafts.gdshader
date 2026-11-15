@@ -12,7 +12,7 @@
 // V21: only light that crosses the dark counts: a column of lit air over lit ground (the open road, a
 // clearing) adds nothing, so no glowing patches; the beams are the lit columns through shaded wood.
 // The sum is soft-capped (never white-hot) and fades with distance.
-// Cost: `steps` samples per pixel of the 640x360 viewport (6 / 10 / 14 by quality); the march ends
+// Cost: `steps` samples per pixel of the low-resolution viewport (6 / 10 / 14 by quality); the march ends
 // at the opaque surface (the depth buffer) so nothing in front is lit through a trunk.
 shader_type spatial;
 render_mode unshaded, blend_add, depth_test_disabled, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
@@ -50,7 +50,7 @@ vec3 shade_sample(vec2 xz) {
 	vec2 uv = (xz - shade_rect.xy) / max(shade_rect.zw - shade_rect.xy, vec2(0.0001));
 	float inside = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
 	vec3 s = textureLod(shade_map, uv, 0.0).rgb;
-	// Outside the baked rect: open sky, ground at the sample height (G = 0.25 ~ the plains).
+	// Outside the baked rect: open sky, ground at y = 0 (G = 0.25 encodes 0 m: (0 - (-12)) / 48).
 	return mix(vec3(1.0, 0.25, 0.0), s, inside);
 }
 

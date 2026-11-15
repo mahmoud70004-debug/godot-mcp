@@ -10,6 +10,8 @@ const WALL_HEIGHT := 4.0
 const SPAWN := Vector2(1.0, 64.0)
 ## The straight run up to the citadel's front gate (the paving bends just short of it).
 const GATE_APPROACH := [Vector2(125.0, 186.0), Vector2(125.0, 208.0)]
+## Safety cap on the island-linking loop (slivers dropped and trails cut both take a round).
+const MAX_ROUNDS := 400
 ## Walkable islands smaller than this (m2) are slivers, not places: dropped, not joined.
 const MIN_ISLAND := 40
 const MARKER_GLADE := 5.0
@@ -48,7 +50,10 @@ static func walk_grid() -> PackedByteArray:
 				_stamp([m[2], m[2]], MARKER_GLADE, w, h, wr.position)
 		_links.clear()
 		var start := _cell(SPAWN - wr.position, w)
-		for _round in 64:
+		var linked := 0
+		var rounds := 0
+		while rounds < MAX_ROUNDS:
+			rounds += 1
 			var seen := _flood(start, w, h)
 			var link := _nearest_island(seen, w, h)
 			if link.is_empty():
@@ -60,6 +65,9 @@ static func walk_grid() -> PackedByteArray:
 				continue
 			_links.append([a + wr.position, b + wr.position])
 			_stamp([a + wr.position, b + wr.position], ForestBuilder.TRAIL_CLEAR + ForestBuilder.VERGE, w, h, wr.position)
+			linked += 1
+		if rounds >= MAX_ROUNDS:
+			push_warning("ForestWall: gave up after %d rounds (%d clearings linked): some clearings may be cut off" % [rounds, linked])
 	return _walk
 
 
