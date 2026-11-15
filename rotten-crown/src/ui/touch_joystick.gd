@@ -1,7 +1,9 @@
 class_name TouchJoystick
 extends Control
-## Fixed on-screen stick (bottom-left). TouchControls feeds it touches; it
-## converts them into the analogue move_* input actions.
+## On-screen stick (bottom-left, or bottom-right with swapped controls). TouchControls feeds it
+## touches; it converts them into the analogue move_* input actions. A touch on the stick itself
+## uses its home position; a touch elsewhere in the stick's half of the screen (V21) floats the stick
+## to the thumb, so that whole side drives the character, not only the drawn disc.
 
 @export var radius := 42.0
 @export var knob_radius := 17.0
@@ -14,6 +16,8 @@ extends Control
 var output := Vector2.ZERO
 var _knob := Vector2.ZERO
 var _active := false
+## Offset of the floating centre from the home position (zero while the stick is where it is drawn).
+var _float := Vector2.ZERO
 
 
 func contains_point(global_point: Vector2) -> bool:
@@ -21,8 +25,10 @@ func contains_point(global_point: Vector2) -> bool:
 	return (global_point - _global_center()).length() <= radius * 1.6
 
 
-func begin_touch(global_point: Vector2) -> void:
+## `floating`: centre the stick on the touch instead of its home position.
+func begin_touch(global_point: Vector2, floating := false) -> void:
 	_active = true
+	_float = (global_point - get_global_rect().get_center()) if floating else Vector2.ZERO
 	update_touch(global_point)
 
 
@@ -39,6 +45,7 @@ func update_touch(global_point: Vector2) -> void:
 
 func end_touch() -> void:
 	_active = false
+	_float = Vector2.ZERO
 	_knob = Vector2.ZERO
 	output = Vector2.ZERO
 	_apply()
@@ -46,7 +53,7 @@ func end_touch() -> void:
 
 
 func _global_center() -> Vector2:
-	return get_global_rect().get_center()
+	return get_global_rect().get_center() + _float
 
 
 func _apply() -> void:
@@ -67,7 +74,7 @@ func _set_axis(negative: StringName, positive: StringName, value: float) -> void
 
 
 func _draw() -> void:
-	var c := size * 0.5
+	var c := size * 0.5 + _float
 	draw_circle(c, radius, base_color, true, -1.0, false)
 	var knob := Color(knob_color, minf(knob_color.a + 0.2, 1.0)) if _active else knob_color
 	draw_circle((c + _knob).round(), knob_radius, knob, true, -1.0, false)

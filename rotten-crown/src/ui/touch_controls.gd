@@ -1,8 +1,9 @@
 class_name TouchControls
 extends Control
 ## Multi-touch router for the landscape layout:
-##   left:  fixed virtual joystick
-##   right: the whole right half drags the camera
+##   left:  virtual joystick (a touch on the disc uses it where it is drawn; a touch anywhere else in
+##          the left stick zone floats it to the thumb)
+##   right: the right part of the screen drags the camera
 ##   right: action buttons (attack / block / interact) take priority
 ## With Settings.swap_controls the whole layout is mirrored (stick and look zone swap sides).
 ## Godot's GUI is single-pointer, so this node tracks each finger itself.
@@ -74,6 +75,11 @@ func apply_layout() -> void:
 	release_all()
 
 
+## The part of the screen that belongs to the stick: the side opposite the look zone.
+func _in_stick_zone(pos: Vector2) -> bool:
+	return not _in_look_zone(pos)
+
+
 func _in_look_zone(pos: Vector2) -> bool:
 	if Settings.swap_controls:
 		return pos.x <= global_position.x + size.x * (1.0 - look_zone_start)
@@ -127,7 +133,11 @@ func _on_touch_down(finger: int, pos: Vector2) -> void:
 		# Only one thumb fits on the stick: the newest touch always owns it.
 		_joystick_finger = finger
 		joystick.begin_touch(pos)
-	elif _in_look_zone(pos):
+	elif _in_stick_zone(pos):
+		# The stick's side of the screen: the stick floats to the thumb (one thumb, the newest wins).
+		_joystick_finger = finger
+		joystick.begin_touch(pos, true)
+	else:
 		_look_finger = finger
 
 

@@ -94,6 +94,19 @@ const mid = (r) => [(r[0] + r[2]) / 2, (r[1] + r[3]) / 2];
   check('stick on the right walks', walked > 0.3, `${walked.toFixed(2)} m`);
   await page.waitForTimeout(500);
 
+  // V21: the whole stick side drives the character - a touch well away from the drawn disc floats the stick.
+  const f0 = (await state()).player;
+  await sync();
+  let floater = { ...P(uiW - 34, 120), id: 4 };
+  await send('touchStart', [floater]);
+  for (let i = 1; i <= 6; i++) { floater = { ...floater, y: floater.y - 5 * s }; await send('touchMove', [floater]); }
+  await page.waitForTimeout(800);
+  const f1 = (await state()).player;
+  await send('touchEnd', []);
+  const floated = Math.hypot(f1.pos[0] - f0.pos[0], f1.pos[2] - f0.pos[2]);
+  check('stick side away from the disc walks (floating stick)', floated > 0.3, `${floated.toFixed(2)} m`);
+  await page.waitForTimeout(500);
+
   // Look on the left half (above the buttons).
   const a = (await state()).player;
   await sync();

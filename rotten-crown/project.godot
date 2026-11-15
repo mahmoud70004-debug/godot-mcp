@@ -13,8 +13,8 @@ config_version=5
 config/name="Rotten Crown"
 config/description="Retro dark-fantasy first-person horror adventure for Android."
 config/version="0.1.0"
-config/build_label="V20"
-config/build_stamp="2026-11-15T13:47:24Z"
+config/build_label="V21"
+config/build_stamp="2026-11-15T17:31:25Z"
 run/main_scene="res://src/ui/main_menu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 boot_splash/bg_color=Color(0.02, 0.02, 0.02, 1)
@@ -198,6 +198,10 @@ shade_map={
 shade_rect={
 "type": "vec4",
 "value": Vector4(0, 0, 1, 1)
+}
+shade_contrast={
+"type": "float",
+"value": 0.0
 }
 cloud_tex={
 "type": "sampler2D",

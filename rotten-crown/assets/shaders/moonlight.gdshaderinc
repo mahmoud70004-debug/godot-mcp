@@ -24,6 +24,8 @@ global uniform vec3 moon_ref_irr;
 // Baked canopy shade (r: 1 = full moonlight, 0 = full shade) over shade_rect (x0, z0, x1, z1).
 global uniform sampler2D shade_map : filter_linear, repeat_disable;
 global uniform vec4 shade_rect;
+// V21: how far the shade curve pushes lit and shade apart (0 = the baked values as they are).
+global uniform float shade_contrast;
 // Tileable cloud noise, its drift so far (metres, Moonlight's cloud clock), repeats per metre and
 // darkening 0..1.
 global uniform sampler2D cloud_tex : filter_linear_mipmap, repeat_enable;
@@ -48,11 +50,17 @@ float moon_cloud(vec3 world_pos) {
 	return 1.0 - cloud_strength * smoothstep(0.45, 0.75, n);
 }
 
+// V21 shadow contrast: the baked shade (a soft multiply of canopies) pushed apart, so a shadow reads
+// as a shadow and the dapples as light: deep shade goes deeper, the lit patches stay at full moon.
+float moon_shade_curve(float x) {
+	return mix(x, smoothstep(0.1, 0.7, x), shade_contrast);
+}
+
 // Baked canopy shade at a world position: 1 in the open (and outside shade_rect), 0 in deep shade.
 float moon_canopy(vec3 world_pos) {
 	vec2 uv = (world_pos.xz - shade_rect.xy) / max(shade_rect.zw - shade_rect.xy, vec2(0.0001));
 	float inside = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
-	return mix(1.0, textureLod(shade_map, uv, 0.0).r, inside);
+	return mix(1.0, moon_shade_curve(textureLod(shade_map, uv, 0.0).r), inside);
 }
 
 // How much moonlight reaches a world position (canopy shade x cloud shadow), 0..1.

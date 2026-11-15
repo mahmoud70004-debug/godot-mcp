@@ -9,6 +9,9 @@
 // shafts stand in the world: they fill the gaps between trunks and leaves exactly where the light
 // really reaches the floor, from every viewing direction, and move with the clouds. They scatter
 // forward (brighter looking towards the moon) but never vanish looking away.
+// V21: only light that crosses the dark counts: a column of lit air over lit ground (the open road, a
+// clearing) adds nothing, so no glowing patches; the beams are the lit columns through shaded wood.
+// The sum is soft-capped (never white-hot) and fades with distance.
 // Cost: `steps` samples per pixel of the 640x360 viewport (6 / 10 / 14 by quality); the march ends
 // at the opaque surface (the depth buffer) so nothing in front is lit through a trunk.
 shader_type spatial;
@@ -30,11 +33,11 @@ uniform int steps : hint_range(4, 16) = 10;
 // Camera near / far (reverse-Z depth to distance) and how far the haze is marched (m).
 uniform float cam_near = 0.05;
 uniform float cam_far = 170.0;
-uniform float max_dist = 46.0;
-// Haze density per metre in deep shade / in the open; the shaft is the contrast between lit and
-// unlit air, so the open (where everything is lit) stays quiet.
-uniform float density_shade = 0.095;
-uniform float density_open = 0.018;
+uniform float max_dist = 34.0;
+// Haze density per metre (the shaft is the contrast between lit and unlit air).
+uniform float density = 0.085;
+// The most light the haze can add (display), so a shaft stays a soft glow.
+uniform float cap = 0.20;
 // The haze thins out above this height over the ground (m): the canopy roof.
 uniform float top = 17.0;
 // Ground height encoding of the shade map's G channel (MoonShadeBaker.HEIGHT_MIN / RANGE).
@@ -98,14 +101,17 @@ vec3 volume(vec2 sc_uv, vec2 frag, mat4 inv_proj, mat4 inv_view, float time) {
 		vec3 lit_s = shade_sample(g);
 		// Shade map: 1 open, 0 deep shade. Crisp the dapples so partly lit air stays quiet.
 		float lit = smoothstep(0.08, 0.5, lit_s.r) * moon_cloud_at(g);
-		// Haze is thicker in the shaded wood (it pools under the canopy) than over open ground, and
-		// thins out upwards to the roof.
-		float dens = mix(density_shade, density_open, here.r) * (0.35 + 0.65 * exp(-h / 6.0)) * (1.0 - smoothstep(top * 0.6, top, h));
+		// Only light crossing the dark: over lit ground (open road, clearing) the air adds nothing.
+		float dark_below = 1.0 - smoothstep(0.2, 0.75, here.r);
+		// Thins out upwards to the roof, pooling low like mist.
+		float dens = density * (0.4 + 0.6 * exp(-h / 6.0)) * (1.0 - smoothstep(top * 0.6, top, h));
 		// A slow breathing, so the air is never still.
 		dens *= 0.9 + 0.1 * sin(time * 0.25 + dot(p.xz, vec2(0.11, 0.07)));
-		acc += lit * dens * dt * exp(-t * 0.018);
+		acc += lit * dark_below * dens * dt * exp(-t * 0.045);
 	}
-	return shaft_color * acc * phase * strength;
+	// Soft cap: 1 - exp keeps even a dense column a glow, never a white blob.
+	float glow = cap * (1.0 - exp(-acc * phase * strength * 4.0));
+	return shaft_color * glow;
 }
 
 void vertex() {
