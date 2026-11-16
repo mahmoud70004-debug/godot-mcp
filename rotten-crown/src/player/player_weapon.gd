@@ -21,7 +21,15 @@ var is_blocking := false
 var pose_position := REST_POS
 var pose_rotation := REST_ROT
 
+## V24: blood on the blade. Each landed hit darkens it (SwordMesh's rust creeping from the point,
+## in stained steps) and it wears off slowly.
+const BLOOD_PER_HIT := 0.14
+const BLOOD_WEAR := 0.004
+
 var _attacking := false
+var _blood := 0.0
+var _blood_step := 0
+var _trail: SwordTrail
 var _weapon: WeaponData
 var _model: Node3D
 var _tween: Tween
@@ -29,7 +37,44 @@ var _sway_time := 0.0
 var _motion := 0.0
 
 
+func _ready() -> void:
+	_trail = SwordTrail.new()
+	_trail.name = "Trail"
+	add_child(_trail)
+	if hitbox:
+		hitbox.hit_landed.connect(_on_hit_landed)
+
+
+func _on_hit_landed(_hurtbox: HurtboxComponent) -> void:
+	_blood = minf(_blood + BLOOD_PER_HIT, 1.0)
+	_apply_blood()
+
+
+## Re-skins the blade when the stain moves a step (cached meshes: SwordMesh.mesh).
+func _apply_blood() -> void:
+	var step := roundi(_blood * 6.0)
+	if step == _blood_step or _model == null or _weapon == null:
+		return
+	if _weapon.weapon_type == WeaponData.WeaponType.AXE or _weapon.weapon_type == WeaponData.WeaponType.MACE:
+		_blood_step = step
+		return
+	_blood_step = step
+	var sword := _model.get_node_or_null("Sword") as MeshInstance3D
+	if sword:
+		sword.mesh = SwordMesh.mesh(_weapon.tint, 0.35 + float(step) / 6.0 * 0.5)
+		# The steel itself darkens towards dried blood (a copy of the blade material, per step).
+		var blade := sword.mesh.surface_get_material(0) as StandardMaterial3D
+		if blade:
+			var stained := blade.duplicate() as StandardMaterial3D
+			stained.albedo_color = Color.WHITE.lerp(Color(0.5, 0.2, 0.18), float(step) / 6.0 * 0.85)
+			stained.roughness = lerpf(blade.roughness, 0.7, float(step) / 6.0)
+			sword.set_surface_override_material(0, stained)
+
+
 func _process(delta: float) -> void:
+	if _blood > 0.0:
+		_blood = maxf(_blood - BLOOD_WEAR * delta, 0.0)
+		_apply_blood()
 	_sway_time += delta * (1.4 + _motion * 7.0)
 	var amp := 0.25 + _motion
 	var bob := Vector3(cos(_sway_time) * 0.012, -absf(sin(_sway_time)) * 0.016, 0.0) * amp
@@ -55,6 +100,8 @@ func equip(weapon: WeaponData) -> void:
 		_model.scale = Vector3.ONE * MODEL_SCALE
 		add_child(_model)
 		_set_reach(weapon.reach)
+		_blood_step = 0
+		_apply_blood()
 	_attacking = false
 	is_blocking = false
 	if hitbox:
@@ -75,11 +122,14 @@ func attack(damage: float, knockback: float) -> void:
 	_tween.tween_property(self, "pose_position", WINDUP_POS, d * 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_tween.parallel().tween_property(self, "pose_rotation", WINDUP_ROT, d * 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 	_tween.tween_callback(hitbox.activate.bind(damage, knockback, owner as Node3D))
+	_tween.tween_callback(_trail.start.bind(_model))
 	_tween.tween_property(self, "pose_position", SWING_POS, d * 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	_tween.parallel().tween_property(self, "pose_rotation", SWING_ROT, d * 0.18).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	_tween.tween_callback(hitbox.deactivate)
 	_tween.tween_property(self, "pose_position", REST_POS, d * 0.52).set_trans(Tween.TRANS_SINE)
 	_tween.parallel().tween_property(self, "pose_rotation", REST_ROT, d * 0.52).set_trans(Tween.TRANS_SINE)
+	# The ribbon follows the blade a little way into the recovery, then fades.
+	get_tree().create_timer(d * 0.3 + d * 0.18 + d * 0.1).timeout.connect(_trail.stop)
 	_tween.tween_callback(func() -> void: _attacking = false)
 
 
@@ -112,6 +162,8 @@ func _to_pose(pos: Vector3, rot: Vector3, duration: float) -> void:
 func _kill_tween() -> void:
 	if _tween and _tween.is_valid():
 		_tween.kill()
+	if _trail:
+		_trail.stop()
 
 
 func _set_reach(reach: float) -> void:

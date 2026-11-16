@@ -18,6 +18,8 @@ signal prewarmed
 @export var view_distance: ViewDistance
 ## V20: volumetric moonlight shafts (MoonShafts): a world-space march of the haze from the baked canopy shade.
 @export var moon_shafts := false
+## V24: the frame tightens when a hunter closes in or health is low (DangerFeedback).
+@export var danger_feedback := false
 ## The knight's inner voice after waking up here (DialogueUI subtitles).
 @export var wake_dialogue: DialogueSequence
 
@@ -47,6 +49,10 @@ func _ready() -> void:
 		var shafts := MoonShafts.new()
 		shafts.name = "MoonShafts"
 		add_child(shafts)
+	if danger_feedback:
+		var feedback := DangerFeedback.new()
+		feedback.name = "DangerFeedback"
+		add_child(feedback)
 	_apply_dev_perf_flags()
 	_exempt_follow_nodes_from_interpolation()
 	if player:

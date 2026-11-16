@@ -39,3 +39,6 @@ attack_range = 2.6
 slam_radius = 1.9
 windup_tremble = 0.03
 sprite_sheet = ExtResource("9_sheet")
+eye_color = Color(0.9, 0.38, 0.14, 1)
+eye_height = 3.2
+eye_spacing = 0.3

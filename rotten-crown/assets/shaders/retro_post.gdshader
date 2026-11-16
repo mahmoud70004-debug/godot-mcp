@@ -33,6 +33,9 @@ uniform float grade_amount : hint_range(0.0, 1.0) = 0.0;
 uniform float cine_vignette : hint_range(0.0, 1.0) = 0.0;
 uniform vec3 cine_edge_color : source_color = vec3(0.05, 0.08, 0.16);
 uniform float cine_fringe : hint_range(0.0, 0.01) = 0.0;
+// V24: danger 0..1 (DangerFeedback: a hunter closing in, low health): the vignette closes in and
+// breathes in a dark blood tone, so the frame itself tightens as the threat nears.
+uniform float danger : hint_range(0.0, 1.0) = 0.0;
 
 const float BAYER[16] = float[16](
 	0.0, 8.0, 2.0, 10.0,
@@ -125,6 +128,12 @@ void fragment() {
 	vec2 v = SCREEN_UV - 0.5;
 	float vignette = 1.0 - dot(v, v) * vignette_strength * 2.2;
 	col *= clamp(vignette, 0.0, 1.0);
+	if (danger > 0.0) {
+		float pulse = 0.5 + 0.5 * sin(TIME * (2.2 + danger * 3.4));
+		float rr = length(lens * vec2(1.0, 1.2)) * 1.6;
+		float closing = smoothstep(0.5 - 0.3 * danger - 0.05 * pulse, 1.0, rr) * min(danger * 1.25, 1.0);
+		col = mix(col, col * 0.22 + vec3(0.11, 0.01, 0.016), clamp(closing * (0.8 + 0.2 * pulse), 0.0, 1.0));
+	}
 	if (cine_vignette > 0.0) {
 		// Oval (wider than tall, like the frame), soft from the middle third to the corners.
 		float r = length(lens * vec2(1.0, 1.35)) * 1.6;

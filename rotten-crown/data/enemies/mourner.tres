@@ -34,3 +34,6 @@ head_tilt_degrees = 78.0
 body_scale = Vector3(0.9, 1.14, 0.9)
 drop_chance = 0.0
 sprite_sheet = ExtResource("9_sheet")
+eye_color = Color(0.6, 0.75, 1, 1)
+eye_height = 2.0
+eye_spacing = 0.2

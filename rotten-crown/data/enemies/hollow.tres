@@ -36,3 +36,6 @@ body_scale = Vector3(1, 1, 1)
 drop_item = ExtResource("2_res")
 drop_chance = 0.4
 sprite_sheet = ExtResource("9_sheet")
+eye_color = Color(0.88, 0.52, 0.18, 1)
+eye_height = 1.75
+eye_spacing = 0.18

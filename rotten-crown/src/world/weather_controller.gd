@@ -116,6 +116,8 @@ func _make_player() -> AudioStreamPlayer:
 
 
 func _apply_rain() -> void:
+	# V24: the wet ground (road sheen, splashes in terrain.gdshader) follows the rain, damped: ground dries slowly.
+	RenderingServer.global_shader_parameter_set(&"wetness", smoothstep(0.05, 0.6, rain))
 	if _material != null:
 		# Low quality drops the streak layer (D7); the rain bed still plays.
 		_material.set_shader_parameter("rain_amount", 0.0 if Settings.quality == 0 else rain)

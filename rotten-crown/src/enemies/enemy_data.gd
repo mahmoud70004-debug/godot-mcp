@@ -29,6 +29,12 @@ enum AttackStyle { LUNGE, STAB, LEAP, SLAM }
 ## Moves only while the player is NOT looking at it.
 @export var freezes_when_watched := false
 
+@export_group("Eyes")
+## V24: two faint points that glimmer in the dark before the body can be made out (EyeGlow).
+@export var eye_color := Color(0.85, 0.5, 0.18)
+@export var eye_height := 1.5
+@export var eye_spacing := 0.17
+
 @export_group("Attack")
 @export var damage := 12.0
 @export var knockback := 3.0
