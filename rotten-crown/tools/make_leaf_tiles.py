@@ -1,19 +1,22 @@
 #!/usr/bin/env python3
-"""V18 leaf tiles: pixel-clustered, hole-ridden foliage in the spirit of Minecraft's leaves
-(the texture work, not the blocks).
+"""V23 leaf tiles: individual, shaded, interlocking leaves (not a pixel mass).
 
-A 32x32 grid of coarse texels, shown 4x4 per texel in a 128 px tile. Each tile is a ragged-edged
-disc of overlapping small leaf lobes (2-4 texels), painted back to front so the lobes read as
-separate leaves stacked into clusters; every lobe has a lit top-left rim and a darker lower-right
-edge (one tone step each), four tones overall. Holes (a fifth of the disc, in clumps of 1-3
-texels) let the dark body behind show through, so a clump of cards reads as interlocking foliage
-with depth, not a printed sheet. Normal maps come from a height field of domed lobes.
+A tile is a ragged disc of ~150 real leaf shapes (pointed lens, midrib, a lit and a shaded half)
+painted back to front on a 64x64 grid shown 2x2 per texel in the 128 px tile. What makes it read as
+foliage and not as a coloured blob:
+- DEPTH: every leaf has a depth; the deeper, the darker (ambient occlusion of the clump), so the
+  surface leaves are lit and the inside is a dark cavity seen through the gaps;
+- CONTACT SHADOWS: each leaf drops a soft shadow (offset away from the light) on the leaves under
+  it, which separates every layer and gives the clusters their interlocking;
+- PER-LEAF LIGHT: a gradient across each leaf from its lit edge (upper left, where the moon hits)
+  to its shaded edge, a lighter midrib, a rim highlight on the lit side;
+- COLOUR: every leaf its own tone (cool dark green to yellow-green), so neighbours never merge;
+- NORMALS: each leaf is a tilted plane folded along its midrib, so in the game the moon catches
+  every leaf at its own angle (the normal map follows the same leaves).
 
   python3 tools/make_leaf_tiles.py
 
-Writes assets/textures/forest_src/leaf_mass_{a,b,c,d}.png and _n.png (RGBA 128x128, hard alpha;
-same names and format as the Blender masses they replace, which tools/blender/trees/
-render_tree_textures.py still writes if run again).
+Writes assets/textures/forest_src/leaf_mass_{a,b,c,d}.png and _n.png (RGBA 128x128, hard alpha).
 """
 import pathlib
 
@@ -21,105 +24,120 @@ import numpy as np
 from PIL import Image
 
 OUT = pathlib.Path(__file__).resolve().parent.parent / "assets" / "textures" / "forest_src"
-N = 32
-SCALE = 4
+N = 64
+SCALE = 2
+LIGHT = np.array([-0.62, -0.78])  # towards the light on the tile (upper left)
 
-# name: (seed, lobes, lobe radius range, hole share, edge ragged, tones dark->light)
+# name: (seed, leaves, length range, hole share, palette dark, palette lit, rim)
 VARIANTS = {
-    "a": (11, 150, (1.7, 3.0), 0.16, 0.22, [(0.17, 0.25, 0.20), (0.27, 0.38, 0.29), (0.38, 0.52, 0.38), (0.52, 0.66, 0.48)]),
-    "b": (23, 125, (1.6, 2.7), 0.24, 0.30, [(0.19, 0.22, 0.17), (0.30, 0.34, 0.24), (0.43, 0.46, 0.31), (0.56, 0.58, 0.40)]),
-    "c": (37, 140, (1.9, 3.2), 0.14, 0.20, [(0.19, 0.26, 0.19), (0.28, 0.38, 0.26), (0.39, 0.51, 0.34), (0.52, 0.64, 0.44)]),
-    "d": (41, 150, (1.5, 2.7), 0.20, 0.26, [(0.15, 0.24, 0.21), (0.25, 0.37, 0.31), (0.36, 0.50, 0.41), (0.49, 0.63, 0.52)]),
+    "a": (11, 260, (6.0, 10.0), 0.08, (0.14, 0.22, 0.17), (0.86, 1.0, 0.62)),
+    "b": (23, 210, (5.5, 9.0), 0.14, (0.17, 0.16, 0.11), (0.95, 0.82, 0.42)),
+    "c": (37, 240, (6.5, 10.5), 0.07, (0.16, 0.22, 0.15), (0.80, 0.90, 0.60)),
+    "d": (41, 260, (5.5, 9.5), 0.10, (0.13, 0.21, 0.19), (0.78, 1.0, 0.76)),
 }
 
 
-def lobes(rng, count, radius):
-    """Index map (-1 empty), tone map and height map of overlapping leaf lobes, back to front."""
-    idx = -np.ones((N, N), int)
-    tone = np.zeros((N, N), int)
-    height = np.zeros((N, N))
-    yy, xx = np.mgrid[0:N, 0:N] + 0.5
-    for k in range(count):
-        # Centres inside a disc, denser towards the middle so the rim stays lacy.
-        r = 14.2 * np.sqrt(rng.random()) ** 1.15
-        a = rng.random() * np.tau if hasattr(np, "tau") else rng.random() * 2 * np.pi
-        cx, cy = N / 2 + r * np.cos(a), N / 2 + r * np.sin(a)
-        rx = rng.uniform(*radius)
-        ry = rx * rng.uniform(0.55, 0.85)
-        th = rng.random() * np.pi
-        dx, dy = xx - cx, yy - cy
-        u = dx * np.cos(th) + dy * np.sin(th)
-        v = -dx * np.sin(th) + dy * np.cos(th)
-        d = (u / rx) ** 2 + (v / ry) ** 2
-        m = d <= 1.0
-        base = rng.choice([0, 1, 1, 2, 2, 3], p=[0.16, 0.2, 0.2, 0.2, 0.14, 0.1])
-        # Lit from the upper left: a lobe's own top-left is a tone lighter, its bottom-right darker.
-        light = -(dx + dy) / (rx + ry)
-        t = np.clip(base + np.where(light > 0.35, 1, np.where(light < -0.35, -1, 0)), 0, 3)
-        # Layer depth: later lobes are in front; the rim of the front lobe is a dark line on what it covers.
-        idx[m] = k
-        tone[m] = t[m]
-        height[m] = (1.0 - d[m]) * 0.8 + k * 0.02
-    return idx, tone, height
+def smoothstep(a, b, x):
+    t = np.clip((x - a) / (b - a), 0.0, 1.0)
+    return t * t * (3 - 2 * t)
 
 
-def make(name, seed, count, radius, holes, ragged, tones):
+def make(seed, count, length, holes, dark, lit):
     rng = np.random.default_rng(seed)
-    idx, tone, height = lobes(rng, count, radius)
+    dark, lit = np.array(dark), np.array(lit)
     yy, xx = np.mgrid[0:N, 0:N] + 0.5
+    col = np.zeros((N, N, 3))
+    alpha = np.zeros((N, N), bool)
+    nrm = np.zeros((N, N, 3))
+    nrm[..., 2] = 1.0
+    # Leaves back to front: depth 0 (deep) .. 1 (surface).
+    leaves = []
+    for k in range(count):
+        r = 14.8 * np.sqrt(rng.random()) ** 1.1 * (N / 32) / 2 * 2
+        r = 30.0 * np.sqrt(rng.random()) ** 1.12
+        a = rng.random() * 2 * np.pi
+        leaves.append((rng.random(), N / 2 + r * np.cos(a), N / 2 + r * np.sin(a), rng.uniform(*length), rng.random() * np.pi))
+    leaves.sort(key=lambda t: t[0])
+    for depth, cx, cy, L, th in leaves:
+        W = L * rng.uniform(0.46, 0.64)
+        c, s = np.cos(th), np.sin(th)
+        dx, dy = xx - cx, yy - cy
+        u = dx * c + dy * s  # along the leaf
+        v = -dx * s + dy * c  # across
+        t = u / (L * 0.5)
+        shape = (1 - np.clip(t, -1, 1) ** 2) ** 0.85  # pointed ends, fullest in the middle
+        wv = W * 0.5 * shape
+        m = (np.abs(t) <= 1.0) & (np.abs(v) <= wv) & (wv > 0.25)
+        if not m.any():
+            continue
+        # Contact shadow on whatever is already there (away from the light, softly).
+        sh = np.roll(np.roll(m, int(round(-LIGHT[0] * 2.2)), axis=1), int(round(-LIGHT[1] * 2.2)), axis=0)
+        sh &= ~m & alpha
+        col[sh] *= 0.5
+        # Colour: depth (occlusion) x the leaf's own tone x a gradient across it, lit side up-left.
+        own = rng.random()
+        base = dark + (lit - dark) * (0.15 + 0.85 * own * (0.35 + 0.65 * depth))
+        occl = 0.44 + 0.56 * depth ** 0.9
+        to_light = (dx * LIGHT[0] + dy * LIGHT[1]) / max(L * 0.5, 1.0)  # -1 away .. 1 towards light
+        grad = 0.78 + 0.34 * np.clip(to_light, -1, 1)
+        shade = occl * grad
+        rib = np.abs(v) < 0.55
+        shade = np.where(rib, shade * 1.22, shade)
+        # Rim highlight on the lit edge, dark line on the far edge: the leaf has thickness.
+        edge = np.clip(1.0 - np.abs(v) / np.maximum(wv, 0.01), 0, 1)
+        lit_side = (v * (-s * LIGHT[0] + c * LIGHT[1]) > 0)
+        shade = np.where(m & (edge < 0.22) & lit_side, shade * 1.28, shade)
+        shade = np.where(m & (edge < 0.22) & ~lit_side, shade * 0.72, shade)
+        rgb = base[None, None, :] * shade[..., None] * (1.0 + (rng.random() - 0.5) * 0.18)
+        col[m] = np.clip(rgb[m], 0, 1)
+        alpha |= m
+        # Normal: the leaf is a plane tilted at random, folded along the midrib.
+        tilt = rng.normal(0, 0.42, 2)
+        fold = 0.38 * np.sign(v)
+        px = np.cos(th + np.pi / 2) * fold
+        py = np.sin(th + np.pi / 2) * fold
+        nx = tilt[0] + px
+        ny = tilt[1] + py
+        n3 = np.stack([nx, ny, np.ones_like(nx) * 1.0], -1)
+        n3 /= np.linalg.norm(n3, axis=-1, keepdims=True)
+        nrm[m] = n3[m]
+    # Ragged silhouette and the holes: noise-thresholded, the middle stays closed.
     rr = np.hypot(xx - N / 2, yy - N / 2) / (N / 2)
-    alpha = (idx >= 0) & (rr < 0.97 - ragged * rng.random((N, N)) * np.clip(rr * 1.4 - 0.45, 0, 1))
-    # Holes: smooth noise thresholded, so they come in clumps of 1-3 texels.
-    g = rng.random((N // 4, N // 4))
-    g = np.kron(g, np.ones((4, 4)))
-    g = 0.55 * g + 0.45 * rng.random((N, N))
+    alpha &= rr < 0.985
+    g = rng.random((N // 8, N // 8))
+    g = np.kron(g, np.ones((8, 8))) * 0.5 + rng.random((N, N)) * 0.5
     k = np.array([0.25, 0.5, 0.25])
     for axis in (0, 1):
         g = np.apply_along_axis(lambda a: np.convolve(np.pad(a, 1, mode="wrap"), k, mode="valid"), axis, g)
-    cut = np.quantile(g[alpha], holes) if alpha.any() else 0
-    # The very middle stays closed (the clump's heart) so a card is never see-through at its centre.
-    alpha &= (g > cut) | (rr < 0.22)
-    # Drop single stray texels (they read as noise), then keep the texel count honest.
+    cut = np.quantile(g[alpha], holes)
+    alpha &= (g > cut) | (rr < 0.25)
+    # Drop stray single texels.
     p = np.pad(alpha, 1)
     nb = p[:-2, 1:-1].astype(int) + p[2:, 1:-1] + p[1:-1, :-2] + p[1:-1, 2:]
     alpha &= nb >= 1
-    # Depth shade: texels with an open neighbour above-left are rim-lit, those under a hole sit darker.
-    col = np.zeros((N, N, 3))
-    for t in range(4):
-        col[tone == t] = tones[t]
-    p = np.pad(alpha, 1)
-    under_hole = (~p[:-2, 1:-1]) & alpha
-    col[under_hole] = np.clip(col[under_hole] * 1.12, 0, 1)
-    over_hole = (~p[2:, 1:-1]) & alpha
-    col[over_hole] = col[over_hole] * 0.78
-    # Fine per-texel jitter: reads as separate leaves, not flat plates.
-    col *= (1.0 + (rng.random((N, N, 1)) - 0.5) * 0.10)
+    return col, alpha, nrm
+
+
+def finish(col, alpha, nrm):
     rgba = np.zeros((N, N, 4))
-    rgba[..., :3] = np.clip(col, 0, 1)
-    rgba[..., 3] = alpha
-    # Transparent texels keep the colour of the nearest leaf (no dark fringes under filtering).
-    for _ in range(6):
-        e = rgba[..., 3] == 0
-        if not e.any():
+    rgba[..., :3] = col
+    # Transparent texels take the nearest leaf colour (no dark fringes under filtering).
+    filled = alpha.copy()
+    out = col.copy()
+    for _ in range(8):
+        if filled.all():
             break
-        pad = np.pad(rgba, ((1, 1), (1, 1), (0, 0)), mode="edge")
+        pad = np.pad(out, ((1, 1), (1, 1), (0, 0)), mode="edge")
+        fpad = np.pad(filled, 1, mode="edge")
         for dy, dx in ((0, 1), (2, 1), (1, 0), (1, 2)):
-            nbr = pad[dy:dy + N, dx:dx + N]
-            take = e & (nbr[..., 3] > 0) & (rgba[..., 3] == 0)
-            rgba[take, :3] = nbr[take, :3]
-            rgba[take, 3] = 1e-3
-    a_mask = rgba[..., 3] > 0.5
-    rgba[..., 3] = np.where(a_mask, 1.0, 0.0)
-    # Normal map from the lobes' height field (domed lobes: each leaf catches the moon at its own angle).
-    h = np.where(alpha, height, -0.3)
-    gx = (np.roll(h, -1, 1) - np.roll(h, 1, 1)) * 0.5
-    gy = (np.roll(h, -1, 0) - np.roll(h, 1, 0)) * 0.5
-    nx, ny, nz = -gx * 0.9, gy * 0.9, np.ones_like(h)
-    ln = np.sqrt(nx * nx + ny * ny + nz * nz)
-    nrm = np.stack([nx / ln, ny / ln, nz / ln], -1) * 0.5 + 0.5
-    nrm[~alpha] = (0.5, 0.5, 1.0)
-    nrgba = np.concatenate([nrm, a_mask[..., None].astype(float)], -1)
-    return rgba, nrgba
+            take = ~filled & fpad[dy:dy + N, dx:dx + N]
+            out[take] = pad[dy:dy + N, dx:dx + N][take]
+            filled = filled | take
+    rgba[..., :3] = out
+    rgba[..., 3] = alpha
+    n = nrm * 0.5 + 0.5
+    n[~alpha] = (0.5, 0.5, 1.0)
+    return rgba, np.concatenate([n, alpha[..., None].astype(float)], -1)
 
 
 def save(arr, path):
@@ -129,19 +147,22 @@ def save(arr, path):
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    for name, (seed, count, radius, holes, ragged, tones) in VARIANTS.items():
-        rgba, nrgba = make(name, seed, count, radius, holes, ragged, tones)
+    tiles = []
+    for name, (seed, count, length, holes, dark, lit) in VARIANTS.items():
+        col, alpha, nrm = make(seed, count, length, holes, dark, lit)
+        rgba, nrgba = finish(col, alpha, nrm)
         save(rgba, OUT / f"leaf_mass_{name}.png")
         save(nrgba, OUT / f"leaf_mass_{name}_n.png")
-        print(f"leaf_mass_{name}: {int((rgba[..., 3] > 0.5).sum())}/{N * N} texels opaque")
-    sheet = np.zeros((N * SCALE, N * SCALE * 4, 4))
-    for i, name in enumerate(VARIANTS):
-        a = np.asarray(Image.open(OUT / f"leaf_mass_{name}.png")).astype(float) / 255
-        sheet[:, i * N * SCALE:(i + 1) * N * SCALE] = a
+        lum = (col[alpha] @ np.array([0.2126, 0.7152, 0.0722])).mean()
+        print(f"leaf_mass_{name}: {int(alpha.sum())}/{N * N} opaque, mean luma {lum:.3f}")
+        tiles.append(rgba)
+    sheet = np.concatenate(tiles, 1)
     bg = np.zeros_like(sheet[..., :3])
-    bg[:] = (0.05, 0.08, 0.16)
-    out = sheet[..., :3] * sheet[..., 3:] + bg * (1 - sheet[..., 3:])
-    Image.fromarray(np.round(out * 255).astype(np.uint8)).resize((N * SCALE * 4 * 2, N * SCALE * 2), Image.NEAREST).save(OUT.parent.parent.parent / "build" / "leaf_tiles_preview.png")
+    bg[:] = (0.04, 0.06, 0.13)
+    prev = sheet[..., :3] * sheet[..., 3:] + bg * (1 - sheet[..., 3:])
+    pth = OUT.parent.parent.parent / "build" / "leaf_tiles_preview.png"
+    pth.parent.mkdir(exist_ok=True)
+    Image.fromarray(np.round(prev * 255).astype(np.uint8)).resize((N * 4 * 4, N * 4), Image.NEAREST).save(pth)
 
 
 if __name__ == "__main__":

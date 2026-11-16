@@ -516,7 +516,7 @@ static func _clump(acc: Dictionary, c: Vector3, s: float, tile: String, rng: Ran
 			var rad := sqrt(maxf(1.0 - yv * yv, 0.0))
 			dir = Vector3(cos(spin + q * golden) * rad, yv * 0.8, sin(spin + q * golden) * rad).normalized()
 			dir = (dir + Vector3(rng.randf_range(-0.25, 0.25), rng.randf_range(-0.2, 0.2), rng.randf_range(-0.25, 0.25))).normalized()
-		var reach := s * (0.08 if is_inner else rng.randf_range(0.2, 0.3))
+		var reach := s * (0.08 if is_inner else rng.randf_range(0.2, 0.33))
 		var size := s * (0.6 if is_inner else rng.randf_range(0.56, 0.72))
 		var centre := c + dir * reach
 		var right := Vector3.UP.cross(dir)
@@ -526,7 +526,7 @@ static func _clump(acc: Dictionary, c: Vector3, s: float, tile: String, rng: Ran
 		var rr := right * cos(roll) + up * sin(roll)
 		var uu := dir.cross(rr)
 		# Depth shade: outer shell lighter towards the sky, the inner card in the dark.
-		var k := 0.5 if is_inner else clampf(0.78 + dir.y * 0.16 + rng.randf_range(-0.08, 0.08), 0.6, 1.05)
+		var k := 0.45 if is_inner else clampf(0.78 + dir.y * 0.32 + rng.randf_range(-0.07, 0.07), 0.45, 1.1)
 		var col := Color(k * 0.97, k * 1.02, k * 0.95, 1.0)
 		var v: PackedVector3Array = acc["v"]
 		var base := v.size()
