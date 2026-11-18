@@ -27,7 +27,7 @@ extends RefCounted
 const MOON_ROTATION := Vector3(-0.524, -2.634, 0.0)
 ## World rect (x0, z0, x1, z1) of the map; the Moonlight node's shade_rect default.
 const RECT := Vector4(-260.0, 30.0, 260.0, 520.0)
-const PX_PER_M := 2.0
+const PX_PER_M := 3.0
 ## G channel: ground height encoding (m).
 const HEIGHT_MIN := -12.0
 const HEIGHT_RANGE := 48.0
@@ -35,17 +35,17 @@ const OUT_PATH := "res://assets/textures/world/moon_shade.png"
 const SEED := 7177
 ## Opacity of one tree's leaf clumps (leaves let some moonlight through), of its bark,
 ## and of the contact darkening at its foot.
-const CROWN_OPACITY := 0.5
-const BARK_OPACITY := 0.4
-const CONTACT_OPACITY := 0.6
+const CROWN_OPACITY := 0.64
+const BARK_OPACITY := 0.5
+const CONTACT_OPACITY := 0.75
 ## Contact disc radius at a trunk foot: CONTACT_BASE + CONTACT_TRUNK x trunk radius (m).
 const CONTACT_BASE := 1.1
 const CONTACT_TRUNK := 1.2
 ## Scenery colliders: taller than TALL (m) cast a shadow polygon of STRUCTURE_OPACITY;
 ## lower ones a contact patch of KIT_OPACITY reaching KIT_GROW m past their footprint.
 const TALL := 2.5
-const STRUCTURE_OPACITY := 0.82
-const KIT_OPACITY := 0.55
+const STRUCTURE_OPACITY := 0.9
+const KIT_OPACITY := 0.65
 const KIT_GROW := 0.7
 ## Leaf gaps: crown opacity x lerp(GAP_MIN, GAP_MAX, noise), clamped to 1.
 const GAP_MIN := 0.1
@@ -55,7 +55,7 @@ const GAP_FREQUENCY := 0.09
 const BARK_VOXEL := 1.0
 ## Smallest blob radius in pixels (a blob between pixel centres would vanish).
 const MIN_RADIUS_PX := 0.8
-const BLUR_RADIUS := 2
+const BLUR_RADIUS := 1
 const BLUR_PASSES := 2
 ## Roads and trails stay readable: inside a path's clearance (ForestBuilder.road_lines)
 ## plus ROAD_EDGE m the canopy shade is raised to the power 1 - ROAD_OPEN (dapples keep

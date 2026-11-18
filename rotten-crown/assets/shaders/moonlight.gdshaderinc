@@ -53,7 +53,7 @@ float moon_cloud(vec3 world_pos) {
 // V21 shadow contrast: the baked shade (a soft multiply of canopies) pushed apart, so a shadow reads
 // as a shadow and the dapples as light: deep shade goes deeper, the lit patches stay at full moon.
 float moon_shade_curve(float x) {
-	return mix(x, smoothstep(0.1, 0.7, x), shade_contrast);
+	return mix(x, smoothstep(0.14, 0.66, x), shade_contrast);
 }
 
 // Baked canopy shade at a world position: 1 in the open (and outside shade_rect), 0 in deep shade.

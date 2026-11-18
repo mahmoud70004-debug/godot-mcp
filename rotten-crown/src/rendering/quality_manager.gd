@@ -109,7 +109,9 @@ func _apply_shadows(scene: Node, level: int) -> void:
 		var light := node as DirectionalLight3D
 		light.shadow_enabled = level != LOW
 		if level == MEDIUM:
-			light.directional_shadow_max_distance = 25.0
+			# V25: 25 -> 20 m: the same 1024 atlas covers less ground, so its shadows are sharper at no cost
+			# (2048 measured slower: Hollowmere 2.75 -> 1.75 fps in software GL).
+			light.directional_shadow_max_distance = 20.0
 		elif level == HIGH:
 			light.directional_shadow_max_distance = 40.0
 

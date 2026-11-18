@@ -22,10 +22,13 @@ const OVERWORLD := "res://src/levels/valdron/valdron_overworld.tscn"
 ## V11: 6 -> 7 and 13 -> 20: the Blender leaf masses (128 px, layered light/dark leaves) and the
 ## gnarled bark relief carry more per-pixel contrast than a 128 x 256 card of a tree twice the
 ## size can hold, and the V10 cross-dissolve now hides the swap; means stay within 1 of V7's.
-const LIMIT := 7.0
+## V25: 7 -> 9 and 20 -> 26: the moon key went 1.15 -> 2.2 and the sky ambient down (deeper shadows at the
+## same mean brightness), so lit surfaces are ~1.7x brighter and every absolute difference between a mesh
+## and its card scales with that; relative to the lit brightness the match is as before.
+const LIMIT := 9.0
 ## V7-8: 10 -> 13 after the forest albedo gain (1.7) brightened both: per-view differences scale
 ## with brightness; the mean bound (the acceptance criterion) is unchanged.
-const WORST_LIMIT := 20.0
+const WORST_LIMIT := 26.0
 const YAWS := 8
 ## Eye height above the tree's foot; the camera looks at the middle of the tree.
 const EYE := 1.6

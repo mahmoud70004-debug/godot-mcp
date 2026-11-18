@@ -236,3 +236,10 @@
 
 ## V24 reverted (2026-11-18)
 User verdict on V24: floor looked smoother (visible in the phone screenshot), the danger vignette was unwanted; asked to go back to V23 completely. git revert de66f35 restores V23 (code, bake, docs). Kept as lessons: no edge darkening on enemies; do not touch ground mist/layer smoothness; only the shadows (sharper, deeper, better quality, same brightness) are to change next. The V24 pieces (pickups, UI frames, eyes, trail, wet roads) are in git history f347349 if any is wanted later.
+
+## V25 - deeper, sharper shadows at the same brightness (published 2026-11-18T10:03:00Z)
+- Base: V23 (V24 reverted at the user's request). User: shadows too light; wants more shading/contrast/quality, no brightness change.
+- Baked canopy shade (MoonShadeBaker): 3 px/m (was 2), blur radius 1 x 2 passes (was 2 x 2), opacities crown 0.64 / bark 0.5 / contact 0.75 / structure 0.9 / kit 0.65; map 1560x1470 (1.27 MB, was 0.59). moon_shade_curve smoothstep(0.14, 0.66) (was 0.1, 0.7). Real-time: shadow_opacity 1.0, shadow_blur 0.6; Medium 20 m (was 25). 2048 atlas at Medium tried and rejected (Hollowmere 2.75 -> 1.75 fps).
+- Lighting pair chosen by measurement over 10 poses (tail crop, no HUD): key 1.15 -> 2.2, ambient_gain 1.5 -> 0.62: mean luminance x1.015, contrast (std) x1.147. glint_bark 0.22, glint_leaf 0.18 (moon_color grew).
+- tools/test_impostor_match.gd limits 7/20 -> 9/26 (documented: lit surfaces ~1.7x brighter).
+- Tests: layout 0, forest 0, impostor 0, validate/gdlint, web smoke/touch/swap PASS; web_perf Low 3.25/2.75, Medium 3/3.

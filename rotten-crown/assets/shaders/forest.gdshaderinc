@@ -170,8 +170,8 @@ vec3 forest_moon(vec3 n, float shade, float wrap) {
 // V20: the moon catching the surface (linear, added after the albedo): Blinn-Phong glints of the
 // moon key on ridges of bark and on each leaf lobe's dome (the normals carry the relief), only
 // where moonlight reaches (shade) and the surface faces the moon. Gloss per surface kind.
-uniform float glint_bark : hint_range(0.0, 2.0) = 0.38;
-uniform float glint_leaf : hint_range(0.0, 2.0) = 0.3;
+uniform float glint_bark : hint_range(0.0, 2.0) = 0.22;
+uniform float glint_leaf : hint_range(0.0, 2.0) = 0.18;
 vec3 forest_glint(vec3 n, vec3 view, float shade, float gloss) {
 	vec3 h = normalize(moon_dir + view);
 	float s = pow(max(dot(n, h), 0.0), 26.0);
