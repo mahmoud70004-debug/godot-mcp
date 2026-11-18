@@ -251,3 +251,10 @@ User verdict on V24: floor looked smoother (visible in the phone screenshot), th
 - forest.gdshaderinc forest_translucency: leaves backlit by the moon (camera towards the moon, surface turned away) let light through in their own green (0.2). A moon rim (n.v edge term) was tried and rejected: it broke the impostor match.
 - Mean luminance vs V25 over 10 poses x0.996, contrast x0.97 (same brightness; the dapples add local contrast on the floor).
 - Tests: layout 0, forest 0, impostor 0 (Broad G 8.7 of 9), validate/gdlint, web smoke/touch/swap PASS; web_perf Low 3/3.75, Medium 2.75/3.25.
+
+## V27 - calm static tree shadows, sharper far ground (published 2026-11-18T11:28:09Z)
+- User video review (13:07 recording): V26 leaf dapples read as cracks / stains that drift like running water; ground a few metres out looked muddy (shadows and texture). Asked for fewer, simpler, realistic tree shadows, no motion, Minecraft-shader-like (BSL / Complementary / Chocapic / Bliss) night lighting.
+- moon_canopy_dapple rewritten: static (no TIME drift), ONE copy of the tile at 4.2 m, only nudges the soft edge of partly shaded areas (bell around 0.5, +-0.3) and widens the penumbra (smoothstep 0.22..0.78); the baked crown shapes, fully lit ground, deep shade, trunk/wall shadows stay as baked.
+- Ground: terrain.gdshader ground textures filter_nearest_mipmap_anisotropic + MIP_BIAS -0.8 on every ground sample; project anisotropic_filtering_level 3 (8x); dapple tile anisotropic. (The floor cards were already drawn to 18-30 m: the "muddiness" was the mip level, not their range.)
+- Moon key 2.2 -> 2.25 to keep the mean (x0.982 -> ~1.0). Web search for references returned only aggregator pages: BSL = soft shadows, volumetric light, AO, bloom; Complementary = fog at night, moon glow; leaf shadows in real engines are blurred/supersampled and static or baked.
+- Not done: AO/SSAO (no Compatibility support), per-leaf shadow-casting of real-time shadows (caster proxies are merged boxes).

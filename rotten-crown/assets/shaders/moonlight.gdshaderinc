@@ -28,7 +28,7 @@ global uniform vec4 shade_rect;
 global uniform float shade_contrast;
 // V26: the seamless leaf-gap tile (tools/make_dapple_tile.py, rank-equalised: lit where tile > 1 - s) and how
 // strongly it breaks the partly lit canopy shade into leaf-shaped dapples (0 = the baked shade as it is).
-global uniform sampler2D dapple_tex : filter_linear_mipmap, repeat_enable;
+global uniform sampler2D dapple_tex : filter_linear_mipmap_anisotropic, repeat_enable;
 global uniform float dapple_amount;
 // Tileable cloud noise, its drift so far (metres, Moonlight's cloud clock), repeats per metre and
 // darkening 0..1.
@@ -67,29 +67,23 @@ float moon_canopy(vec3 world_pos) {
 	return mix(1.0, moon_shade_curve(textureLod(shade_map, uv, 0.0).r), inside);
 }
 
-// V26: the shade at the ground, with its partly lit areas broken into leaf-shaped gaps: where the baked shade
-// says "about half lit" the light arrives as the silhouettes of leaves (two copies of the tile at
-// different scales, drifting slowly the opposite way like a canopy in a light wind); fully lit and fully
-// shaded ground stay as baked, trunk and wall shadows keep their edges. `t` = TIME.
+// V27: the shade at the ground with leafy EDGES, and nothing else changed. The baked canopy shade keeps
+// its large, simple crown shapes (so shadows stay few, calm and where the trees really are); one static
+// copy of the leaf-gap tile (4.2 m, no drift: moving shadows read as running water) nudges the soft
+// edge of every partly shaded area, so a crown's shadow ends in leaf-sized notches instead of a smooth
+// blob. Fully lit ground, the deepest shade and the trunk / wall shadows are exactly as baked.
+// `t` is kept for the callers (TIME) and unused.
 float moon_canopy_dapple(vec3 world_pos, float t) {
 	float base = moon_canopy(world_pos);
 	if (dapple_amount <= 0.0) {
 		return base;
 	}
-	// The baked value itself (before the contrast curve) says how much canopy there is over this spot.
-	vec2 uv = (world_pos.xz - shade_rect.xy) / max(shade_rect.zw - shade_rect.xy, vec2(0.0001));
-	float inside = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
-	float raw = mix(1.0, textureLod(shade_map, uv, 0.0).r, inside);
-	vec2 a = world_pos.xz / 2.6 + vec2(0.011, 0.007) * t;
-	vec2 b = world_pos.xz / 1.7 + vec2(-0.008, 0.012) * t + vec2(0.37, 0.61);
-	float p = 0.5 * (texture(dapple_tex, a).r + texture(dapple_tex, b).r);
-	p = smoothstep(0.18, 0.82, p);
-	// Under a canopy the baked values are mostly low (0.05 .. 0.4): that is "some leaves, some gaps".
-	float cover = smoothstep(0.03, 0.6, raw) * 0.92;
-	float lit = smoothstep(0.93 - cover - 0.07, 0.93 - cover + 0.07, p);
-	// Open ground (>= ~0.8) and the deepest shade (< ~0.03, trunks, walls) keep their baked values.
-	float band = smoothstep(0.02, 0.09, raw) * (1.0 - smoothstep(0.55, 0.8, raw));
-	return mix(base, lit, band * dapple_amount);
+	float p = texture(dapple_tex, world_pos.xz * (1.0 / 4.2)).r;
+	// Only the soft edge (a bell around s = 0.5) is moved; a wide, gentle penumbra like a real moon shadow.
+	float bell = 4.0 * base * (1.0 - base);
+	float edge = clamp(base + (p - 0.5) * 0.6 * bell, 0.0, 1.0);
+	float soft = smoothstep(0.22, 0.78, edge);
+	return mix(base, soft, dapple_amount);
 }
 
 // V26: light bounced into the shade by the lit patches around it (the average shade of three points 2.4 m

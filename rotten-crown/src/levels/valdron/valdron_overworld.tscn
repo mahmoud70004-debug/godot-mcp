@@ -108,7 +108,7 @@ environment = SubResource("Environment_night")
 [node name="Moonlight" type="DirectionalLight3D" parent="."]
 rotation = Vector3(-0.524, -2.634, 0)
 light_color = Color(0.58, 0.7, 1.0, 1)
-light_energy = 2.2
+light_energy = 2.25
 shadow_enabled = true
 shadow_opacity = 1.0
 shadow_blur = 0.6

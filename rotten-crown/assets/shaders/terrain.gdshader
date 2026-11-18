@@ -11,10 +11,10 @@ render_mode diffuse_lambert, specular_disabled, ambient_light_disabled;
 
 #include "res://assets/shaders/moonlight.gdshaderinc"
 
-uniform sampler2D grass_tex : filter_nearest_mipmap, repeat_enable;
-uniform sampler2D dry_tex : filter_nearest_mipmap, repeat_enable;
-uniform sampler2D road_tex : filter_nearest_mipmap, repeat_enable;
-uniform sampler2D forest_tex : filter_nearest_mipmap, repeat_enable;
+uniform sampler2D grass_tex : filter_nearest_mipmap_anisotropic, repeat_enable;
+uniform sampler2D dry_tex : filter_nearest_mipmap_anisotropic, repeat_enable;
+uniform sampler2D road_tex : filter_nearest_mipmap_anisotropic, repeat_enable;
+uniform sampler2D forest_tex : filter_nearest_mipmap_anisotropic, repeat_enable;
 // Texture repeats per metre for each layer.
 uniform float grass_scale = 0.16;
 uniform float dry_scale = 0.2;
@@ -33,6 +33,9 @@ uniform vec3 amber_albedo : source_color = vec3(1.0, 0.74, 0.52);
 // Linear gain on the lit ground layers (the scans x tints alone give ~0.1 albedo, near black
 // under a 30 degree moon); the road keeps its own, lower, level so paths read paler but textured.
 const float GROUND_GAIN = 2.2;
+// V27: the ground stays sharp as it recedes: anisotropic sampling plus a mip bias towards the finer level
+// (a few metres out the grazing ground used to fall to a muddy mip).
+const float MIP_BIAS = -0.8;
 
 varying vec3 world_pos;
 varying vec3 paint;
@@ -69,32 +72,32 @@ void fragment() {
 	// back and forth by up to ~0.5 m) instead of the old 8 px/m Bayer dither, which read as a
 	// chessboard wherever a path edge came close to the camera.
 	float n = blotch(world_pos.xz * 1.7) * 0.6 + blotch(world_pos.xz * 5.3) * 0.4 - 0.5;
-	vec3 grass = texture(grass_tex, uv * grass_scale).rgb * grass_albedo;
+	vec3 grass = texture(grass_tex, uv * grass_scale, MIP_BIAS).rgb * grass_albedo;
 	// Keep the night mood: pull the scan's green toward blue-grey.
 	grass = mix(vec3(dot(grass, vec3(0.3, 0.59, 0.11))) * vec3(0.92, 1.0, 1.08), grass, 0.55);
 	vec3 col = grass;
 	float w_forest = smoothstep(0.4, 0.6, paint.b + n * 0.3);
 	if (w_forest > 0.0) {
-		vec3 base = texture(forest_tex, uv * forest_scale).rgb;
+		vec3 base = texture(forest_tex, uv * forest_scale, MIP_BIAS).rgb;
 		vec3 fc = base * forest_albedo;
 		if (floor_mix > 0.004) {
 			float moss_amt = min(floor_mix * 2.0, 1.0);
 			float amber = clamp(floor_mix * 2.0 - 1.0, 0.0, 1.0);
 			float bn = blotch(world_pos.xz * 0.11) * 0.7 + blotch(world_pos.xz * 0.43) * 0.3;
 			fc = base * loam_albedo;
-			fc = mix(fc, texture(grass_tex, uv * 0.23).rgb * moss_albedo, smoothstep(0.06, -0.06, bn + n * 0.2 - moss_amt * 0.6));
+			fc = mix(fc, texture(grass_tex, uv * 0.23, MIP_BIAS).rgb * moss_albedo, smoothstep(0.06, -0.06, bn + n * 0.2 - moss_amt * 0.6));
 			fc = mix(fc, base * amber_albedo, smoothstep(-0.06, 0.06, amber + n * 0.3 - 0.5 - bn * 0.3));
 		}
 		col = mix(col, fc, w_forest);
 	}
 	float w_dry = smoothstep(0.4, 0.6, paint.g + n * 0.3);
 	if (w_dry > 0.0) {
-		col = mix(col, texture(dry_tex, uv * dry_scale).rgb * dry_albedo, w_dry);
+		col = mix(col, texture(dry_tex, uv * dry_scale, MIP_BIAS).rgb * dry_albedo, w_dry);
 	}
 	col *= GROUND_GAIN;
 	float w_road = smoothstep(0.4, 0.6, paint.r + n * 0.3);
 	if (w_road > 0.0) {
-		vec3 road = texture(road_tex, uv * road_scale).rgb * road_albedo;
+		vec3 road = texture(road_tex, uv * road_scale, MIP_BIAS).rgb * road_albedo;
 		float luma = dot(road, vec3(0.3, 0.59, 0.11));
 		// The same road changes with the land it crosses: a pale, moonlit dirt
 		// path under the trees, a worn grey track through the dry fields.
