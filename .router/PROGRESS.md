@@ -233,3 +233,6 @@
 - tools/make_leaf_tiles.py rewritten: 64x64 grid (2x2 px texels), ~190-260 real leaf shapes per tile (pointed lens, midrib, lit rim up-left, dark far edge), depth occlusion (deeper = darker), contact shadows between layers, per-leaf colour, per-leaf tilted/folded normal map. Tile mean luma 0.30-0.36 (old 0.43: the inside of a clump is a dark cavity by design). Birch tile toned down (impostor match limit).
 - ForestTrees._clump: outer cards reach 0.2-0.33 s, vertex-colour shade 0.45 (underside) .. 1.1 (top), inner card 0.45. 6 cards / lumpier reach tried and rejected: impostor match (Birch G mean 7.0-9.1 of 7.0).
 - Tests: layout 0, forest 0, impostor 0 (Broad G mean 6.0, Birch 4.9), validate/gdlint, web smoke/touch/swap PASS; web_perf Low spawn 3, hollowmere 2.75.
+
+## V24 reverted (2026-11-18)
+User verdict on V24: floor looked smoother (visible in the phone screenshot), the danger vignette was unwanted; asked to go back to V23 completely. git revert de66f35 restores V23 (code, bake, docs). Kept as lessons: no edge darkening on enemies; do not touch ground mist/layer smoothness; only the shadows (sharper, deeper, better quality, same brightness) are to change next. The V24 pieces (pickups, UI frames, eyes, trail, wet roads) are in git history f347349 if any is wanted later.
