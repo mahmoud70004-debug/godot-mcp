@@ -258,3 +258,11 @@ User verdict on V24: floor looked smoother (visible in the phone screenshot), th
 - Ground: terrain.gdshader ground textures filter_nearest_mipmap_anisotropic + MIP_BIAS -0.8 on every ground sample; project anisotropic_filtering_level 2 (4x; 8x measured no sharper to the eye and a little slower); dapple tile anisotropic. (The floor cards were already drawn to 18-30 m: the "muddiness" was the mip level, not their range.)
 - Moon key 2.2 -> 2.25 to keep the mean (x0.982 -> ~1.0). Web search for references returned only aggregator pages: BSL = soft shadows, volumetric light, AO, bloom; Complementary = fog at night, moon glow; leaf shadows in real engines are blurred/supersampled and static or baked.
 - Not done: AO/SSAO (no Compatibility support), per-leaf shadow-casting of real-time shadows (caster proxies are merged boxes).
+
+## V28 - gothic entrance (published 2026-11-18T17:48:25Z) [V28-1, V28-2 of the plan]
+- User approved the 3 landmarks + the entrance dressing (refs .router/ref/v28_gothic_*.jpg; documents: fragmentary Outlast-style records, English, hints not plot).
+- src/world/props/gothic_kit.gd (GothicKit + Builder): flat-shaded procedural modules - fluted octagonal spire (ribs, crockets, belfry slits, finial), pinnacle, stepped buttress, pointed window (frame, glass, mullions, tracery light, optional glow), great octagonal tower (plinth, bands, 3 tiers of windows, corbelled crown, merlon pinnacles, spire). Tris: great tower ~3.1k, spire ~0.8k, buttress+window ~0.7k.
+- src/world/gothic_entrance.gd, called after KingdomWalls.build: 3 great towers per side (x 30 / 104 / 172, spires 22-28 m), gate turrets x 13.5, buttresses every 14 m from |x| 52 to 225 with pointed blind windows between; 28.4k triangles merged (MeshMerger 120 m cells, culled 200 m); box colliders for towers and buttress feet. Tools: tools/gothic_preview.tscn (RC_GOTH=tower|spire|wall).
+- A glowing tower window was tried and removed: the green window is reserved for the Keep.
+- Tests: layout 0, forest 0, impostor 0, validate/gdlint, web smoke/touch/swap PASS; web_perf Low spawn 2.75, hollowmere 2.5.
+- Next: V28-3 dress Keep / Outer Ward / existing towers; V28-4 skyline; landmarks V28-5..7.

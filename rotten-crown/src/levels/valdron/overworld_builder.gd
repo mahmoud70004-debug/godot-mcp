@@ -50,6 +50,7 @@ static func build(root: Node3D) -> TerrainBuilder:
 	ward.rotation.y = OverworldSpec.WARD_YAW
 	root.add_child(ward)
 	KingdomWalls.build(root, terrain)
+	GothicEntrance.build(root, terrain)
 	for class_id in REGION_BUILDERS:
 		var script := _find_class(class_id)
 		if script == null:
