@@ -117,8 +117,11 @@ void light() {
 	float ndl = clamp(dot(NORMAL, LIGHT), 0.0, 1.0);
 	float att = ATTENUATION;
 	if (LIGHT_IS_DIRECTIONAL) {
-		att = min(att, moon_canopy(world_pos) * v_cloud);
+		float lit = moon_canopy_dapple(world_pos, TIME);
+		att = min(att, lit * v_cloud);
 		DIFFUSE_LIGHT += moon_ambient((INV_VIEW_MATRIX * vec4(NORMAL, 0.0)).xyz);
+		// Bounce from the lit patches round it into the shade (a soft gradation, not a print).
+		DIFFUSE_LIGHT += moon_color.rgb * (moon_bounce(world_pos) * (1.0 - lit) * 0.1 * v_cloud) / PI;
 	}
 	DIFFUSE_LIGHT += LIGHT_COLOR * ndl * att / PI;
 }

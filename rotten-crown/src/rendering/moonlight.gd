@@ -47,7 +47,7 @@ const GRASS_WRAP := 0.5
 ## Every global this node drives (reset to the project defaults on exit).
 const GLOBALS: Array[StringName] = [
 	&"moon_dir", &"moon_color", &"sky_ambient_top", &"sky_ambient_bottom", &"moon_ref_irr",
-	&"shade_map", &"shade_rect", &"shade_contrast", &"cloud_tex", &"cloud_offset", &"cloud_scale", &"cloud_strength",
+	&"shade_map", &"shade_rect", &"shade_contrast", &"dapple_tex", &"dapple_amount", &"cloud_tex", &"cloud_offset", &"cloud_scale", &"cloud_strength",
 	&"wind", &"wind_ref",
 ]
 
@@ -80,6 +80,9 @@ static var _active: Moonlight
 @export var shade_rect := MoonShadeBaker.RECT
 ## V21: how far the shade curve pushes lit patches and shade apart (moonlight.gdshaderinc, 0 = as baked).
 @export_range(0.0, 1.0) var shade_contrast := 1.0
+## V26: how far the partly lit ground breaks into leaf-shaped gaps (leaf_dapple.png), 0 = the baked shade.
+@export_range(0.0, 1.0) var dapple_amount := 1.0
+@export var dapple_texture: Texture2D = preload("res://assets/textures/world/leaf_dapple.png")
 ## Tileable cloud noise (the sky's clouds, so they read as the same weather).
 @export var cloud_texture: Texture2D
 
@@ -180,6 +183,8 @@ func _push_static() -> void:
 	RenderingServer.global_shader_parameter_set(&"shade_map", shade_map)
 	RenderingServer.global_shader_parameter_set(&"shade_rect", shade_rect)
 	RenderingServer.global_shader_parameter_set(&"shade_contrast", shade_contrast)
+	RenderingServer.global_shader_parameter_set(&"dapple_tex", dapple_texture)
+	RenderingServer.global_shader_parameter_set(&"dapple_amount", dapple_amount if dapple_texture != null else 0.0)
 	RenderingServer.global_shader_parameter_set(&"cloud_tex", cloud_texture)
 	RenderingServer.global_shader_parameter_set(&"cloud_offset", _cloud_offset)
 	RenderingServer.global_shader_parameter_set(&"cloud_scale", cloud_scale)

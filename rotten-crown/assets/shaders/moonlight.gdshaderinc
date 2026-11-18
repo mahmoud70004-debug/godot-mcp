@@ -26,6 +26,10 @@ global uniform sampler2D shade_map : filter_linear, repeat_disable;
 global uniform vec4 shade_rect;
 // V21: how far the shade curve pushes lit and shade apart (0 = the baked values as they are).
 global uniform float shade_contrast;
+// V26: the seamless leaf-gap tile (tools/make_dapple_tile.py, rank-equalised: lit where tile > 1 - s) and how
+// strongly it breaks the partly lit canopy shade into leaf-shaped dapples (0 = the baked shade as it is).
+global uniform sampler2D dapple_tex : filter_linear_mipmap, repeat_enable;
+global uniform float dapple_amount;
 // Tileable cloud noise, its drift so far (metres, Moonlight's cloud clock), repeats per metre and
 // darkening 0..1.
 global uniform sampler2D cloud_tex : filter_linear_mipmap, repeat_enable;
@@ -61,6 +65,38 @@ float moon_canopy(vec3 world_pos) {
 	vec2 uv = (world_pos.xz - shade_rect.xy) / max(shade_rect.zw - shade_rect.xy, vec2(0.0001));
 	float inside = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
 	return mix(1.0, moon_shade_curve(textureLod(shade_map, uv, 0.0).r), inside);
+}
+
+// V26: the shade at the ground, with its partly lit areas broken into leaf-shaped gaps: where the baked shade
+// says "about half lit" the light arrives as the silhouettes of leaves (two copies of the tile at
+// different scales, drifting slowly the opposite way like a canopy in a light wind); fully lit and fully
+// shaded ground stay as baked, trunk and wall shadows keep their edges. `t` = TIME.
+float moon_canopy_dapple(vec3 world_pos, float t) {
+	float base = moon_canopy(world_pos);
+	if (dapple_amount <= 0.0) {
+		return base;
+	}
+	// The baked value itself (before the contrast curve) says how much canopy there is over this spot.
+	vec2 uv = (world_pos.xz - shade_rect.xy) / max(shade_rect.zw - shade_rect.xy, vec2(0.0001));
+	float inside = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
+	float raw = mix(1.0, textureLod(shade_map, uv, 0.0).r, inside);
+	vec2 a = world_pos.xz / 2.6 + vec2(0.011, 0.007) * t;
+	vec2 b = world_pos.xz / 1.7 + vec2(-0.008, 0.012) * t + vec2(0.37, 0.61);
+	float p = 0.5 * (texture(dapple_tex, a).r + texture(dapple_tex, b).r);
+	p = smoothstep(0.18, 0.82, p);
+	// Under a canopy the baked values are mostly low (0.05 .. 0.4): that is "some leaves, some gaps".
+	float cover = smoothstep(0.03, 0.6, raw) * 0.92;
+	float lit = smoothstep(0.93 - cover - 0.07, 0.93 - cover + 0.07, p);
+	// Open ground (>= ~0.8) and the deepest shade (< ~0.03, trunks, walls) keep their baked values.
+	float band = smoothstep(0.02, 0.09, raw) * (1.0 - smoothstep(0.55, 0.8, raw));
+	return mix(base, lit, band * dapple_amount);
+}
+
+// V26: light bounced into the shade by the lit patches around it (the average shade of three points 2.4 m
+// away), so a dapple sits in a gradual falloff instead of a hard print: a faint, cool fill, 0..1.
+float moon_bounce(vec3 world_pos) {
+	return (moon_canopy(world_pos + vec3(2.4, 0.0, 0.0)) + moon_canopy(world_pos + vec3(-1.2, 0.0, 2.1))
+		+ moon_canopy(world_pos + vec3(-1.2, 0.0, -2.1))) * (1.0 / 3.0);
 }
 
 // How much moonlight reaches a world position (canopy shade x cloud shadow), 0..1.

@@ -243,3 +243,11 @@ User verdict on V24: floor looked smoother (visible in the phone screenshot), th
 - Lighting pair chosen by measurement over 10 poses (tail crop, no HUD): key 1.15 -> 2.2, ambient_gain 1.5 -> 0.62: mean luminance x1.015, contrast (std) x1.147. glint_bark 0.22, glint_leaf 0.18 (moon_color grew).
 - tools/test_impostor_match.gd limits 7/20 -> 9/26 (documented: lit surfaces ~1.7x brighter).
 - Tests: layout 0, forest 0, impostor 0, validate/gdlint, web smoke/touch/swap PASS; web_perf Low 3.25/2.75, Medium 3/3.
+
+## V26 - leaf-shaped dapples + backlight (published 2026-11-18T10:53:10Z)
+- User liked the dappled moonlight on the forest floor but it read as plain blobs; wanted leaf-shaped, more divided, higher-res light and more cinematic, gradual forest shading, same colours, no brightness change.
+- tools/make_dapple_tile.py -> assets/textures/world/leaf_dapple.png (256x256 seamless L8, overlapping pointed leaf silhouettes in 3 sizes, rank-equalised: lit where tile > 1 - coverage). Globals dapple_tex / dapple_amount (Moonlight node pushes; mipmaps on).
+- moonlight.gdshaderinc moon_canopy_dapple(): partly lit ground (baked raw 0.03..0.8) is re-cut into leaf-shaped gaps by two drifting copies of the tile (2.6 m and 1.7 m, opposite slow drifts = wind); fully lit ground and trunk/wall shadows keep their baked edges. Used by terrain light() and forest floor tufts (TILED) per pixel. moon_bounce(): 3 taps 2.4 m away add a faint cool fill into the shade next to lit patches (soft gradation).
+- forest.gdshaderinc forest_translucency: leaves backlit by the moon (camera towards the moon, surface turned away) let light through in their own green (0.2). A moon rim (n.v edge term) was tried and rejected: it broke the impostor match.
+- Mean luminance vs V25 over 10 poses x0.996, contrast x0.97 (same brightness; the dapples add local contrast on the floor).
+- Tests: layout 0, forest 0, impostor 0 (Broad G 8.7 of 9), validate/gdlint, web smoke/touch/swap PASS; web_perf Low 3/3.75, Medium 2.75/3.25.

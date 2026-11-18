@@ -178,6 +178,22 @@ vec3 forest_glint(vec3 n, vec3 view, float shade, float gloss) {
 	return moon_color.rgb * (s * gloss * shade * smoothstep(0.0, 0.3, dot(n, moon_dir)));
 }
 
+// V26 backlight: leaves seen against the moon let its light through (linear, multiplied by the albedo so it
+// takes the leaf's own green), strongest when the camera looks towards the moon at a surface turned away
+// from it; and a thin rim of moonlight along the edges that face the moon (added after the albedo, like
+// the glints). Both only where moonlight reaches (shade).
+uniform float leaf_translucency : hint_range(0.0, 2.0) = 0.2;
+uniform float rim_strength : hint_range(0.0, 2.0) = 0.28;
+vec3 forest_translucency(vec3 n, vec3 view, float shade) {
+	float back = pow(clamp(-dot(view, moon_dir), 0.0, 1.0), 2.5);
+	float away = 1.0 - clamp(dot(n, moon_dir), 0.0, 1.0);
+	return moon_color.rgb * (back * away * shade * leaf_translucency);
+}
+vec3 forest_rim(vec3 n, vec3 view, float shade) {
+	float edge = pow(1.0 - clamp(dot(n, view), 0.0, 1.0), 3.0);
+	return moon_color.rgb * (edge * clamp(dot(n, moon_dir) + 0.3, 0.0, 1.0) * shade * rim_strength);
+}
+
 // The carried lantern on a point (linear), Godot's omni attenuation (lantern_light.a > 0).
 vec3 forest_lantern(vec3 pos, vec3 n, float wrap) {
 	vec3 to = lantern_pos.xyz - pos;
@@ -398,7 +414,9 @@ void fragment() {
 	vec3 n = normalize(v_right * nb.x + vec3(0.0, nb.y, 0.0) + v_toward * nb.z);
 	float imp_shade = forest_shade(v_canopy, v_cloud, v_height);
 	vec3 light = forest_moon(n, imp_shade, mix(bark_wrap, leaf_wrap, nt.a));
-	glint = forest_glint(n, normalize(CAMERA_POSITION_WORLD - v_world), imp_shade, mix(glint_bark, glint_leaf, nt.a));
+	vec3 imp_view = normalize(CAMERA_POSITION_WORLD - v_world);
+	glint = forest_glint(n, imp_view, imp_shade, mix(glint_bark, glint_leaf, nt.a));
+	light += forest_translucency(n, imp_view, imp_shade) * nt.a;
 #else
 	vec3 n = normalize(v_wnormal);
 #ifdef TREE
@@ -425,9 +443,18 @@ void fragment() {
 		}
 	}
 #endif
-	vec3 light = forest_moon(n, v_shade, bark ? bark_wrap : leaf_wrap) + v_lantern;
+	float px_shade = v_shade;
+#ifdef TILED
+	// V26: floor tufts take the same leaf-shaped dapples as the ground under them, per pixel.
+	px_shade = moon_canopy_dapple(v_world, TIME) * moon_cloud(v_world);
+#endif
+	vec3 light = forest_moon(n, px_shade, bark ? bark_wrap : leaf_wrap) + v_lantern;
 #ifdef TREE
-	glint = forest_glint(n, normalize(CAMERA_POSITION_WORLD - v_world), v_shade, bark ? glint_bark : glint_leaf);
+	vec3 tree_view = normalize(CAMERA_POSITION_WORLD - v_world);
+	glint = forest_glint(n, tree_view, v_shade, bark ? glint_bark : glint_leaf);
+	if (!bark) {
+		light += forest_translucency(n, tree_view, v_shade);
+	}
 #endif
 #endif
 	if (v_glow > 0.0) {
