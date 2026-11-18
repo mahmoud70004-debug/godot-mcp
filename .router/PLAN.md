@@ -599,3 +599,22 @@ The walkability test is rewritten: paths/clearings connected, walls closed (no g
 | V11-3 | H | wall modules + placement along roads/trails, colliders, interior thinning, verge | wall test (AC2), layout test |
 | V11-4 | N | canopy roof / foreground foliage density | AC3 shots from path poses |
 | V11-5 | H | budgets, perf, review, publish V11 | AC5, AC6 |
+
+# V28+ - Gothic megalophobia (user-approved 2026-11-18)
+Goal: the kingdom must feel enormous, gothic and cursed (Megalophobia, Outlast-style discovery); today only the trees do. Refs: .router/ref/v28_gothic_stone.jpg
+(weathered stone, ivy, pointed arch/gate - landmarks in the forest) and v28_gothic_spires.jpg (black spired cathedral on a rock against the moon - keep + skyline).
+Scale rules: oversized doors/steps/statues (x2-3), tops lost in the fog, vertical sight lines through canopy gaps, broken/partial structures with trees through them.
+Constraints: no new omni lights; static colliders as boxes; ForestWall/test_forest_walkable must stay 0 failures; every task publishes a numbered phone-testable build.
+
+## Tasks
+| id | tier | what | done-check |
+|---|---|---|---|
+| V28-1 | H | GothicKit (procedural, src/world/props/gothic_kit.gd): spire (fluted octagonal shaft, crockets, finial), pinnacle, buttress, flying buttress, pointed window with tracery, rose window, pointed arch, merged with MeshMerger, same materials as CastleProps | preview render of each module; tris per module logged |
+| V28-2 | H | Entrance (start of the game, z 20..75): barbican/gate flanks with spires, buttressed wall runs east+west of the gate, ruined annex towers, statues, pointed arch gate dressing; trees knit into them (ForestWall keeps the road clear); road continues through | shots from the spawn walk (facing 180); layout test (gate/road clear), forest test 0 |
+| V28-3 | H | Dress Keep / Outer Ward front / wall towers: spires instead of cones, buttresses, pinnacles, pointed windows, taller keep silhouette (green window stays) | shots; layout test 0 |
+| V28-4 | N | Skyline: far fog-tinted gothic silhouettes (HorizonBackdrop style) + the Keep's green window visible from far | shots from plains + wall |
+| V28-5 | H | Landmark 1: fallen Cathedral of the Weeping Saint (roofless nave, giant rose window, collapsed vault, trees through walls), zone weeping_hollow; 4-5 documents | walkable test, shots, documents readable in the bag/lore reader |
+| V28-6 | H | Landmark 2: Lorisian wine vault (cellar_hollow, amber): barrels sealed in black wax, oversized door; 4-5 documents | same |
+| V28-7 | H | Landmark 3: broken arched bridge + prisoner tower, climbable, panorama over the fog kingdom; prophecy carved in stone | same |
+| V28-8 | H | review (router-reviewer on the range), perf vs previous, report tier mix | AC |
+Documents: English, Outlast style (fragmentary records: ledger entries, inventories, letters cut short, scratched marks), NOT a plot: clues and hints only; each LoreData with author, region_id, short text.
