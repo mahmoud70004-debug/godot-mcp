@@ -24,7 +24,7 @@ extends RefCounted
 
 ## Keep in step with the Moonlight node in valdron_overworld.tscn (Euler YXZ; the light
 ## travels along -Z of that basis, +Z points at the moon).
-const MOON_ROTATION := Vector3(-0.524, -2.634, 0.0)
+const MOON_ROTATION := Vector3(-0.66, -0.56, 0.0)
 ## World rect (x0, z0, x1, z1) of the map; the Moonlight node's shade_rect default.
 const RECT := Vector4(-260.0, 30.0, 260.0, 520.0)
 const PX_PER_M := 3.0
