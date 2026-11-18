@@ -77,10 +77,6 @@ func _draw() -> void:
 	var c := size * 0.5 + _float
 	draw_circle(c, radius, base_color, true, -1.0, false)
 	var knob := Color(knob_color, minf(knob_color.a + 0.2, 1.0)) if _active else knob_color
-	# V24: an iron rim on the base and on the knob, like the buttons.
-	draw_arc(c, radius, 0.0, TAU, 40, Color(0.3, 0.28, 0.24, 0.8), 1.5, false)
-	draw_arc(c, radius, PI * 0.95, PI * 1.55, 12, Color(0.55, 0.52, 0.43, 0.9), 1.0, false)
 	draw_circle((c + _knob).round(), knob_radius, knob, true, -1.0, false)
-	draw_arc((c + _knob).round(), knob_radius, 0.0, TAU, 24, Color(0.3, 0.28, 0.24, 0.9), 1.0, false)
 	if ring_color.a > 0.0:
 		draw_arc(c, radius, 0.0, TAU, 32, ring_color, 1.0)

@@ -48,10 +48,6 @@ func _ready() -> void:
 	health.died.connect(_on_died)
 	rig.setup(data)
 	_setup_attack_shape()
-	var eyes := EyeGlow.new()
-	eyes.name = "EyeGlow"
-	add_child(eyes)
-	eyes.setup(self, data)
 
 
 ## Process culling (OverworldPopulator calls this twice a second). A far, idle enemy stops its

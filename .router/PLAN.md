@@ -599,10 +599,3 @@ The walkability test is rewritten: paths/clearings connected, walls closed (no g
 | V11-3 | H | wall modules + placement along roads/trails, colliders, interior thinning, verge | wall test (AC2), layout test |
 | V11-4 | N | canopy roof / foreground foliage density | AC3 shots from path poses |
 | V11-5 | H | budgets, perf, review, publish V11 | AC5, AC6 |
-
-# V24+ - atmosphere and polish (user-approved 2026-11-16, from a Gemini review of a 57 s video + my opinion)
-Order (each published with tests): 1 pickups as small 3D objects + faint glimmer (no flat bright square); 2 gothic UI frames for bars/buttons;
-3 dynamic vignette tied to danger (enemy near / low health); 4 denser layered ground fog around trunks; 5 glowing eyes of enemies in the dark;
-6 sword: swing trail, blood/wear on the blade; 7 Thornfield wet road sheen + rain splashes.
-Rejected (reasoned): player lantern (user removed it in V8), darker ambient baseline (readability; V22 already deepened shadows), film grain (V6: noise on phones).
-Done-checks: validate/gdlint, layout/forest/impostor tests, web smoke/touch/swap, web_perf Low vs previous, screenshots.

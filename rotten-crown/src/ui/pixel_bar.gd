@@ -4,10 +4,6 @@ extends Control
 ## Crisp pixel stat bar with a lagging "ghost" segment that shows
 ## recent damage, souls-style.
 
-## Iron of the frame and the lit rivets at its corners (V24).
-const IRON := Color(0.3, 0.28, 0.24, 0.95)
-const RIVET := Color(0.55, 0.52, 0.43, 1.0)
-
 @export var fill_color := Color(0.62, 0.141, 0.098)
 @export var ghost_color := Color(0.863, 0.835, 0.749)
 @export var back_color := Color(0.043, 0.055, 0.047, 0.85)
@@ -49,12 +45,5 @@ func _draw() -> void:
 	draw_rect(Rect2(inner.position, Vector2(floorf(inner.size.x * _ghost), inner.size.y)), ghost_color)
 	draw_rect(Rect2(inner.position, Vector2(floorf(inner.size.x * ratio), inner.size.y)), fill_color)
 	draw_rect(Rect2(inner.position, Vector2(floorf(inner.size.x * ratio), 1.0)), fill_color.lightened(0.25))
-	# V24: an old iron frame - segment ticks in the gauge, a worn rim and rivets at the corners.
-	for q in [0.25, 0.5, 0.75]:
-		draw_rect(Rect2(inner.position.x + floorf(inner.size.x * q), inner.position.y, 1.0, inner.size.y), Color(0.0, 0.0, 0.0, 0.35))
-	var frame := r.grow(1.0)
-	draw_rect(frame, IRON, false, 1.0)
-	for corner in [frame.position, Vector2(frame.end.x - 2.0, frame.position.y), Vector2(frame.position.x, frame.end.y - 2.0), frame.end - Vector2(2.0, 2.0)]:
-		draw_rect(Rect2(corner, Vector2(2.0, 2.0)), RIVET)
 	if border_color.a > 0.0:
 		draw_rect(r, border_color, false, 1.0)

@@ -40,6 +40,3 @@ skitter_pause = 0.35
 hit_box_size = Vector3(1.2, 1.2, 1.4)
 hit_box_offset = Vector3(0, 0.9, -0.9)
 sprite_sheet = ExtResource("9_sheet")
-eye_color = Color(0.55, 0.85, 0.4, 1)
-eye_height = 0.7
-eye_spacing = 0.22

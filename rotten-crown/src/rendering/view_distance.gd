@@ -47,9 +47,8 @@ const FLOOR_FADE := 6.0
 const GRASS := [0.55, 0.68, 0.8]
 ## Half the diagonal of a grass chunk (GrassScatter.CHUNK / MeadowProps.GRASS_CHUNK, 12 m).
 const GRASS_CHUNK_HALF := 8.5
-## The top of the ground mist layer sits this far below the eye (V24: 0.7, so the mist lies knee to waist
-## high round the player and the trunk bases; at 2.2 it lay under the feet).
-const MIST_BELOW_EYE := 0.7
+## The ground mist sits this far below the eye.
+const MIST_BELOW_EYE := 2.2
 
 enum Kind { SCENERY, TERRAIN, NEAR_TREES, FAR_TREES, FLOOR, FLOOR_LARGE, GRASS }
 ## The forest material kinds that fade into the fog colour (fog_tint) before their cut-off.

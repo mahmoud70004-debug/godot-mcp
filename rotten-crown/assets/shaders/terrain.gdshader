@@ -34,10 +34,6 @@ uniform vec3 amber_albedo : source_color = vec3(1.0, 0.74, 0.52);
 // under a 30 degree moon); the road keeps its own, lower, level so paths read paler but textured.
 const float GROUND_GAIN = 2.2;
 
-// V24: how wet the ground is (WeatherController, from the rain): roads darken, catch the moon in
-// glints along their micro-relief and show drops splashing; 0 = dry.
-global uniform float wetness;
-
 varying vec3 world_pos;
 varying vec3 paint;
 varying float floor_mix;
@@ -105,28 +101,6 @@ void fragment() {
 		road = mix(road, vec3(luma) * vec3(1.6, 1.66, 1.8), smoothstep(0.2, 0.6, paint.b));
 		road = mix(road, mix(vec3(luma) * vec3(1.12, 1.16, 1.26), col, 0.35), smoothstep(0.2, 0.6, paint.g));
 		col = mix(col, road, w_road);
-	}
-	if (wetness > 0.01 && w_road > 0.01) {
-		float wet = wetness * w_road;
-		col *= mix(1.0, 0.7, wet);
-		// Micro-relief of the mud: the normal wobbles, so the moon's glint breaks into wet spots.
-		vec3 nw = normalize(vec3((blotch(uv * 9.0) - 0.5) * 0.55, 1.0, (blotch(uv * 9.0 + 31.7) - 0.5) * 0.55));
-		vec3 view = normalize(CAMERA_POSITION_WORLD - world_pos);
-		float spec = pow(max(dot(nw, normalize(moon_dir + view)), 0.0), 110.0);
-		spec *= moon_canopy(world_pos) * v_cloud;
-		vec3 glint = moon_color.rgb * spec * wet * 0.75;
-		// Drops: rings spreading from random points, near the eye only (it is per pixel cost).
-		float dist = length(CAMERA_POSITION_WORLD - world_pos);
-		if (dist < 16.0) {
-			vec2 cell = floor(uv * 2.2);
-			vec2 f = fract(uv * 2.2) - 0.5;
-			float h = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
-			float life = fract(TIME * (0.7 + h * 0.5) + h * 7.0);
-			vec2 c = vec2(h - 0.5, fract(h * 13.7) - 0.5) * 0.6;
-			float ring = smoothstep(0.045, 0.0, abs(length(f - c) - life * 0.32)) * (1.0 - life) * step(h, 0.55);
-			glint += vec3(0.5, 0.62, 0.8) * ring * wet * (1.0 - dist / 16.0) * 0.5;
-		}
-		EMISSION = moon_to_display(glint);
 	}
 	ALBEDO = col;
 	ROUGHNESS = 1.0;

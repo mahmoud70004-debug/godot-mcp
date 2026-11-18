@@ -93,7 +93,7 @@ uniform float bark_scale = 0.5;
 uniform float bark_gain = 1.3;
 // How much of the bark scan shows (the rest is flat vertex colour). Low: flat-shaded forms.
 uniform float bark_detail = 0.55;
-uniform float glow_strength = 0.75;
+uniform float glow_strength = 1.25;
 // Rot swelling in metres (vertex shader only).
 uniform float pulse = 0.025;
 // Glow used when there is no instance data (single MeshInstance3D growths).
