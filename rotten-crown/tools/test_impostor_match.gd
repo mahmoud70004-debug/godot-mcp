@@ -25,9 +25,7 @@ const OVERWORLD := "res://src/levels/valdron/valdron_overworld.tscn"
 ## V25: 7 -> 9 and 20 -> 26: the moon key went 1.15 -> 2.2 and the sky ambient down (deeper shadows at the
 ## same mean brightness), so lit surfaces are ~1.7x brighter and every absolute difference between a mesh
 ## and its card scales with that; relative to the lit brightness the match is as before.
-## V29: 9 -> 10: the moon moved to the north (the trees are now seen backlit on the way through the kingdom), where
-## the leaf translucency term makes the near mesh and its card differ a little more in green (Broad G 9.2).
-const LIMIT := 10.0
+const LIMIT := 9.0
 ## V7-8: 10 -> 13 after the forest albedo gain (1.7) brightened both: per-view differences scale
 ## with brightness; the mean bound (the acceptance criterion) is unchanged.
 const WORST_LIMIT := 26.0

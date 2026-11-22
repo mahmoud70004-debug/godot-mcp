@@ -131,12 +131,7 @@ static func _textured(key: String, tex: String, tile_metres: float, tint: Color)
 	mat.uv1_triplanar = true
 	mat.uv1_world_triplanar = true
 	mat.uv1_scale = Vector3.ONE / tile_metres
-	mat.roughness = 0.78
-	# V29: the moon catches every edge turned away from it (rim light) and glints a little on the stone:
-	# against a bright sky the silhouettes get a cool lit edge instead of going flat black.
-	mat.rim_enabled = true
-	mat.rim = 0.85
-	mat.rim_tint = 0.25
+	mat.roughness = 0.95
 	mat.set_meta("swatch", tint)
 	_cache[key] = mat
 	return mat

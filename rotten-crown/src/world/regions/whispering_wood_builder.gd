@@ -17,13 +17,13 @@ extends RefCounted
 ##  - Markers: Spawn_Enemy_1..3, Lore_1, Pickup_1, Light_1 (+ Light_2, the lantern),
 ##    Trigger (meta "radius" = 45, at the forest entrance) and more "Trigger" markers
 ##    in Zone_k nodes so the region atmosphere holds along the whole path.
-##  - The overworld moonlight shines along euler(-0.66, -0.56, 0); shafts slant the same way.
+##  - The overworld moonlight shines along euler(-0.524, -2.634, 0); shafts slant the same way.
 ##  - Groups are merged here with their own visibility ranges (trunks 110 m, small
 ##    props 60 m); the merged chunks carry no_merge so the overworld merge skips them.
 
 const SHAFT_SHADER := preload("res://assets/shaders/moon_shaft.gdshader")
 const GRASS_MATERIAL := preload("res://assets/materials/grass_field.tres")
-const MOON_EULER := Vector3(-0.66, -0.56, 0.0)
+const MOON_EULER := Vector3(-0.524, -2.634, 0.0)
 ## Tunnel trees: one every STEP metres along the path, alternating sides.
 const STEP := 3.3
 ## The Saint's glade on the path bend, and the stone circle off the path.

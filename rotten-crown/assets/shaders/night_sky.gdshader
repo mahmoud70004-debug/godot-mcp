@@ -116,13 +116,8 @@ void sky() {
 
 	// Moon disc, dimmed where clouds pass in front of it.
 	float disc = smoothstep(moon_size, moon_size * 0.85, moon_dist);
-	// V29: a defined disc - craters/maria and a darker limb - inside a thin bright ring, so it reads as a moon
-	// and not as a glow (the halo around it is kept below the disc's own brightness).
-	float maria = noise2(vec2(atan(dir.x, dir.z), dir.y) * 70.0) * 0.38 + noise2(vec2(atan(dir.x, dir.z), dir.y) * 210.0) * 0.12;
-	float limb = 1.0 - 0.35 * smoothstep(moon_size * 0.55, moon_size, moon_dist);
-	float ring = smoothstep(moon_size * 1.5, moon_size, moon_dist) * (1.0 - disc) * 0.5;
-	col += moon_color * ring * (1.0 - cloud * 0.8);
-	col = mix(col, moon_color * (1.0 - maria) * limb, disc * (1.0 - cloud * 0.7));
+	float maria = noise2(vec2(atan(dir.x, dir.z), dir.y) * 90.0) * 0.18;
+	col = mix(col, moon_color * (1.15 - maria), disc * (1.0 - cloud * 0.75));
 
 	col = mix(col, haze_color, haze_amount * (1.0 - smoothstep(haze_low, haze_high, up)));
 	COLOR = col;
