@@ -41,7 +41,7 @@ static func wood() -> StandardMaterial3D:
 
 
 static func roof() -> StandardMaterial3D:
-	return _textured("roof", "clay_roof_tiles", 3.0, Color(0.32, 0.3, 0.32))
+	return _textured("roof", "clay_roof_tiles", 3.0, Color(0.13, 0.24, 0.17))
 
 
 static func bark() -> StandardMaterial3D:

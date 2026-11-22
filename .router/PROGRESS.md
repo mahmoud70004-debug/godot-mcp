@@ -269,3 +269,10 @@ User verdict on V24: floor looked smoother (visible in the phone screenshot), th
 
 ## V29 reverted (2026-11-22)
 User rejected V29 (moon north, rim, fog scatter). git revert restores V28 (gothic entrance kept) and its published build. Next: "Aether" art direction (video the_aether_pt.25: saturated cobalt blue, orange-only warm accents, rim-lit frosty edges, giant redwood trunks, conifer boughs with bright tips, fur-like moss, mossy cottages with warm lattice windows, mossy cobbles, glowing blue fog). User asks for a PROTOTYPE FIRST, NOT published: screenshots only; if liked, proceed to lighting/shadows/mood. Moon stays at the old direction.
+
+## Aether prototype (2026-11-22) - NOT published (docs/build label stay V28)
+- tools/make_night_grade.py: accepts several raw frames + --ref image + --blue; LUT refit from the video montage (.router/ref/aether_ref_montage.png) with game frames rendered RC_PERF=nopost: ref meanRGB 13/23/64, graded 14/24/65 (sat 0.77). Warm (orange) protection kept.
+- Fog / sky / ambient / region fog colours -> saturated cobalt; moon_shafts strength 1.6 (glowing haze).
+- ForestTrees: CONIFER prototype (Tall/Broad/Elder/Hollow): tiers of drooping frond quads + spire instead of leaf balls; tools/make_fir_tile.py writes leaf_mass_a(+_n) as a frond tile. Roofs tinted moss green.
+- Not done: giant redwood trunks, fur-like moss shader on stone/roofs/trunks, mossy cobbles, mossy cottages with lattice windows, frosty rim on frond tips, brightness/perf measurement, tests.
+- Moon: back to the old direction (V29 reverted).

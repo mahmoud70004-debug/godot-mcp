@@ -203,11 +203,14 @@ static func _build(style: int, lod: int) -> Dictionary:
 		var spine := _stem(ctx, Vector3.ZERO, Vector3.RIGHT, r0, float(p["fork"]))
 		var at := _ring_at(spine, 1.6)
 		base = Vector2(at.x, at.z)
-	var clumps: Array = ctx["clumps"]
-	if not near:
-		clumps = _thin(clumps, rng)
-	for c: Array in clumps:
-		_clump(ctx["leaves"], c[0], float(c[1]), String(p["leaf"]), rng, near)
+	if CONIFER and style in CONIFER_STYLES and not _sculpt(style).is_empty():
+		_conifer(ctx["leaves"], _sculpt_height(style), base, rng, near)
+	else:
+		var clumps: Array = ctx["clumps"]
+		if not near:
+			clumps = _thin(clumps, rng)
+		for c: Array in clumps:
+			_clump(ctx["leaves"], c[0], float(c[1]), String(p["leaf"]), rng, near)
 	var mesh := ArrayMesh.new()
 	var trunk: Dictionary = ctx["trunk"]
 	_append(trunk, ctx["leaves"])
@@ -239,6 +242,71 @@ static func _sculpt(style: int) -> Dictionary:
 		var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
 		_sculpts[style] = data if data is Dictionary else {}
 	return _sculpts[style]
+
+
+## PROTOTYPE (Aether): the big trees carry conifer boughs - tiers of long drooping fronds round the
+## trunk, dense at the bottom and tapering to a spire - instead of ball-shaped leaf clumps.
+const CONIFER := true
+const CONIFER_STYLES := [Style.TALL, Style.BROAD, Style.ELDER, Style.HOLLOW]
+const CONIFER_TILE := "leaf_dark"
+## Foliage starts this high (m) on the trunk and tiers are this far apart.
+const CONIFER_START := 2.6
+const CONIFER_STEP := 1.05
+
+
+static func _sculpt_height(style: int) -> float:
+	var v: Array = _sculpt(style).get("v", [])
+	var top := 8.0
+	for k in v.size() / 3:
+		top = maxf(top, float(v[k * 3 + 1]))
+	return top
+
+
+## Tiers of drooping fronds from CONIFER_START up to a little above the trunk top.
+static func _conifer(acc: Dictionary, height: float, centre: Vector2, rng: RandomNumberGenerator, near: bool) -> void:
+	var r := ForestAtlas.uv_rect(CONIFER_TILE)
+	var top := height * 1.08 + 1.5
+	var lmax := minf(height * 0.46, 6.0)
+	var y := CONIFER_START
+	var tier := 0
+	while y < top:
+		var t := (y - CONIFER_START) / maxf(top - CONIFER_START, 1.0)
+		var length := lmax * pow(1.0 - t, 0.85) + 0.7
+		var count := (8 if near else 5) if t < 0.85 else 4
+		var spin := rng.randf() * TAU
+		for k in count:
+			var yaw := spin + TAU * k / count + rng.randf_range(-0.2, 0.2)
+			var l := length * rng.randf_range(0.85, 1.12)
+			var droop := deg_to_rad(rng.randf_range(16.0, 30.0)) + (1.0 - t) * 0.08
+			_bough(acc, Vector3(centre.x, y + rng.randf_range(-0.2, 0.2), centre.y), yaw, l, l * 0.46, droop, r, 0.5 + 0.5 * t)
+			if near and t < 0.8:
+				# A second, steeper frond under the first: the tier reads as layered, not as one flat disc.
+				_bough(acc, Vector3(centre.x, y - 0.35, centre.y), yaw + 0.35, l * 0.8, l * 0.38, droop + 0.3, r, 0.42 + 0.5 * t)
+		y += CONIFER_STEP * (0.9 + 0.2 * (1.0 - t)) + (0.25 if not near else 0.0)
+		tier += 1
+	# The spire: three crossed upright fronds.
+	for k in 3:
+		var yaw := PI * k / 3.0
+		var tip := Vector3(centre.x, top - 1.2, centre.y)
+		_bough(acc, tip, yaw, 1.7, 1.0, deg_to_rad(-65.0), r, 1.0)
+		_bough(acc, tip, yaw + PI, 1.7, 1.0, deg_to_rad(-65.0), r, 1.0)
+
+
+## One frond: a quad of the frond tile from `base` outward along `yaw`, tilted down by `droop` rad, `l` long
+## and `w` wide, both sides; `shade` is its vertex brightness (lower tiers darker).
+static func _bough(acc: Dictionary, base: Vector3, yaw: float, l: float, w: float, droop: float, r: Rect2, shade: float) -> void:
+	var dir := Vector3(cos(yaw) * cos(droop), -sin(droop), -sin(yaw) * cos(droop))
+	var side := Vector3(-sin(yaw), 0.0, -cos(yaw)) * (w * 0.5)
+	var tip := base + dir * l
+	var col := Color(shade * 0.95, shade, shade * 0.97, 1.0)
+	var nrm := (Vector3.UP * 0.7 + Vector3(dir.x, 0.0, dir.z) * 0.5).normalized()
+	var v := (acc["v"] as PackedVector3Array).size()
+	var uvs := [Vector2(0.0, 0.0), Vector2(0.0, 1.0), Vector2(1.0, 1.0), Vector2(1.0, 0.0)]
+	var pts := [base - side, base + side, tip + side * 0.9, tip - side * 0.9]
+	for k in 4:
+		_vert(acc, pts[k], nrm, col, r.position + (uvs[k] as Vector2) * r.size)
+	var idx: PackedInt32Array = acc["i"]
+	idx.append_array([v, v + 1, v + 2, v, v + 2, v + 3, v, v + 2, v + 1, v, v + 3, v + 2])
 
 
 ## Adds the sculpted trunk to ctx (bark vertices, clumps, moss anchors); returns the trunk centre

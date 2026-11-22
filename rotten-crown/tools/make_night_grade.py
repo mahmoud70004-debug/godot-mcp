@@ -26,7 +26,7 @@ N = 32
 # Parts of the edited screenshot that are game world, not HUD (bars, joystick, buttons, sword).
 REF_RECTS = [(0.0, 0.10, 1.0, 0.58), (0.22, 0.58, 0.55, 1.0), (0.72, 0.58, 0.84, 0.95)]
 # Parts of a rendered frame below the region title, without the sword's corner.
-SRC_RECTS = [(0.0, 0.30, 1.0, 0.62), (0.0, 0.62, 0.55, 1.0)]
+SRC_RECTS = [(0.0, 0.40, 1.0, 0.62), (0.0, 0.62, 0.55, 1.0)]
 
 # Warm protection: hue window (degrees) and saturation ramp.
 WARM_HUE = (0.0, 58.0)
@@ -203,11 +203,19 @@ def stats(c: np.ndarray) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("raw_ref")
+    ap.add_argument("raw_ref", nargs="+", help="one or more ungraded game frames (RC_PERF=nopost)")
+    ap.add_argument("--ref", default=None, help="target image (default: the V8 reference); with --ref the whole image is used")
+    ap.add_argument("--blue", default=None, help="BLUE_SHIFT as r,g,b (default 0.95,0.99,1.09)")
     ap.add_argument("--sim", nargs="+", metavar="OUT_DIR FRAME", help="write graded copies of raw frames")
     a = ap.parse_args()
-    src = pixels(load(pathlib.Path(a.raw_ref)), SRC_RECTS)
-    ref = pixels(load(REF), REF_RECTS)
+    global BLUE_SHIFT
+    if a.blue:
+        BLUE_SHIFT = tuple(float(x) for x in a.blue.split(","))
+    src = np.concatenate([pixels(load(pathlib.Path(f)), SRC_RECTS) for f in a.raw_ref])
+    if a.ref:
+        ref = pixels(load(pathlib.Path(a.ref)), [(0.0, 0.0, 1.0, 1.0)])
+    else:
+        ref = pixels(load(REF), REF_RECTS)
     g = Grade(src, ref)
     lut = g.lut()
     OUT.parent.mkdir(parents=True, exist_ok=True)
