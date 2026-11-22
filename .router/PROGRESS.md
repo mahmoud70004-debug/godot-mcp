@@ -266,3 +266,6 @@ User verdict on V24: floor looked smoother (visible in the phone screenshot), th
 - A glowing tower window was tried and removed: the green window is reserved for the Keep.
 - Tests: layout 0, forest 0, impostor 0, validate/gdlint, web smoke/touch/swap PASS; web_perf Low spawn 2.75, hollowmere 2.5.
 - Next: V28-3 dress Keep / Outer Ward / existing towers; V28-4 skyline; landmarks V28-5..7.
+
+## V29 reverted (2026-11-22)
+User rejected V29 (moon north, rim, fog scatter). git revert restores V28 (gothic entrance kept) and its published build. Next: "Aether" art direction (video the_aether_pt.25: saturated cobalt blue, orange-only warm accents, rim-lit frosty edges, giant redwood trunks, conifer boughs with bright tips, fur-like moss, mossy cottages with warm lattice windows, mossy cobbles, glowing blue fog). User asks for a PROTOTYPE FIRST, NOT published: screenshots only; if liked, proceed to lighting/shadows/mood. Moon stays at the old direction.
