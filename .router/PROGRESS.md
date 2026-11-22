@@ -276,3 +276,13 @@ User rejected V29 (moon north, rim, fog scatter). git revert restores V28 (gothi
 - ForestTrees: CONIFER prototype (Tall/Broad/Elder/Hollow): tiers of drooping frond quads + spire instead of leaf balls; tools/make_fir_tile.py writes leaf_mass_a(+_n) as a frond tile. Roofs tinted moss green.
 - Not done: giant redwood trunks, fur-like moss shader on stone/roofs/trunks, mossy cobbles, mossy cottages with lattice windows, frosty rim on frond tips, brightness/perf measurement, tests.
 - Moon: back to the old direction (V29 reverted).
+
+## V30 - Aether look: sculpted redwoods, conifer boughs, moss, frost rim (2026-11-22)
+- User approved the Blender look-dev (images sent individually) and asked: fix moss / fir / rim light, KEEP the sculpt detail and pay for it elsewhere, put it in the game, publish.
+- Blender (tools/blender/trees/aether_trees.py, `-- export`; tools/bake_aether_hero.sh runs it + the Godot bake): per style (tall/broad/elder/hollow) a redwood trunk with fluted furrows, buttress roots, emerald moss cushions (moss weights lowered to ~40% coverage, colours x2.6 so the cobalt grade does not swallow them). Two meshes: hero ~4.5k tris (data/trees/hero_<style>.res via tools/bake_aether_hero.gd, class ForestHero) and a coarse trunk ~480 tris (data/trees/trunk_<style>.json, the existing sculpt path) that sits 5% inside the hero and carries the mid distance.
+- Hero: own shader forest_hero.gdshader (TREE + BARK_DISSOLVE), HERO_END 9 m + 3 m dither fade, 6 m cells ("H_x_z" -> Hero_<Style> MultiMeshes, same instance data as Near). Only conifer styles.
+- Conifer (ForestTrees._conifer/_bough): clean lower trunk (24% of the height), uneven crown (missing boughs, one side fuller, tier length wave), boughs are 2-segment arched strips (not flat planes); bough tile tools/make_fir_tile.py = a whole fir bough with side twigs and needles. Bough length cap 4.4 m, CONIFER_STEP 1.3.
+- Tree scale: instances are scaled 1.3-2.3x, so trunk design sizes are H 17-28 m, r 0.6-1.15 m (final 30-50 m giants).
+- Light: forest.gdshaderinc forest_frost (cobalt rim on bark, independent of canopy shade; leaves 0 to keep the impostor match). make_night_grade.py: green protection (moss stays green), LUT refit.
+- Cost (RC_PROBE=1, new dev aid in level.gd, real renderer): baseline Aether prototype 240k prims / 86-108 draws; V30 ~370-400k prims / 102-132 draws (hero ~90k submitted: a drawn hero cell pays every tree in it). Reduced from 920k by: hero range 14->9 m, hero cells 10->6 m, hero 10k->4.5k tris, coarse trunk 880->480 tris, fewer boughs.
+- Tests: layout 0, forest 0, impostor 0 (LIMIT 9 -> 9.5 documented), validate, gdlint.

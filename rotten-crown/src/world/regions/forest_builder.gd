@@ -41,6 +41,7 @@ const SEED := 4004
 const NEAR_CELL := 24.0
 ## Impostors cost 4 triangles each: two cells hold them all (one draw each).
 const FAR_CELL := 1000.0
+const HERO_CELL := 6.0  # ForestHero: small cells, a drawn cell pays every tree in it
 const ROAD_CLEAR := 3.5
 ## Free ground from a narrow trail's centreline to a trunk (the trail is 2.6 m wide).
 const TRAIL_CLEAR := 2.3
@@ -782,7 +783,7 @@ static func _chunks(forest: Node3D, trees: Array) -> void:
 	var reach := []
 	for k in STYLES.size():
 		reach.append(ForestTrees.impostor_size(k) * 0.5 * 1.4)
-	for grid: Array in [["N_", NEAR_CELL, 0], ["F_", FAR_CELL, 2]]:
+	for grid: Array in [["N_", NEAR_CELL, 0], ["H_", HERO_CELL, 3], ["F_", FAR_CELL, 2]]:
 		var cells := {}
 		for i in trees.size():
 			var foot: Vector3 = trees[i][0]
@@ -805,6 +806,8 @@ static func _chunks(forest: Node3D, trees: Array) -> void:
 			if int(grid[2]) == 0:
 				_style_set(node, trees, members, reach)
 				_trunks(node, trees, members)
+			elif int(grid[2]) == 3:
+				ForestHero.cell(node, trees, members, reach)
 			else:
 				_impostors(node, trees, members, reach)
 

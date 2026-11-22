@@ -32,6 +32,9 @@ SRC_RECTS = [(0.0, 0.40, 1.0, 0.62), (0.0, 0.62, 0.55, 1.0)]
 WARM_HUE = (0.0, 58.0)
 WARM_SAT = (0.28, 0.5)
 WARM_SAT_GAIN = 1.1
+# Green protection (moss): saturation ramp and how much of the pixel's own colour is kept.
+GREEN_SAT = (0.3, 0.55)
+GREEN_KEEP = 0.7
 # V9: the user asked for "a little more blue" on top of the fitted grade (cool colours only).
 BLUE_SHIFT = (0.95, 0.99, 1.09)
 
@@ -149,7 +152,13 @@ class Grade:
         hue_w = smooth(WARM_HUE[0] - 12.0, WARM_HUE[0], h) * (1.0 - smooth(WARM_HUE[1], WARM_HUE[1] + 14.0, h))
         hue_w = np.maximum(hue_w, 1.0 - smooth(0.0, 12.0, 360.0 - h))  # reds just under 360 deg
         w = (hue_w * smooth(WARM_SAT[0], WARM_SAT[1], s) * smooth(0.06, 0.16, c.max(-1)))[..., None]
-        return cool * (1.0 - w) + warm * w
+        # Aether: live moss stays green (the transfer would turn it into blue). Saturated greens keep part of their own
+        # colour at the transferred brightness.
+        hue_g = smooth(78.0, 96.0, h) * (1.0 - smooth(150.0, 170.0, h))
+        wg = (hue_g * smooth(GREEN_SAT[0], GREEN_SAT[1], s) * smooth(0.08, 0.2, c.max(-1)) * GREEN_KEEP)[..., None]
+        wg = np.minimum(wg, 1.0 - w)
+        green = c * (l1 / np.maximum(l0, 1e-4))[..., None]
+        return cool * (1.0 - w - wg) + warm * w + np.clip(green, 0.0, 1.0) * wg
 
     def lut(self) -> np.ndarray:
         v = np.linspace(0.0, 1.0, N)

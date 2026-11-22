@@ -25,7 +25,9 @@ const OVERWORLD := "res://src/levels/valdron/valdron_overworld.tscn"
 ## V25: 7 -> 9 and 20 -> 26: the moon key went 1.15 -> 2.2 and the sky ambient down (deeper shadows at the
 ## same mean brightness), so lit surfaces are ~1.7x brighter and every absolute difference between a mesh
 ## and its card scales with that; relative to the lit brightness the match is as before.
-const LIMIT := 9.0
+## Aether: 9 -> 9.5 for the frost rim on bark (forest_frost, view dependent; the birch's thin pale trunk differs by
+## 9.2 in G between mesh and card, the conifers stay under 4.5).
+const LIMIT := 9.5
 ## V7-8: 10 -> 13 after the forest albedo gain (1.7) brightened both: per-view differences scale
 ## with brightness; the mean bound (the acceptance criterion) is unchanged.
 const WORST_LIMIT := 26.0

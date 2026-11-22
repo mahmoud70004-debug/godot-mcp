@@ -189,6 +189,15 @@ vec3 forest_translucency(vec3 n, vec3 view, float shade) {
 	float away = 1.0 - clamp(dot(n, moon_dir), 0.0, 1.0);
 	return moon_color.rgb * (back * away * shade * leaf_translucency);
 }
+// Aether frost: the cold rim of every trunk and bough (linear, added after the albedo), independent of the canopy
+// shade - the blue fog and sky light the silhouettes from behind, so a trunk in the deep shade still reads as a
+// lit form against the haze. Stronger on faces turned up to the sky.
+uniform vec3 frost_color : source_color = vec3(0.22, 0.5, 1.0);
+uniform float frost_strength : hint_range(0.0, 2.0) = 0.5;
+vec3 forest_frost(vec3 n, vec3 view, float amount) {
+	float edge = pow(1.0 - clamp(dot(n, view), 0.0, 1.0), 3.4);
+	return frost_color * (edge * (0.55 + 0.45 * clamp(n.y * 0.5 + 0.5, 0.0, 1.0)) * frost_strength * amount);
+}
 vec3 forest_rim(vec3 n, vec3 view, float shade) {
 	float edge = pow(1.0 - clamp(dot(n, view), 0.0, 1.0), 3.0);
 	return moon_color.rgb * (edge * clamp(dot(n, moon_dir) + 0.3, 0.0, 1.0) * shade * rim_strength);
@@ -373,6 +382,12 @@ void fragment() {
 	// V12b: a near tree's leaves come and go leaf by leaf (cells of the leaf texture, not screen
 	// dots) in front of its card, which stays whole behind them until the mesh is complete; the
 	// trunk does not dissolve at all.
+#ifdef BARK_DISSOLVE
+	// The close-up trunk (forest_hero): the same screen pattern as the swap, over the coarse trunk beneath.
+	if (v_fade_out > 0.0 && dissolve_threshold(FRAGCOORD.xy) < v_fade_out) {
+		discard;
+	}
+#endif
 	if (dissolve_out && v_fade_out > 0.0 && v_uv.x >= -0.5) {
 		vec2 cell = floor(v_uv * vec2(textureSize(atlas, 0)) / 7.0);
 		if (fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453) < v_fade_out) {
@@ -416,6 +431,7 @@ void fragment() {
 	vec3 light = forest_moon(n, imp_shade, mix(bark_wrap, leaf_wrap, nt.a));
 	vec3 imp_view = normalize(CAMERA_POSITION_WORLD - v_world);
 	glint = forest_glint(n, imp_view, imp_shade, mix(glint_bark, glint_leaf, nt.a));
+	glint += forest_frost(n, imp_view, 1.0 - nt.a);
 	light += forest_translucency(n, imp_view, imp_shade) * nt.a;
 #else
 	vec3 n = normalize(v_wnormal);
@@ -452,6 +468,7 @@ void fragment() {
 #ifdef TREE
 	vec3 tree_view = normalize(CAMERA_POSITION_WORLD - v_world);
 	glint = forest_glint(n, tree_view, v_shade, bark ? glint_bark : glint_leaf);
+	glint += forest_frost(n, tree_view, bark ? 1.0 : 0.0);
 	if (!bark) {
 		light += forest_translucency(n, tree_view, v_shade);
 	}

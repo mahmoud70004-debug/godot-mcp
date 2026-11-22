@@ -33,6 +33,11 @@ const SOLID_SHADER := preload("res://assets/shaders/forest_solid.gdshader")
 const CARD_SHADER := preload("res://assets/shaders/forest_card.gdshader")
 const FLOOR_SHADER := preload("res://assets/shaders/forest_floor_card.gdshader")
 const FAR_SHADER := preload("res://assets/shaders/forest_far.gdshader")
+const HERO_SHADER := preload("res://assets/shaders/forest_hero.gdshader")
+## The close-up trunk mesh (Aether, sculpted in Blender: tools/blender/trees/aether_trees.py -- export, then
+## tools/bake_aether_hero.sh) is drawn within HERO_END m of the camera and dissolves out over HERO_FADE.
+const HERO_END := 9.0
+const HERO_FADE := 3.0
 ## V11: deep gnarled ridges with knots (Blender script tools/blender/trees/render_tree_textures.py).
 const BARK_TEX := "res://assets/textures/world/bark_gnarled.png"
 const BARK_NORMAL := "res://assets/textures/world/bark_gnarled_n.png"
@@ -47,22 +52,22 @@ const VOID := Color(0.025, 0.025, 0.035)
 ## the fork], leaf tile + clump size range + lowest clump, trunk sides [near, mid],
 ## bark colour, moss height, rot veins on the foot, stems (birch clump), split (hollow).
 const STYLES := {
-	Style.TALL: {"r0": 0.42, "fork": 8.0, "lean": 0.3, "wob": 0.18, "twist": 0.6, "roots": 3, "root_size": 0.6,
+	Style.TALL: {"r0": 0.62, "fork": 8.0, "lean": 0.3, "wob": 0.18, "twist": 0.6, "roots": 3, "root_size": 0.6,
 		"limbs": 4, "rise": 0.93, "drop": 0.3, "len": Vector2(3.0, 4.4), "lrad": 0.5, "below": Vector2i(0, 2),
 		"leaf": "leaf_dark", "leaf_size": Vector2(2.3, 3.2), "leaf_min": 5.2, "sides": Vector2i(7, 5),
 		"bark": Color(0.4, 0.42, 0.48), "moss_h": 1.8},
-	Style.BROAD: {"r0": 0.64, "fork": 4.4, "lean": 1.0, "wob": 0.35, "twist": 1.0, "roots": 4, "root_size": 1.1,
+	Style.BROAD: {"r0": 0.72, "fork": 4.4, "lean": 1.0, "wob": 0.35, "twist": 1.0, "roots": 4, "root_size": 1.1,
 		"limbs": 4, "rise": 0.75, "drop": -0.15, "len": Vector2(5.5, 7.5), "lrad": 0.58, "below": Vector2i(0, 2),
 		"leaf": "leaf_dark", "leaf_size": Vector2(2.5, 3.4), "leaf_min": 3.8, "sides": Vector2i(8, 5),
 		"bark": Color(0.36, 0.37, 0.4), "moss_h": 2.4, "veins": true},
 	Style.BARE: {"r0": 0.38, "fork": 5.4, "lean": 0.9, "wob": 0.6, "twist": 1.6, "roots": 3, "root_size": 0.7,
 		"limbs": 3, "rise": 0.85, "drop": 0.1, "len": Vector2(4.0, 6.0), "lrad": 0.55, "below": Vector2i(0, 3),
 		"leaf": "", "sides": Vector2i(6, 4), "bark": Color(0.36, 0.37, 0.42), "moss_h": 1.2},
-	Style.ELDER: {"r0": 1.25, "fork": 5.2, "lean": 0.8, "wob": 0.4, "twist": 0.8, "roots": 6, "root_size": 1.5,
+	Style.ELDER: {"r0": 1.15, "fork": 5.2, "lean": 0.8, "wob": 0.4, "twist": 0.8, "roots": 6, "root_size": 1.5,
 		"limbs": 5, "rise": 0.7, "drop": -0.2, "len": Vector2(8.5, 11.0), "lrad": 0.55, "below": Vector2i(0, 2),
 		"leaf": "leaf_dark", "leaf_size": Vector2(3.2, 4.4), "leaf_min": 5.0, "sides": Vector2i(9, 6),
 		"bark": Color(0.42, 0.42, 0.45), "moss_h": 3.2, "veins": true},
-	Style.HOLLOW: {"r0": 0.62, "fork": 6.0, "lean": 0.6, "wob": 0.3, "twist": 1.2, "roots": 4, "root_size": 0.9,
+	Style.HOLLOW: {"r0": 0.78, "fork": 6.0, "lean": 0.6, "wob": 0.3, "twist": 1.2, "roots": 4, "root_size": 0.9,
 		"limbs": 2, "rise": 0.85, "drop": 0.0, "len": Vector2(3.2, 4.6), "lrad": 0.6, "below": Vector2i(0, 1),
 		"leaf": "leaf_dying", "leaf_size": Vector2(2.0, 2.8), "leaf_min": 4.5, "sides": Vector2i(8, 5),
 		"bark": Color(0.33, 0.34, 0.37), "moss_h": 1.6, "veins": true, "split": 1.9},
@@ -80,6 +85,7 @@ static var _mats: Dictionary = {}
 static var _impostor_size: Dictionary = {}
 static var _sculpts: Dictionary = {}
 static var _feet: Dictionary = {}
+static var _heroes: Dictionary = {}
 
 
 ## One style, built on first use (`lod` 0; 1 is a coarser copy kept for experiments):
@@ -144,6 +150,8 @@ static func material(id: String) -> ShaderMaterial:
 			mat.shader = FLOOR_SHADER
 		"far":
 			mat.shader = FAR_SHADER
+		"hero":
+			mat.shader = HERO_SHADER
 		_:
 			mat.shader = CARD_SHADER
 	mat.set_shader_parameter("atlas", ForestAtlas.texture())
@@ -155,6 +163,13 @@ static func material(id: String) -> ShaderMaterial:
 			mat.set_shader_parameter("hang_uv_y", Vector2(hang.position.y, hang.size.y))
 			mat.set_shader_parameter("leaf_normal", ForestAtlas.leaf_normal_texture())
 			mat.set_shader_parameter("leaf_normal_rect", ForestAtlas.leaf_normal_rect())
+			mat.set_shader_parameter("bark_normal", load(BARK_NORMAL))
+		"hero":
+			mat.set_shader_parameter("lod_end", HERO_END + HERO_FADE)
+			mat.set_shader_parameter("fade_out", HERO_FADE)
+			mat.set_shader_parameter("dissolve_out", true)
+			mat.set_shader_parameter("bark_relief", 1.0)
+			mat.set_shader_parameter("bark_detail", 0.4)
 			mat.set_shader_parameter("bark_normal", load(BARK_NORMAL))
 		"far":
 			mat.set_shader_parameter("lod_begin", NEAR_END)
@@ -251,7 +266,7 @@ const CONIFER_STYLES := [Style.TALL, Style.BROAD, Style.ELDER, Style.HOLLOW]
 const CONIFER_TILE := "leaf_dark"
 ## Foliage starts this high (m) on the trunk and tiers are this far apart.
 const CONIFER_START := 2.6
-const CONIFER_STEP := 1.05
+const CONIFER_STEP := 1.3
 
 
 static func _sculpt_height(style: int) -> float:
@@ -262,24 +277,31 @@ static func _sculpt_height(style: int) -> float:
 	return top
 
 
-## Tiers of drooping fronds from CONIFER_START up to a little above the trunk top.
+## Tiers of drooping fronds from a clean lower trunk up to a little above the trunk top. The crown is uneven on
+## purpose: boughs missing here and there, one side fuller, tiers thin or wide, so no tree is a tidy cone.
 static func _conifer(acc: Dictionary, height: float, centre: Vector2, rng: RandomNumberGenerator, near: bool) -> void:
 	var r := ForestAtlas.uv_rect(CONIFER_TILE)
-	var top := height * 1.08 + 1.5
-	var lmax := minf(height * 0.46, 6.0)
-	var y := CONIFER_START
+	var top := height * 1.04 + 1.0
+	var lmax := minf(height * 0.4, 4.4)
+	var start := clampf(height * 0.24, CONIFER_START, 8.5)
+	var phase := rng.randf() * TAU
+	var y := start
 	var tier := 0
 	while y < top:
-		var t := (y - CONIFER_START) / maxf(top - CONIFER_START, 1.0)
+		var t := (y - start) / maxf(top - start, 1.0)
 		var length := lmax * pow(1.0 - t, 0.85) + 0.7
-		var count := (8 if near else 5) if t < 0.85 else 4
+		length *= 0.82 + 0.3 * sin(tier * 0.8 + phase)
+		var count := (7 if near else 5) if t < 0.85 else 4
 		var spin := rng.randf() * TAU
 		for k in count:
+			if rng.randf() < 0.13 or (tier % 7 == 5 and rng.randf() < 0.5):
+				continue  # a missing bough
 			var yaw := spin + TAU * k / count + rng.randf_range(-0.2, 0.2)
-			var l := length * rng.randf_range(0.85, 1.12)
+			var side := 0.62 + 0.76 * pow(0.5 + 0.5 * sin(yaw + phase + tier * 0.35), 1.3)
+			var l := length * rng.randf_range(0.85, 1.12) * side
 			var droop := deg_to_rad(rng.randf_range(16.0, 30.0)) + (1.0 - t) * 0.08
 			_bough(acc, Vector3(centre.x, y + rng.randf_range(-0.2, 0.2), centre.y), yaw, l, l * 0.46, droop, r, 0.5 + 0.5 * t)
-			if near and t < 0.8:
+			if near and t < 0.5:
 				# A second, steeper frond under the first: the tier reads as layered, not as one flat disc.
 				_bough(acc, Vector3(centre.x, y - 0.35, centre.y), yaw + 0.35, l * 0.8, l * 0.38, droop + 0.3, r, 0.42 + 0.5 * t)
 		y += CONIFER_STEP * (0.9 + 0.2 * (1.0 - t)) + (0.25 if not near else 0.0)
@@ -292,21 +314,27 @@ static func _conifer(acc: Dictionary, height: float, centre: Vector2, rng: Rando
 		_bough(acc, tip, yaw + PI, 1.7, 1.0, deg_to_rad(-65.0), r, 1.0)
 
 
-## One frond: a quad of the frond tile from `base` outward along `yaw`, tilted down by `droop` rad, `l` long
-## and `w` wide, both sides; `shade` is its vertex brightness (lower tiers darker).
+## One bough: a two-segment strip of the bough tile from `base` outward along `yaw`, rising a little and then
+## drooping by `droop` rad at the tip (an arch, not a flat plane), `l` long and `w` wide, both sides; `shade` is
+## its vertex brightness (lower tiers darker).
 static func _bough(acc: Dictionary, base: Vector3, yaw: float, l: float, w: float, droop: float, r: Rect2, shade: float) -> void:
-	var dir := Vector3(cos(yaw) * cos(droop), -sin(droop), -sin(yaw) * cos(droop))
+	var out := Vector3(cos(yaw), 0.0, -sin(yaw))
 	var side := Vector3(-sin(yaw), 0.0, -cos(yaw)) * (w * 0.5)
-	var tip := base + dir * l
+	var mid := base + (out * cos(droop * 0.25) + Vector3.DOWN * sin(droop * 0.25)) * (l * 0.5)
+	var tip := mid + (out * cos(droop * 1.7) + Vector3.DOWN * sin(droop * 1.7)) * (l * 0.5)
 	var col := Color(shade * 0.95, shade, shade * 0.97, 1.0)
-	var nrm := (Vector3.UP * 0.7 + Vector3(dir.x, 0.0, dir.z) * 0.5).normalized()
+	var nrm := (Vector3.UP * 0.7 + out * 0.5).normalized()
 	var v := (acc["v"] as PackedVector3Array).size()
-	var uvs := [Vector2(0.0, 0.0), Vector2(0.0, 1.0), Vector2(1.0, 1.0), Vector2(1.0, 0.0)]
-	var pts := [base - side, base + side, tip + side * 0.9, tip - side * 0.9]
-	for k in 4:
-		_vert(acc, pts[k], nrm, col, r.position + (uvs[k] as Vector2) * r.size)
+	var rings := [base, mid, tip]
+	var halves := [0.4, 1.0, 0.8]
+	for k in 3:
+		var u := k * 0.5
+		_vert(acc, (rings[k] as Vector3) - side * halves[k], nrm, col, r.position + Vector2(u, 0.0) * r.size)
+		_vert(acc, (rings[k] as Vector3) + side * halves[k], nrm, col, r.position + Vector2(u, 1.0) * r.size)
 	var idx: PackedInt32Array = acc["i"]
-	idx.append_array([v, v + 1, v + 2, v, v + 2, v + 3, v, v + 2, v + 1, v, v + 3, v + 2])
+	for seg in 2:
+		var a := v + seg * 2
+		idx.append_array([a, a + 1, a + 3, a, a + 3, a + 2, a, a + 3, a + 1, a, a + 2, a + 3])
 
 
 ## Adds the sculpted trunk to ctx (bark vertices, clumps, moss anchors); returns the trunk centre

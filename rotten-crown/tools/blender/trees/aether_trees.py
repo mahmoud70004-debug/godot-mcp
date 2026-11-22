@@ -82,10 +82,16 @@ def grid_faces(ny, nt):
 
 
 # ----------------------------------------------------------------------------- redwood trunk
-def trunk_mesh(H=30.0, r_mid=1.35, r_top=0.32, roots=8, seed=5, nt=340, ny=1500, flute=1.0, detail=1.0, moss=True):
+def trunk_mesh(H=30.0, r_mid=1.35, r_top=0.32, roots=8, seed=5, nt=340, ny=1500, flute=1.0, detail=1.0, moss=True, ys=None, hf=1.0, mf=1.0, moss_gain=1.0):
+    """hf: weight of the finest bark layers (drop them for a coarse game mesh), mf: moss cushion frequency factor.
+    ys: explicit ring heights (dense near the ground for the game mesh)."""
     r = np.random.default_rng(seed)
-    t = np.linspace(0, 1, ny)
-    y = -0.7 + (H + 0.7) * t ** 1.15
+    if ys is None:
+        t = np.linspace(0, 1, ny)
+        y = -0.7 + (H + 0.7) * t ** 1.15
+    else:
+        y = np.asarray(ys, float)
+        ny = len(y)
     th = np.linspace(0, 2 * np.pi, nt, endpoint=False)
     TH, Y = np.meshgrid(th, y)
     base_r = r_top + (r_mid - r_top) * np.clip(1 - Y / H, 0, 1) ** 0.5
@@ -104,7 +110,7 @@ def trunk_mesh(H=30.0, r_mid=1.35, r_top=0.32, roots=8, seed=5, nt=340, ny=1500,
     plates = ridged(N1(cx * 15 + wx, Y * 1.5 + wy, sz * 15 + wx))
     fibre = N3(cx * 95 + 7, Y * 3.5, sz * 95 + 7) - 0.5
     fl = (f1 * 0.62 + f2 * 0.38 - 0.5) * amp
-    fine = (-crack * 0.12 * detail - crack2 * 0.045 * detail + (plates - 0.5) * 0.1 * detail + fibre * 0.03 * detail)
+    fine = (-crack * 0.12 * detail - crack2 * 0.045 * detail * hf + (plates - 0.5) * 0.1 * detail + fibre * 0.03 * detail * hf)
     # Buttress roots: lobes at random angles, strongest at the ground and gone by ~5 m.
     ang = np.sort(r.random(roots)) * 2 * np.pi
     wid = 0.22 + r.random(roots) * 0.16
@@ -125,15 +131,17 @@ def trunk_mesh(H=30.0, r_mid=1.35, r_top=0.32, roots=8, seed=5, nt=340, ny=1500,
     if moss:
         # Moss: clumpy cushions that stand off the bark and cover it in patches, lit-green on their crowns.
         w = moss_weights(None, TH, Y).reshape(TH.shape)
-        clump = N1(cx * 38 + 9, Y * 2.6 + 9, sz * 38 + 9) * 0.55 + N2(cx * 85, Y * 6.0, sz * 85) * 0.45
-        lump = np.clip(clump * 1.4 - 0.25, 0, 1)
-        fur = N3(cx * 150 + 3, Y * 14, sz * 150 + 3)
-        off = w * (0.07 + 0.22 * lump + 0.04 * fur)
+        clump = N1(cx * 38 * mf + 9, Y * 2.6 * mf + 9, sz * 38 * mf + 9) * 0.55 + N2(cx * 85 * mf, Y * 6.0 * mf, sz * 85 * mf) * 0.45
+        lump = np.clip(clump * 1.5 - 0.25, 0, 1)
+        fur = N3(cx * 150 * mf + 3, Y * 14 * mf, sz * 150 * mf + 3) * hf
+        off = w * moss_gain * (0.08 + 0.3 * lump + 0.04 * fur)
         rad = rad + off
-        base_g = np.array([0.006, 0.014, 0.01])
-        crown = np.array([0.04, 0.1, 0.055])
-        mc = base_g[None, None, :] + (crown - base_g)[None, None, :] * lump[..., None]
-        wm = np.clip(w * 1.6, 0, 1)[..., None]
+        # Emerald moss with sunlit-lime crowns (the colour reads in the moon's blue light).
+        base_g = np.array([0.012, 0.045, 0.02])
+        crown = np.array([0.10, 0.30, 0.08])
+        tip = np.array([0.2, 0.4, 0.09])
+        mc = base_g[None, None, :] + (crown - base_g)[None, None, :] * lump[..., None] + (tip - crown)[None, None, :] * (np.clip(lump - 0.55, 0, 1) * 2 * fur)[..., None] * 0.8
+        wm = np.clip(w * 1.7, 0, 1)[..., None]
         col = col * (1 - wm) + mc * wm
     X = rad * np.cos(TH + Y * 0.004) + 0.55 * np.sin(Y * 0.045)
     Yy = rad * np.sin(TH + Y * 0.004) + 0.3 * np.sin(Y * 0.03 + 1.0)
@@ -148,7 +156,7 @@ def moss_weights(V, TH, Y, lobes_hint=None):
     patch2 = N2(np.cos(th) * 6.0, y * 0.9, np.sin(th) * 6.0)
     low = 1 - smooth(1.0, 11.0, y)
     north = 0.85 + 0.15 * np.sin(th)
-    w = np.clip((patch * 0.7 + patch2 * 0.45 - 0.3) * 3.0, 0, 1) * (0.2 + 0.8 * low) * north
+    w = np.clip((patch * 0.7 + patch2 * 0.45 - 0.4) * 3.4, 0, 1) * (0.25 + 0.75 * low) * north
     w = np.clip(w + 0.3 * N3(np.cos(th) * 3 + 70, y * 1.5, np.sin(th) * 3 + 70) * smooth(2.5, 0.0, y), 0, 1)
     w = np.where(y > 18, w * 0.2, w)
     return w.ravel()
@@ -225,6 +233,8 @@ def setup_scene(res=(1000, 1400)):
     # The moon stands behind-left of the camera's subject (camera looks along +y): a strong cold rim.
     sun("moon", (-22, 26, 20), 9.0, (0.4, 0.58, 1.0), 3)
     sun("fill", (12, -30, 14), 1.5, (0.3, 0.45, 1.0), 25)
+    # A cold rim from the far side: the frosty edge on every trunk and frond.
+    sun("rim", (14, 30, 6), float(os.environ.get("RIM", "7.0")), (0.55, 0.75, 1.0), 4)
     gm = bpy.data.materials.new("ground")
     gm.use_nodes = True
     gm.node_tree.nodes["Principled BSDF"].inputs["Base Color"].default_value = (0.02, 0.025, 0.03, 1)
@@ -371,6 +381,7 @@ def build_fir(Tm, seed=1, height=27.0, dense=1.0):
                 a1 = base + k * sides + (s + 1) % sides
                 bf.append((a0, a1, a1 + sides, a0 + sides))
 
+    phase = rng.random() * 6.28
     y = 3.0
     tier = 0
     while y < H - 1.0:
@@ -382,13 +393,20 @@ def build_fir(Tm, seed=1, height=27.0, dense=1.0):
         for kb in range(nb):
             yaw = spin + 2 * np.pi * kb / nb + rng.normal(0, 0.12)
             out = np.array([np.cos(yaw), np.sin(yaw), 0.0])
-            Lb = L * (0.85 + 0.3 * rng.random())
+            # An uneven crown: some boughs missing, some stunted, one side fuller, whole tiers thin or wide.
+            if rng.random() < 0.15 or (tier % 7 == 5 and rng.random() < 0.5):
+                continue
+            side_bias = 0.62 + 0.76 * (0.5 + 0.5 * np.sin(yaw + phase + tier * 0.35)) ** 1.3
+            Lb = L * (0.85 + 0.3 * rng.random()) * side_bias * (0.82 + 0.3 * np.sin(tier * 0.8 + phase))
+            dead = rng.random() < 0.06 and t < 0.7
             pts = []
             for s in np.linspace(0, 1, 9):
                 p = np.array([0, 0, y]) + out * (trunk_r + Lb * s) + Z * (Lb * (0.14 * s - 0.34 * s * s + 0.18 * s ** 4))
                 pts.append(p)
             pts = np.array(pts)
             tube(pts, 0.05 * (1 - 0.5 * t) + 0.01, 0.006)
+            if dead:
+                continue
             # Fronds along the branch, both sides, plus the tip.
             lat = np.cross(Z, out)
             for si in np.linspace(0.12, 0.97, 18):
@@ -488,6 +506,8 @@ def do_scene():
         vs.inputs["Color"].default_value = (0.25, 0.45, 1.0, 1)
         vs.inputs["Density"].default_value = float(os.environ.get("FOG_DENSITY", "0.012"))
         vs.inputs["Anisotropy"].default_value = 0.5
+        vs.inputs["Emission Color"].default_value = (0.2, 0.4, 1.0, 1)
+        vs.inputs["Emission Strength"].default_value = float(os.environ.get("FOG_GLOW", "0.35"))
         nt.links.new(vs.outputs["Volume"], nt.nodes["Material Output"].inputs["Volume"])
         box.data.materials.append(fm)
         box.visible_shadow = False
@@ -501,9 +521,84 @@ def do_scene():
     render(os.environ.get("OUTNAME", "scene_fog"))
 
 
+# ----------------------------------------------------------------------------- game export
+# name: (H, r_mid, r_top, roots, seed)
+GAME_TREES = {
+    "tall": (22.0, 0.62, 0.17, 6, 5),
+    "broad": (17.0, 0.72, 0.22, 7, 8),
+    "elder": (28.0, 1.15, 0.30, 9, 12),
+    "hollow": (19.0, 0.78, 0.22, 6, 17),
+}
+GAME_ROOT = os.path.normpath(os.path.join(HERE, "..", "..", ".."))
+
+
+def ring_heights(H, step0, step1, step2):
+    """Ring heights: dense at the foot (roots), coarser up the trunk."""
+    ys = list(np.arange(-0.7, 5.0, step0)) + list(np.arange(5.0, 14.0, step1)) + list(np.arange(14.0, H, step2)) + [H]
+    return np.array(ys)
+
+
+def vertex_normals(V, F):
+    F = np.asarray(F)
+    tri = np.concatenate([F[:, [0, 1, 2]], F[:, [0, 2, 3]]])
+    e1 = V[tri[:, 1]] - V[tri[:, 0]]
+    e2 = V[tri[:, 2]] - V[tri[:, 0]]
+    fn = np.cross(e1, e2)
+    N = np.zeros_like(V)
+    for k in range(3):
+        np.add.at(N, tri[:, k], fn)
+    return N / (np.linalg.norm(N, axis=1, keepdims=True) + 1e-12), tri
+
+
+def export_one(name, spec, kind, gain):
+    H, r_mid, r_top, roots, seed = spec
+    if kind == "hero":
+        ys, nt, hf, mf, mg = ring_heights(H, 0.16, 0.7, 1.6), 42, 0.0, 0.7, 1.0
+    else:
+        ys, nt, hf, mf, mg = ring_heights(H, 0.6, 2.2, 4.5), 14, 0.0, 0.2, 0.7
+    V, F, col, _, nt, ny = trunk_mesh(H=H, r_mid=r_mid, r_top=r_top, roots=roots, seed=seed, nt=nt, ys=ys, hf=hf, mf=mf, moss_gain=mg,
+                                     detail=1.0 if kind == "hero" else 0.6)
+    N, tri = vertex_normals(V, F)
+    if kind == "low":
+        # The coarse copy sits a little inside the hero mesh, so near the camera the hero hides it.
+        c = V.reshape(ny, nt, 3).mean(1, keepdims=True)
+        V = (c + (V.reshape(ny, nt, 3) - c) * 0.95).reshape(-1, 3)
+    cols = col * gain
+    # Moss reads green only if it is bright: the cobalt light and grade swallow dark greens.
+    moss = (col[:, 1] > 1.5 * col[:, 0]) & (col[:, 1] > 0.02)
+    cols[moss] *= float(os.environ.get("MOSS_GAIN", "2.6"))
+    cols = np.clip(cols, 0, 1)
+    g = lambda a: np.stack([a[:, 0], a[:, 2], -a[:, 1]], 1)
+    gv, gn = g(V), g(N)
+    gt = tri[:, ::-1]
+    yi = np.argmin(np.abs(V[:, 2] - 1.6))
+    near = np.abs(V[:, 2] - 1.6) < 0.2
+    base = [float(gv[near, 0].mean()), float(gv[near, 2].mean())]
+    out = {"name": name, "v": np.round(gv, 3).ravel().tolist(), "n": np.round(gn, 3).ravel().tolist(),
+           "c": np.round(cols, 3).ravel().tolist(), "i": gt.ravel().tolist(), "clumps": [], "hangs": [], "base": base,
+           "radius": float(r_mid)}
+    return out, len(gt)
+
+
+def do_export():
+    gain = float(os.environ.get("BARK_GAIN", "1.3"))
+    which = [w for w in sys.argv[sys.argv.index("--") + 1:] if w in GAME_TREES] or list(GAME_TREES)
+    import json
+    os.makedirs(os.path.join(GAME_ROOT, "build", "aether"), exist_ok=True)
+    for name in which:
+        for kind in ("hero", "low"):
+            data, tris = export_one(name, GAME_TREES[name], kind, gain)
+            path = os.path.join(GAME_ROOT, "build", "aether", "%s_%s.json" % (kind, name)) if kind == "hero" else os.path.join(GAME_ROOT, "data", "trees", "trunk_%s.json" % name)
+            with open(path, "w") as f:
+                json.dump(data, f, separators=(",", ":"))
+            print(name, kind, len(data["v"]) // 3, "verts", tris, "tris", os.path.getsize(path) // 1024, "KB")
+
+
 if __name__ == "__main__":
     what = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else ["trunk", "fir", "frond"]
-    if "scene" in what:
+    if "export" in what:
+        do_export()
+    elif "scene" in what:
         do_scene()
     elif "trunk" in what:
         do_trunk()

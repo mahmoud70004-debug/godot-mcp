@@ -40,6 +40,8 @@ func _ready() -> void:
 		player.teleport_to(GameState.pending_player_position)
 		GameState.pending_player_position = null
 	_apply_dev_shot()
+	if OS.get_environment("RC_PROBE") != "":
+		_probe_frame()
 	_base_region = region
 	Events.region_zone_entered.connect(_on_zone_entered)
 	Events.region_zone_exited.connect(_on_zone_exited)
@@ -130,6 +132,18 @@ func _apply_dev_perf_flags() -> void:
 		# "hide:Name" hides every node called Name (cost of one baked group).
 		if node is Node3D and flags.has("hide:" + node.name):
 			(node as Node3D).visible = false
+
+
+## Dev aid: RC_PROBE=1 prints the draw calls / triangles / objects of the frame after 30 frames and quits
+## (combine with RC_SHOT; real renderer: xvfb + --rendering-driver opengl3).
+func _probe_frame() -> void:
+	for i in 30:
+		await get_tree().process_frame
+	var rs := RenderingServer
+	print("PROBE draws %d prims %d objects %d" % [rs.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_DRAW_CALLS_IN_FRAME),
+		rs.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_PRIMITIVES_IN_FRAME),
+		rs.get_rendering_info(RenderingServer.RENDERING_INFO_TOTAL_OBJECTS_IN_FRAME)])
+	get_tree().quit()
 
 
 ## Dev aid for rendering review shots: RC_SHOT="x,y,z,yaw_deg,pitch_deg".
